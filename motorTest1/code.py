@@ -1,3 +1,4 @@
+# Write your code here :-)
 # SPDX-FileCopyrightText: 2021 jedgarpark for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
@@ -33,8 +34,8 @@ button.pull = Pull.UP
 mode = -1  # track state of button mode
 
 # Stepper motor setup
-DELAY = 0.006  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
-STEPS = 513  # this is a full 360º
+DELAY = 0.01  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
+STEPS = 220  # this is a full 360º
 coils = (
     DigitalInOut(board.GP21),  # A1
     DigitalInOut(board.GP20),  # A2
