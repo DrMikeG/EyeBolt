@@ -23,6 +23,11 @@ an handle about 5mm to 200mm of range distance.
 
 850 nm
 
+The field or view of VL6180X is approximately ±12.5°
+
+FOV for the IR laser used for the distance sensor is 25 degrees (+/- 12.5). This means the spot size (the area over which the sensor reads a distance) is about 0.4 times the distance from the sensor. At a distance of 50 mm, it returns a reading from some point within a 20 mm spot on the object. Good for a proximity detector, not so good if you are trying to find the edge of an object.
+
+
 `Don't forget to remove the protective cover off the sensor, it may be a clear or slightly tinted plastic!`
 
 Resolution:	1 mm2
@@ -61,7 +66,26 @@ import board
 import busio
 
 i2c = busio.I2C(scl=board.GP1, sda=board.GP0)
+
+import board
+import busio
+import adafruit_vl6180x
+i2c = busio.I2C(board.SCL, board.SDA) // Does not work on the pico
+sensor = adafruit_vl6180x.VL6180X(i2c)
+
 ```
+
+Next you'll need to install the Adafruit CircuitPython VL6180X library on your CircuitPython board.
+
+Remember for non-express boards like the, you'll need to manually install the necessary libraries from the bundle:
+
+adafruit_vl6180x.mpy
+adafruit_bus_device
+Before continuing make sure your board's lib folder or root filesystem has the adafruit_vl6180x.mpy, and adafruit_bus_device files and folders copied over.
+
+Next connect to the board's serial REPL so you are at the CircuitPython >>> prompt.
+
+
 
 
 ## Steppers ##
@@ -210,3 +234,112 @@ while True:
 
 I plan on using blah and blah pins for input.
 
+## Logging ##
+
+https://learn.adafruit.com/getting-started-with-raspberry-pi-pico-circuitpython/data-logger
+
+Now that I can take measurements and turn the motors, the next step is to write the values out somewhere...
+
+```
+CircuitPython does not allow your computer to write to the filesystem at the same time as CircuitPython is writing to the filesystem. Therefore, if you simply run storage.remount("/", readonly=False) in boot.py, CIRCUITPY is no longer writable by your computer, which means you cannot write to or delete files from the CIRCUITPY drive. This means you cannot modify boot.py. To return the filesystem to a state writable by your computer, you would need to run some commands in the REPL. More information on this process is available at the end of this page.
+```
+
+
+Remounts the given path with new parameters.
+
+Parameters
+readonly (bool) – True when the filesystem should be readonly to CircuitPython.
+
+```
+"""
+boot.py file for Pico data logging example. If pin GP0 is connected to GND when
+the pico starts up, make the filesystem writeable by CircuitPython.
+"""
+import board
+import digitalio
+import storage
+
+write_pin = digitalio.DigitalInOut(board.GP0)
+write_pin.direction = digitalio.Direction.INPUT
+write_pin.pull = digitalio.Pull.UP
+
+# If write pin is connected to ground on start-up, CircuitPython can write to CIRCUITPY filesystem.
+if not write_pin.value:
+    storage.remount("/", readonly=False)
+```
+
+```
+"""
+Data logging example for Pico. Logs the temperature to a file on the Pico.
+"""
+import time
+import board
+import digitalio
+import microcontroller
+
+led = digitalio.DigitalInOut(board.LED)
+led.switch_to_output()
+
+try:
+    with open("/temperature.txt", "a") as datalog:
+        while True:
+            temp = microcontroller.cpu.temperature
+            datalog.write('{0:f}\n'.format(temp))
+            datalog.flush()
+            led.value = not led.value
+            time.sleep(1)
+except OSError as e:  # Typically when the filesystem isn't writeable...
+    delay = 0.5  # ...blink the LED every half second.
+    if e.args[0] == 28:  # If the filesystem is full...
+        delay = 0.25  # ...blink the LED faster!
+    while True:
+        led.value = not led.value
+        time.sleep(delay)
+```
+
+## 18th September 2021 ##
+
+My VL53L3CX Arrived today!
+
+With the improved detection accuracy, the sensor features a 25~3000mm sensing range, automatic smudge correction, and glass cross-talk immunity.
+
+Typical full FoV 25°
+
+Boo!
+
+Got to design a different measuring,
+
+If the radius of a circle is 70mm,
+The total circumference is 440mm
+100 degrees would be 
+(100 / 360) * 440 = 122mm
+I only need ~70mm of travel, so a standard servo should be ok with a serious fan gear
+
+So - my thoughts.
+I'm giving up on doing this optically for now - I'm going to try and make a touch sensor using a servo and a momentary switch.
+
+I have reservations about the travel I'll need for a physical measurement.
+
+Also, there's no reason the measured object is going to stay still.
+
+Need something to keep it still whilst I jab at it, and maybe use gravity to reduce the force require to trip the switch?
+
+## 21st September 2021 ##
+
+After a few days of folly with a beautiful planetary gear train, I've rigged up some linear rail and a servo with a crank arm to move the pointer.
+
+I now need to operate the servo.
+
+MG 995
+
+Signal pin (Orange pin) -The PWM signal which states the axis position is given through this pin.
+VCC (Red pin) - Positive power supply for servo motor is given to this pin.
+Ground(Brown pin) - This pin is connected to ground of circuit or power supply.
+
+Operating voltage range: 4.8 V to 7.2 V
+Rotational degree: 180º
+Dead band width: 5 μs
+Operating temperature range: 0ºC to +55ºC
+Current draw at idle: 10mA
+No load operating current draw: 170mA
+Current at maximum load: 1200mA
