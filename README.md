@@ -1,4 +1,4 @@
-# EyeBolt
+# EyeBolt #
 
 VL53L3CX Time-Of-Flight ToF Ranging Sensor Module Breakout 3Meter 940Nm...
 (Estimated delivery: Wed 15 Sep - Thu 23 Sep)
@@ -343,3 +343,61 @@ Operating temperature range: 0ºC to +55ºC
 Current draw at idle: 10mA
 No load operating current draw: 170mA
 Current at maximum load: 1200mA
+
+https://ceilingnote.blogspot.com/2021/05/raspberry-pi-pico11-control-servo-motor.html
+
+https://learn.adafruit.com/circuitpython-essentials/circuitpython-servo
+
+How to list the pins:
+
+```
+import board
+dir(board)
+```
+
+```import board
+dir(board)
+```
+
+## 2021/09/26 ##
+
+Going back to gear design for turntable.
+
+http://hessmer.org/gears/InvoluteSpurGearBuilder.html?circularPitch=3.2&pressureAngle=20&clearance=0.05&backlash=0.05&profileShift=0&gear1ToothCount=0&gear1CenterHoleDiamater=4&gear2ToothCount=8&gear2CenterHoleDiamater=4&showOption=3
+
+## 2021/09/30 ##
+
+Push buttons have too much spring.
+Can I get a photo interupter to work?
+KY-10 https://arduinomodules.info/ky-010-photo-interrupter-module/
+
+Operating Voltage	3.3 ~ 5V
+
+- (left)	GND
+middle	+5V
+S (right)	Pin 3
+
+```
+int Led = 13; // define LED pin
+int buttonpin = 3; // define photo interrupter signal pin
+int val; //define a numeric variable
+
+void setup()
+{
+	pinMode(Led, OUTPUT); // LED pin as output
+	pinMode(buttonpin, INPUT); //photo interrupter pin as input
+}
+
+void loop()
+{
+	val=digitalRead(buttonpin); //read the value of the sensor 
+	if(val == HIGH) // turn on LED when sensor is blocked 
+	{
+		digitalWrite(Led,HIGH);
+	}
+	else
+	{
+		digitalWrite(Led,LOW);
+	}
+}
+```
