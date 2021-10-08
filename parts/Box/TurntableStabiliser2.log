@@ -1,0 +1,33 @@
+Solid Edge Translation To obj
+Date: Wednesday,October 06,2021 05:20PM
+Output File: C:\Users\gibbens\Documents\Arduino\EyeBolt\parts\Box\TurntableStabiliser2.obj
+Author: Unknown
+Organization: Unknown
+Source System: SOLID EDGE
+
+Hardware:
+Processor: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
+Operating System: Windows 10 Enterprise Edition
+Installed Memory: 31.8 GB
+
+Software Information:
+Parasolid Version: 33.0.171
+PSBodyshop Version: 33.0.86
+OBJ Adapter Version: 7.0.79
+Solid Edge Version: 222.00.00.023 x64
+
+OBJ Export Options:
+Export Construction Solids:Off
+Export Displayed Parts:Off
+Export Construction Sheets:Off
+Enable Logging:On
+Export Textures:Off
+Export Flatten Assembly:On
+Export Units:Millimeters
+Export Tolerance Value:1.250000
+Export Tolerance Type:Custom
+Export Surface Plane Angle Value:0.523599
+
+Translation progress:
+Translation process completed
+Time required to translate:00 : 00 : 01
