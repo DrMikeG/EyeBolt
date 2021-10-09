@@ -107,30 +107,35 @@ def MoveServo(newTargetAngle,speed):
                 my_servo.angle = servoCurrentTarget
     time.sleep(0.25)
             
+def TableIsAtUpperStop():
+    return button13.value == False
+
 
 def TableHomeCycle():
     print("Table Homing")
-    # Move table down until lower limit reached
-    while button12.value == True:
-        CheckEBreak()
-        #Move stepper anticlockwise (down) fast
-        
-
-
+   
     # Move table up until upper limit reached
-    while button13.value == True:
+    while not TableIsAtUpperStop():
         CheckEBreak()
         #Move stepper clockwise (up) fast
+        stepper_motor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE)
+        time.sleep(0.005)
 
+    print("Table retract from upper limit")
     # Move slowly down until upper limit switch releases
-    while button13.value == True:
+    while TableIsAtUpperStop():
         CheckEBreak()
         #Move stepper anticlockwise (down) slow
+        stepper_motor.onestep(direction=stepper.BACKWARD)
+        time.sleep(0.008)
 
+    print("Table seek upper limit")
     # Move slowly up until upper limit switch presses
-    while button13.value == False:
+    while not TableIsAtUpperStop():
         CheckEBreak()
         #Move stepper clockwise (up) slow
+        stepper_motor.onestep(direction=stepper.FORWARD)
+        time.sleep(0.008)
 
     print("Table Home")
     return True
@@ -268,20 +273,15 @@ while True:
 
     # Wait for initialise, button 14...
     if button14.value == False:
-        #print(my_servo.angle)
-        #PrepareThenPerformScan()        
-        print("Step")
-        for _ in range(100):
-            stepper_motor.onestep(direction=stepper.FORWARD)
-            time.sleep(0.01)
-        #time.sleep(0.5)
+        PrepareThenPerformScan()        
+        time.sleep(0.5)
 
     if button12.value == False:
-        print("You pressed button 12!")
+        print("Lower limit switch is pressed")
         time.sleep(0.5)
 
     if button13.value == False:
-        print("You pressed button 13!")
+        print("Upper limit switch is pressed")
         time.sleep(0.5)
     
     if photoSensorPin2.value == True:
