@@ -6,9 +6,15 @@
 import time
 import board
 import digitalio
+import pwmio
 from digitalio import DigitalInOut, Direction, Pull
-from adafruit_motor import stepper
+from adafruit_motor import stepper, servo
 
+
+# Servo control
+# create a PWMOut object on Pin A2.
+pwm = pwmio.PWMOut(board.GP2, duty_cycle=2 ** 15, frequency=50)
+my_servo = servo.Servo(pwm)
 
 button12 = digitalio.DigitalInOut(board.GP12)
 button12.switch_to_input(pull=digitalio.Pull.UP)
@@ -209,7 +215,8 @@ while True:
 
     # Wait for initialise, button 14...
     if button14.value == False:
-        PrepareThenPerformScan()
+        #PrepareThenPerformScan()
+        my_servo.angle = 0 # completely out-stretched
         time.sleep(0.5)
 
     if button12.value == False:
