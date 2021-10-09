@@ -12,9 +12,33 @@ from adafruit_motor import stepper, servo
 
 
 # Servo control
+servoFAST = 1
+servoSLOW = 2
+servoRetract = 146
+servoHome = 143
+servoLimit = 102
+servoCurrentTarget = 143
 # create a PWMOut object on Pin A2.
 pwm = pwmio.PWMOut(board.GP2, duty_cycle=2 ** 15, frequency=50)
 my_servo = servo.Servo(pwm)
+
+# Stepper motor setup
+DELAY = 0.1  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
+STEPS = 200  # this is a full 360º
+coils = (
+    DigitalInOut(board.GP21),  # A1
+    DigitalInOut(board.GP20),  # A2
+    DigitalInOut(board.GP19),  # B1
+    DigitalInOut(board.GP18),  # B2
+)
+for coil in coils:
+    coil.direction = Direction.OUTPUT
+
+stepper_motor = stepper.StepperMotor(
+    coils[0], coils[1], coils[2], coils[3], microsteps=None
+)
+
+
 
 button12 = digitalio.DigitalInOut(board.GP12)
 button12.switch_to_input(pull=digitalio.Pull.UP)
@@ -50,13 +74,39 @@ def CheckEBreak():
     if button15.value == False:
         # Park Servo
         print("PANIC")
+        stepper_motor.release()
+        # Don't use MoveServo as that calls CheckEBreak
+        my_servo.angle = servoHome
         while True:            
             if button14.value == False:
                 print("OK button releases panic")
                 break
             time.sleep(0.1)
 
-
+def MoveServo(newTargetAngle,speed):
+    global servoCurrentTarget
+    CheckEBreak()
+    print("MoveServoTo: "+str(newTargetAngle))
+    if newTargetAngle <= servoRetract:
+        if newTargetAngle >= servoLimit:
+            if speed == servoFAST:
+                servoCurrentTarget = newTargetAngle
+                my_servo.angle = servoCurrentTarget
+                CheckEBreak()    
+            elif speed == servoSLOW:
+                step = (newTargetAngle - servoCurrentTarget) / 20                
+                for _ in range(20):
+                    CheckEBreak()
+                    thisStep = servoCurrentTarget + step
+                    if thisStep <= servoRetract:
+                        if thisStep >= servoLimit:
+                            my_servo.angle = thisStep
+                            time.sleep(0.1)
+                CheckEBreak()
+                servoCurrentTarget = newTargetAngle
+                my_servo.angle = servoCurrentTarget
+    time.sleep(0.25)
+            
 
 def TableHomeCycle():
     print("Table Homing")
@@ -64,6 +114,8 @@ def TableHomeCycle():
     while button12.value == True:
         CheckEBreak()
         #Move stepper anticlockwise (down) fast
+        
+
 
     # Move table up until upper limit reached
     while button13.value == True:
@@ -86,29 +138,28 @@ def TableHomeCycle():
 
 def MovePokerToNearTableEdge():
     CheckEBreak()
+    print("MovePokerToNearTableEdge")
     if PokerHasTouched():
         return False # unexpected
-    #MovePokerTo()
-    for s in range(20):
-        CheckEBreak()
-        time.sleep(0.1)
-    return PokerHasNotTouched()
+    MoveServo(servoHome,servoSLOW)
+    hasTouched = PokerHasNotTouched()
+    print("has touched: "+str(hasTouched))
+    return hasTouched
 
 
 def FullyRetractPoker():
     CheckEBreak()
+    print("FullyRetractPoker")
     # Change servo to value X
     if PokerHasTouched():
-        #MovePokerTo()
-        while not PokerIsReset():
-            CheckEBreak()
+        MoveServo(servoRetract,servoSLOW)
     else:
-        #MovePokerTo()
-        for s in range(20):
-            CheckEBreak()
-            time.sleep(0.1)
+        MoveServo(servoRetract,servoFAST)
+        
     CheckEBreak()
-    return PokerIsReset()
+    isReset = PokerIsReset()
+    print("isReset: "+str(isReset))
+    return isReset
 
 def PokerHasNotTouched():
     # Sensor open means not touched
@@ -209,15 +260,21 @@ def PrepareThenPerformScan():
     print("Done!")
 
 
+CheckEBreak()
+my_servo.angle = servoHome
+servoCurrentTarget = servoHome
+
 while True:
-    
-    CheckEBreak()
 
     # Wait for initialise, button 14...
     if button14.value == False:
-        #PrepareThenPerformScan()
-        my_servo.angle = 0 # completely out-stretched
-        time.sleep(0.5)
+        #print(my_servo.angle)
+        #PrepareThenPerformScan()        
+        print("Step")
+        for _ in range(100):
+            stepper_motor.onestep(direction=stepper.FORWARD)
+            time.sleep(0.01)
+        #time.sleep(0.5)
 
     if button12.value == False:
         print("You pressed button 12!")
@@ -230,3 +287,7 @@ while True:
     if photoSensorPin2.value == True:
         print("Photo sensor closed")
         time.sleep(0.5)
+
+
+    
+    
