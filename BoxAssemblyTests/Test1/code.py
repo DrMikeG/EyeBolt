@@ -51,19 +51,175 @@ def CheckEBreak():
             time.sleep(0.1)
 
 
+
+def TableHomeCycle():
+    print("Table Homing")
+    # Move table down until lower limit reached
+    while button12.value == True:
+        CheckEBreak()
+        #Move stepper anticlockwise (down) fast
+
+    # Move table up until upper limit reached
+    while button13.value == True:
+        CheckEBreak()
+        #Move stepper clockwise (up) fast
+
+    # Move slowly down until upper limit switch releases
+    while button13.value == True:
+        CheckEBreak()
+        #Move stepper anticlockwise (down) slow
+
+    # Move slowly up until upper limit switch presses
+    while button13.value == False:
+        CheckEBreak()
+        #Move stepper clockwise (up) slow
+
+    print("Table Home")
+    return True
+
+
+def MovePokerToNearTableEdge():
+    CheckEBreak()
+    if PokerHasTouched():
+        return False # unexpected
+    #MovePokerTo()
+    for s in range(20):
+        CheckEBreak()
+        time.sleep(0.1)
+    return PokerHasNotTouched()
+
+
+def FullyRetractPoker():
+    CheckEBreak()
+    # Change servo to value X
+    if PokerHasTouched():
+        #MovePokerTo()
+        while not PokerIsReset():
+            CheckEBreak()
+    else:
+        #MovePokerTo()
+        for s in range(20):
+            CheckEBreak()
+            time.sleep(0.1)
+    CheckEBreak()
+    return PokerIsReset()
+
+def PokerHasNotTouched():
+    # Sensor open means not touched
+    return photoSensorPin2.value == False # False is open
+
+def PokerHasTouched():
+    # Sensor closed means not touched
+    return photoSensorPin2.value == True # True is closed
+
+def PokerIsReset():
+    return PokerHasNotTouched()
+
+
+
+def TakeMeasurement():
+    print("Measuring")
+        
+    ok = FullyRetractPoker()
+    if not ok : return False
+    
+    # Send poker towards edge of table
+    ok = MovePokerToNearTableEdge()
+    if not ok : return False
+
+    ok = FullyRetractPoker()
+    if not ok : return False
+
+    # Not touching hopefully
+    if PokerHasTouched():
+        return False
+    
+    while PokerHasNotTouched():
+        # While not closed
+        CheckEBreak()
+        # Move poker forward slowly
+    # Now closed or at maximum reach
+    # Report distance from angle
+
+def PerformScan():
+    print("PerformScan")
+    # ConfirmFirstMeasureToSideOfTable
+
+    # TurnAndMeasure
+    return True
+
+
+def PokerHomeCycle():
+    """Run the homing cycle for the poker
+
+    Fully retract the poker to reset the sensor to open
+    Move to near the table edge (doesn't matter on table height)
+    Fully retract the poker to reset the sensor to open
+    If all that gives the expected sensor readings then poker is home
+    """
+
+    print("Poker Homing")
+
+    ok = FullyRetractPoker()
+    if not ok : return False
+    
+    # Send poker towards edge of table
+    ok = MovePokerToNearTableEdge()
+    if not ok : return False
+
+    ok = FullyRetractPoker()
+    if not ok : return False
+
+    print("Poker Home")
+    return True
+
+
+def PrepareThenPerformScan():
+    """Runs the pre-scan homing cycles before and after the main scan
+
+    This method homes the poke and the table and checks for errors.
+    If there are no errors, it waits for button 14 to be pressed to confirm
+    the scan. The scan is performed, then the table and the poker are homed 
+    again.
+    """
+    
+    ok = PokerHomeCycle()
+    
+    if ok:
+        ok = TableHomeCycle()
+    
+    if ok:
+        while True:
+            CheckEBreak()
+            # Wait for initialise, button 14...
+            if button14.value == False:
+                ok = PerformScan()
+            
+    if ok:
+         ok = PokerHomeCycle()
+    if ok:
+        ok = TableHomeCycle()
+
+    print("Done!")
+
+
 while True:
     
     CheckEBreak()
 
+    # Wait for initialise, button 14...
+    if button14.value == False:
+        PrepareThenPerformScan()
+        time.sleep(0.5)
+
     if button12.value == False:
         print("You pressed button 12!")
         time.sleep(0.5)
+
     if button13.value == False:
         print("You pressed button 13!")
         time.sleep(0.5)
-    if button14.value == False:
-        print("You pressed button 14!")
-        time.sleep(0.5)
+    
     if photoSensorPin2.value == True:
         print("Photo sensor closed")
         time.sleep(0.5)
