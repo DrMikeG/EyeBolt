@@ -17,6 +17,8 @@ servoSLOW = 2
 servoRetract = 145
 servoHome = 143
 servoLimit = 102
+servoAngleToEdgeOfTable = 134
+
 servoCurrentTarget = 143
 # create a PWMOut object on Pin A2.
 pwm = pwmio.PWMOut(board.GP2, duty_cycle=2 ** 15, frequency=50)
@@ -86,7 +88,7 @@ def CheckEBreak():
 def MoveServo(newTargetAngle,speed):
     global servoCurrentTarget
     CheckEBreak()
-    print("MoveServoTo: "+str(newTargetAngle))
+    #print("MoveServoTo: "+str(newTargetAngle))
     if newTargetAngle <= servoRetract:
         if newTargetAngle >= servoLimit:
             if speed == servoFAST:
@@ -167,14 +169,9 @@ def FullyRetractPoker():
     CheckEBreak()
     print("FullyRetractPoker")
     # Change servo to value X
-    if PokerHasTouched():
-        MoveServo(servoRetract,servoSLOW)
-    else:
-        MoveServo(servoRetract,servoFAST)
-
-    CheckEBreak()
+    MoveServo(servoRetract,servoFAST)
     isReset = PokerIsReset()
-    print("isReset: "+str(isReset))
+    #print("isReset: "+str(isReset))
     return isReset
 
 def PokerHasNotTouched():
@@ -199,7 +196,7 @@ def TakeMeasurement():
     if not ok : return False
 
     # ignore limit for now
-
+    print("Measuring - starting")
     measureAngle = servoCurrentTarget    
     hasTouched = False
 
@@ -211,6 +208,9 @@ def TakeMeasurement():
             break
 
     print("Measuring - done")
+
+    ok = FullyRetractPoker()
+    if not ok : return False
 
     return ok, hasTouched, measureAngle
 
@@ -229,7 +229,13 @@ def ConfirmFirstMeasureToSideOfTable():
 
     print("Table measured at :"+str(measureAngle))
 
-    print("ConfirmFirstMeasureToSideOfTable() - done")
+    if (abs(measureAngle - servoAngleToEdgeOfTable) < 2):
+        ok = True
+        print("ConfirmFirstMeasureToSideOfTable() - done")
+    else:
+        ok = False
+        print("ConfirmFirstMeasureToSideOfTable() - failed")
+    
     return ok
 
 def PerformScan():
@@ -240,6 +246,16 @@ def PerformScan():
     if not ok : return False
 
     # TurnAndMeasure
+    # 100 x 25 steps didn't even clear the table
+    for stepCount in range(100):
+        for _ in range(25):
+            CheckEBreak()
+            StepTableDownOneStepWithDelay()
+        ok, hasTouched, measureAngle = TakeMeasurement()
+        if not ok:
+            print("Error in TakeMeasurement()")
+            return False
+        print("Step %i touched %s angle %s" % (stepCount, str(hasTouched),str(measureAngle)))
 
     print("PerformScan - done")
     return True
@@ -297,6 +313,7 @@ def PrepareThenPerformScan():
             # Wait for initialise, button 14...
             if button14.value == False:
                 ok = PerformScan()
+                # Looping here...
 
     if ok:
          ok = PokerHomeCycle()
