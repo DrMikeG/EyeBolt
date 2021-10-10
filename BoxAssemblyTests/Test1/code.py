@@ -40,7 +40,7 @@ for coil in coils:
 stepper_motor = stepper.StepperMotor(
     coils[0], coils[1], coils[2], coils[3], microsteps=None
 )
-
+stepperAdvanceFromHome = 35 * 100
 
 
 button12 = digitalio.DigitalInOut(board.GP12)
@@ -70,44 +70,53 @@ def blink(times):
         led.value = True
         time.sleep(0.1)
 
+def Panic():
+    # Park Servo
+    print("PANIC")
+    stepper_motor.release()
+    # Don't use MoveServo as that calls CheckEBreak
+    my_servo.angle = servoPositionB
+    while True:
+        if button14.value == False:
+            print("OK button releases panic")
+            break
+        time.sleep(0.1)
+
 def CheckEBreak():
     # Button 15 is the EBreak - if this is pressed then:
     # Send Servo at safe value
     # Wait for OK
     if button15.value == False:
-        # Park Servo
-        print("PANIC")
-        stepper_motor.release()
-        # Don't use MoveServo as that calls CheckEBreak
-        my_servo.angle = servoPositionB
-        while True:
-            if button14.value == False:
-                print("OK button releases panic")
-                break
-            time.sleep(0.1)
+        Panic()
+
+def CheckServoPositionIsInRangeAndPanic(newTargetAngle):
+    if newTargetAngle > servoPositionA:
+        print("** ERROR ** ServoPosition %s is beyond full retract of arm",str(newTargetAngle))    
+        Panic()
+    if newTargetAngle < servoPositionD:
+        print("** ERROR ** ServoPosition %s is beyond full extent of arm",str(newTargetAngle))
+        Panic()        
 
 def MoveServo(newTargetAngle,speed):
     global servoCurrentTarget
     CheckEBreak()
-    #print("MoveServoTo: "+str(newTargetAngle))
-    if newTargetAngle <= servoPositionA:
-        if newTargetAngle >= servoPositionC:
-            if speed == servoFAST:
-                servoCurrentTarget = newTargetAngle
-                my_servo.angle = servoCurrentTarget
-                CheckEBreak()
-            elif speed == servoSLOW:
-                step = (newTargetAngle - servoCurrentTarget) / 20
-                for _ in range(20):
-                    CheckEBreak()
-                    thisStep = servoCurrentTarget + step
-                    if thisStep <= servoPositionA:
-                        if thisStep >= servoPositionC:
-                            my_servo.angle = thisStep
-                            time.sleep(0.1)
-                CheckEBreak()
-                servoCurrentTarget = newTargetAngle
-                my_servo.angle = servoCurrentTarget
+    CheckServoPositionIsInRangeAndPanic(newTargetAngle)
+
+    if speed == servoFAST:
+        servoCurrentTarget = newTargetAngle
+        my_servo.angle = servoCurrentTarget
+        CheckEBreak()
+    elif speed == servoSLOW:
+        step = (newTargetAngle - servoCurrentTarget) / 20
+        for _ in range(20):
+            CheckEBreak()
+            thisStep = servoCurrentTarget + step
+            CheckServoPositionIsInRangeAndPanic(thisStep)
+            my_servo.angle = thisStep
+            time.sleep(0.1)
+        CheckEBreak()
+        servoCurrentTarget = newTargetAngle
+        my_servo.angle = servoCurrentTarget
     time.sleep(0.25)
 
 def StepTableUpOneStepWithDelay():
@@ -120,6 +129,9 @@ def StepTableDownOneStepWithDelay():
 
 def TableIsAtUpperStop():
     return button13.value == False
+
+def TableIsAtLowerStop():
+    return button14.value == False
 
 
 def TableHomeCycle():
@@ -154,6 +166,20 @@ def TableHomeCycle():
     print("Table Homed")
     return True
 
+def MoveTableToScanStartPosition():
+    print("MoveTableToScanStartPosition()")
+    CheckEBreak()
+    if not TableIsAtUpperStop():
+        return False
+    
+    for _ in range(stepperAdvanceFromHome):
+        StepTableDownOneStepWithDelay()
+        CheckEBreak()
+        if TableIsAtLowerStop():
+            Panic()
+            return False
+
+    return True
 
 def MovePokerToNearTableEdge():
     # Move poker to be near the edge of the table, but not touching
@@ -206,6 +232,7 @@ def TakeMeasurement():
 
     # Move closer to save time
     MovePokerToNearTableEdge()
+
     if PokerHasTouched():
         print("** ERROR ** PokerHomeCycle() When staging poker, touch sensor was triggered")    
         return False, False, 0
@@ -219,7 +246,7 @@ def TakeMeasurement():
         measureAngle = measureAngle - 1
         MoveServo(measureAngle,servoFAST)
         hasTouched = PokerHasTouched()
-        if measureAngle == servoPositionC:
+        if measureAngle == servoPositionD:
             break
 
     print("Measuring - done")
@@ -257,10 +284,6 @@ def ConfirmFirstMeasureToSideOfTable():
 
 def PerformScan():
     print("PerformScan")
-    # ConfirmFirstMeasureToSideOfTable
-
-    ok = ConfirmFirstMeasureToSideOfTable()
-    if not ok : return False
 
     # TurnAndMeasure
     # 100 x 25 steps didn't even clear the table
@@ -289,20 +312,12 @@ def PokerHomeCycle():
 
     print("Poker Homing")
 
-    while button14.value == True:
-        print("Press to Fully Retract....")
-        time.sleep(0.5)
-
     ok = FullyRetractPokerAndCheckSensor()
     if not ok : 
         print("** ERROR ** PokerHomeCycle() FullyRetractPoker() did not succeed")    
         return False
     time.sleep(1.0)
     print("Fully retract and confirm sensor reset - done")
-
-    while button14.value == True:
-        print("Press to Move Near Table Edge....")
-        time.sleep(0.5)
 
     MovePokerToNearTableEdge()
 
@@ -311,10 +326,6 @@ def PokerHomeCycle():
         return False
     time.sleep(1.0)
     print("Stage Poker and confirm sensor available - done")
-
-    while button14.value == True:
-        print("Press to Fully Retract....")
-        time.sleep(0.5)
 
     ok = FullyRetractPokerAndCheckSensor()
     if not ok : 
@@ -336,12 +347,19 @@ def PrepareThenPerformScan():
     again.
     """
 
-    ok = PokerHomeCycle()
-    if ok:
-        return
-
+    ok = FullyRetractPokerAndCheckSensor()
+    
     if ok:
         ok = TableHomeCycle()
+
+    if ok:
+        ok = PokerHomeCycle()
+
+    if ok:
+        ok = ConfirmFirstMeasureToSideOfTable()
+    
+    if ok:
+        ok = MoveTableToScanStartPosition()
 
     if ok:
         print("Press confirm to begin scan?")
@@ -368,7 +386,13 @@ while True:
 
     # Wait for initialise, button 14...
     if button14.value == False:
-        PrepareThenPerformScan()
+        #PrepareThenPerformScan()
+        FullyRetractPokerAndCheckSensor()
+        TableHomeCycle()
+        MoveTableToScanStartPosition()
+        while True:
+            if button14.value == False:
+                ok, hasTouched, measureAngle = TakeMeasurement()
 
     if button12.value == False:
         print("Lower limit switch is pressed")
