@@ -14,12 +14,13 @@ from adafruit_motor import stepper, servo
 # Servo control
 servoFAST = 1
 servoSLOW = 2
-servoRetract = 145
-servoHome = 143
-servoLimit = 102
-servoAngleToEdgeOfTable = 134
+servoPositionA = 145 # All the way back from the table
+servoPositionB = 139 # Near edge of table
+servoPositionC = 135 # Touching edge of table
+servoPositionD = 103 # At full reach across the table
 
-servoCurrentTarget = 143
+servoCurrentTarget = servoPositionB
+
 # create a PWMOut object on Pin A2.
 pwm = pwmio.PWMOut(board.GP2, duty_cycle=2 ** 15, frequency=50)
 my_servo = servo.Servo(pwm)
@@ -78,7 +79,7 @@ def CheckEBreak():
         print("PANIC")
         stepper_motor.release()
         # Don't use MoveServo as that calls CheckEBreak
-        my_servo.angle = servoHome
+        my_servo.angle = servoPositionB
         while True:
             if button14.value == False:
                 print("OK button releases panic")
@@ -89,8 +90,8 @@ def MoveServo(newTargetAngle,speed):
     global servoCurrentTarget
     CheckEBreak()
     #print("MoveServoTo: "+str(newTargetAngle))
-    if newTargetAngle <= servoRetract:
-        if newTargetAngle >= servoLimit:
+    if newTargetAngle <= servoPositionA:
+        if newTargetAngle >= servoPositionC:
             if speed == servoFAST:
                 servoCurrentTarget = newTargetAngle
                 my_servo.angle = servoCurrentTarget
@@ -100,8 +101,8 @@ def MoveServo(newTargetAngle,speed):
                 for _ in range(20):
                     CheckEBreak()
                     thisStep = servoCurrentTarget + step
-                    if thisStep <= servoRetract:
-                        if thisStep >= servoLimit:
+                    if thisStep <= servoPositionA:
+                        if thisStep >= servoPositionC:
                             my_servo.angle = thisStep
                             time.sleep(0.1)
                 CheckEBreak()
@@ -155,21 +156,27 @@ def TableHomeCycle():
 
 
 def MovePokerToNearTableEdge():
-    CheckEBreak()
+    # Move poker to be near the edge of the table, but not touching
     print("MovePokerToNearTableEdge")
+    MoveServo(servoPositionB,servoFAST)
+    """
     if PokerHasTouched():
+        print("** ERROR ** TakeMeasurement() FullyRetractPoker() did not succeed")    
         return False # unexpected
-    MoveServo(servoHome,servoSLOW)
+    MoveServo(servoPositionC,servoSLOW)
     hasTouched = PokerHasNotTouched()
+    if hasTouched:
+        print("** ERROR ** TakeMeasurement() FullyRetractPoker() did not succeed")    
+        return False # unexpected
     print("has touched: "+str(hasTouched))
     return hasTouched
+    """
 
-
-def FullyRetractPoker():
+def FullyRetractPokerAndCheckSensor():
     CheckEBreak()
     print("FullyRetractPoker")
     # Change servo to value X
-    MoveServo(servoRetract,servoFAST)
+    MoveServo(servoPositionA,servoFAST)
     isReset = PokerIsReset()
     #print("isReset: "+str(isReset))
     return isReset
@@ -192,8 +199,16 @@ def TakeMeasurement():
 
     print("Measuring")
 
-    ok = FullyRetractPoker()
-    if not ok : return False
+    ok = FullyRetractPokerAndCheckSensor()
+    if not ok : 
+        print("** ERROR ** TakeMeasurement() FullyRetractPoker() did not succeed")    
+        return False, False, 0
+
+    # Move closer to save time
+    MovePokerToNearTableEdge()
+    if PokerHasTouched():
+        print("** ERROR ** PokerHomeCycle() When staging poker, touch sensor was triggered")    
+        return False, False, 0
 
     # ignore limit for now
     print("Measuring - starting")
@@ -204,13 +219,15 @@ def TakeMeasurement():
         measureAngle = measureAngle - 1
         MoveServo(measureAngle,servoFAST)
         hasTouched = PokerHasTouched()
-        if measureAngle == servoLimit:
+        if measureAngle == servoPositionC:
             break
 
     print("Measuring - done")
 
-    ok = FullyRetractPoker()
-    if not ok : return False
+    ok = FullyRetractPokerAndCheckSensor()
+    if not ok : 
+        print("** ERROR ** TakeMeasurement() FullyRetractPoker() did not succeed")    
+        return False, False, 0
 
     return ok, hasTouched, measureAngle
 
@@ -229,7 +246,7 @@ def ConfirmFirstMeasureToSideOfTable():
 
     print("Table measured at :"+str(measureAngle))
 
-    if (abs(measureAngle - servoAngleToEdgeOfTable) < 2):
+    if (abs(measureAngle - servoPositionC) < 2):
         ok = True
         print("ConfirmFirstMeasureToSideOfTable() - done")
     else:
@@ -272,21 +289,39 @@ def PokerHomeCycle():
 
     print("Poker Homing")
 
-    ok = FullyRetractPoker()
-    if not ok : return False
+    while button14.value == True:
+        print("Press to Fully Retract....")
+        time.sleep(0.5)
+
+    ok = FullyRetractPokerAndCheckSensor()
+    if not ok : 
+        print("** ERROR ** PokerHomeCycle() FullyRetractPoker() did not succeed")    
+        return False
     time.sleep(1.0)
     print("Fully retract and confirm sensor reset - done")
 
-    ok = MovePokerToNearTableEdge()
-    if not ok : return False
+    while button14.value == True:
+        print("Press to Move Near Table Edge....")
+        time.sleep(0.5)
+
+    MovePokerToNearTableEdge()
+
+    if PokerHasTouched():
+        print("** ERROR ** PokerHomeCycle() When staging poker, touch sensor was triggered")    
+        return False
     time.sleep(1.0)
     print("Stage Poker and confirm sensor available - done")
 
-    ok = FullyRetractPoker()
-    if not ok : return False
+    while button14.value == True:
+        print("Press to Fully Retract....")
+        time.sleep(0.5)
+
+    ok = FullyRetractPokerAndCheckSensor()
+    if not ok : 
+        print("** ERROR ** PokerHomeCycle() FullyRetractPoker() did not succeed")    
+        return False
     time.sleep(1.0)
     print("Fully retract poker ready for table movement - done")
-
 
     print("Poker Homed")
     return True
@@ -302,6 +337,8 @@ def PrepareThenPerformScan():
     """
 
     ok = PokerHomeCycle()
+    if ok:
+        return
 
     if ok:
         ok = TableHomeCycle()
@@ -324,8 +361,8 @@ def PrepareThenPerformScan():
 
 
 CheckEBreak()
-my_servo.angle = servoHome
-servoCurrentTarget = servoHome
+my_servo.angle = servoPositionB
+servoCurrentTarget = servoPositionB
 
 while True:
 
@@ -344,7 +381,8 @@ while True:
     if photoSensorPin2.value == True:
         print("Photo sensor closed")
         time.sleep(0.5)
-
+    
+    CheckEBreak()
 
 
 
