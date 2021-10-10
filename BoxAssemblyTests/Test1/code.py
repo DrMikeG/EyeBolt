@@ -14,7 +14,7 @@ from adafruit_motor import stepper, servo
 # Servo control
 servoFAST = 1
 servoSLOW = 2
-servoRetract = 146
+servoRetract = 145
 servoHome = 143
 servoLimit = 102
 servoCurrentTarget = 143
@@ -77,7 +77,7 @@ def CheckEBreak():
         stepper_motor.release()
         # Don't use MoveServo as that calls CheckEBreak
         my_servo.angle = servoHome
-        while True:            
+        while True:
             if button14.value == False:
                 print("OK button releases panic")
                 break
@@ -92,9 +92,9 @@ def MoveServo(newTargetAngle,speed):
             if speed == servoFAST:
                 servoCurrentTarget = newTargetAngle
                 my_servo.angle = servoCurrentTarget
-                CheckEBreak()    
+                CheckEBreak()
             elif speed == servoSLOW:
-                step = (newTargetAngle - servoCurrentTarget) / 20                
+                step = (newTargetAngle - servoCurrentTarget) / 20
                 for _ in range(20):
                     CheckEBreak()
                     thisStep = servoCurrentTarget + step
@@ -106,38 +106,49 @@ def MoveServo(newTargetAngle,speed):
                 servoCurrentTarget = newTargetAngle
                 my_servo.angle = servoCurrentTarget
     time.sleep(0.25)
-            
+
+def StepTableUpOneStepWithDelay():
+    stepper_motor.onestep(direction=stepper.BACKWARD,style=stepper.DOUBLE) # BACKWARDs is table up
+    time.sleep(0.002)
+
+def StepTableDownOneStepWithDelay():
+    stepper_motor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE) # FORWARDs is table down
+    time.sleep(0.002)
+
 def TableIsAtUpperStop():
     return button13.value == False
 
 
 def TableHomeCycle():
     print("Table Homing")
-   
+
     # Move table up until upper limit reached
+    print("Moving table to upper limit")
     while not TableIsAtUpperStop():
         CheckEBreak()
         #Move stepper clockwise (up) fast
-        stepper_motor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE)
-        time.sleep(0.005)
+        StepTableUpOneStepWithDelay()
+    print("Moving table to upper limit - done")
 
     print("Table retract from upper limit")
     # Move slowly down until upper limit switch releases
     while TableIsAtUpperStop():
         CheckEBreak()
         #Move stepper anticlockwise (down) slow
-        stepper_motor.onestep(direction=stepper.BACKWARD)
-        time.sleep(0.008)
+        StepTableDownOneStepWithDelay()
+        time.sleep(0.004) # extra delay to slow speed
+    print("Table retract from upper limit - done")
 
     print("Table seek upper limit")
     # Move slowly up until upper limit switch presses
     while not TableIsAtUpperStop():
         CheckEBreak()
         #Move stepper clockwise (up) slow
-        stepper_motor.onestep(direction=stepper.FORWARD)
-        time.sleep(0.008)
+        StepTableUpOneStepWithDelay()
+        time.sleep(0.004) # extra delay to slow speed
+    print("Table seek upper limit - done")
 
-    print("Table Home")
+    print("Table Homed")
     return True
 
 
@@ -160,7 +171,7 @@ def FullyRetractPoker():
         MoveServo(servoRetract,servoSLOW)
     else:
         MoveServo(servoRetract,servoFAST)
-        
+
     CheckEBreak()
     isReset = PokerIsReset()
     print("isReset: "+str(isReset))
@@ -180,34 +191,57 @@ def PokerIsReset():
 
 
 def TakeMeasurement():
+    global servoCurrentTarget
+
     print("Measuring")
-        
-    ok = FullyRetractPoker()
-    if not ok : return False
-    
-    # Send poker towards edge of table
-    ok = MovePokerToNearTableEdge()
-    if not ok : return False
 
     ok = FullyRetractPoker()
     if not ok : return False
 
-    # Not touching hopefully
-    if PokerHasTouched():
-        return False
-    
-    while PokerHasNotTouched():
-        # While not closed
-        CheckEBreak()
-        # Move poker forward slowly
-    # Now closed or at maximum reach
-    # Report distance from angle
+    # ignore limit for now
+
+    measureAngle = servoCurrentTarget    
+    hasTouched = False
+
+    while not hasTouched:
+        measureAngle = measureAngle - 1
+        MoveServo(measureAngle,servoFAST)
+        hasTouched = PokerHasTouched()
+        if measureAngle == servoLimit:
+            break
+
+    print("Measuring - done")
+
+    return ok, hasTouched, measureAngle
+
+
+def ConfirmFirstMeasureToSideOfTable():
+    print("ConfirmFirstMeasureToSideOfTable()")
+    ok, hasTouched, measureAngle = TakeMeasurement()
+
+    if not ok:
+         print("Error in TakeMeasurement()")
+         return False
+
+    if not hasTouched:
+         print("Error Confirming first measurement to side of table - did not touch")
+         return False
+
+    print("Table measured at :"+str(measureAngle))
+
+    print("ConfirmFirstMeasureToSideOfTable() - done")
+    return ok
 
 def PerformScan():
     print("PerformScan")
     # ConfirmFirstMeasureToSideOfTable
 
+    ok = ConfirmFirstMeasureToSideOfTable()
+    if not ok : return False
+
     # TurnAndMeasure
+
+    print("PerformScan - done")
     return True
 
 
@@ -224,15 +258,21 @@ def PokerHomeCycle():
 
     ok = FullyRetractPoker()
     if not ok : return False
-    
-    # Send poker towards edge of table
+    time.sleep(1.0)
+    print("Fully retract and confirm sensor reset - done")
+
     ok = MovePokerToNearTableEdge()
     if not ok : return False
+    time.sleep(1.0)
+    print("Stage Poker and confirm sensor available - done")
 
     ok = FullyRetractPoker()
     if not ok : return False
+    time.sleep(1.0)
+    print("Fully retract poker ready for table movement - done")
 
-    print("Poker Home")
+
+    print("Poker Homed")
     return True
 
 
@@ -241,22 +281,23 @@ def PrepareThenPerformScan():
 
     This method homes the poke and the table and checks for errors.
     If there are no errors, it waits for button 14 to be pressed to confirm
-    the scan. The scan is performed, then the table and the poker are homed 
+    the scan. The scan is performed, then the table and the poker are homed
     again.
     """
-    
+
     ok = PokerHomeCycle()
-    
+
     if ok:
         ok = TableHomeCycle()
-    
+
     if ok:
+        print("Press confirm to begin scan?")
         while True:
             CheckEBreak()
             # Wait for initialise, button 14...
             if button14.value == False:
                 ok = PerformScan()
-            
+
     if ok:
          ok = PokerHomeCycle()
     if ok:
@@ -273,8 +314,7 @@ while True:
 
     # Wait for initialise, button 14...
     if button14.value == False:
-        PrepareThenPerformScan()        
-        time.sleep(0.5)
+        PrepareThenPerformScan()
 
     if button12.value == False:
         print("Lower limit switch is pressed")
@@ -283,11 +323,11 @@ while True:
     if button13.value == False:
         print("Upper limit switch is pressed")
         time.sleep(0.5)
-    
+
     if photoSensorPin2.value == True:
         print("Photo sensor closed")
         time.sleep(0.5)
 
 
-    
-    
+
+
