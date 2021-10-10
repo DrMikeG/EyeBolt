@@ -283,14 +283,34 @@ def ConfirmFirstMeasureToSideOfTable():
     
     return ok
 
+def Nudge():
+    print("Nudge?")
+    time.sleep(1.0)
+    while True:
+        CheckEBreak()
+        if button14.value == False:
+            time.sleep(0.2)
+            while button14.value == False:
+                StepTableDownOneStepWithDelay()
+                time.sleep(0.2)
+            return
+
 def PerformScan():
     print("PerformScan")
+
+    Nudge()    
+    
     # One revolution is 1325 steps?
     # TurnAndMeasure
     # 100 x 25 steps didn't even clear the table
-    multiplier = 1
+    
+    # 44 lots of 26 steps
+    #  6 lots of 27 steps
+    #  1 lot of 27 + (1 if rev % 3 = 0) which adds the .3
+    
+    stepValue = 25 # on the perimeter, 25 steps is about the width of the pointer
     for stepCount in range(100):
-        for _ in range(25*multiplier):
+        for _ in range(stepValue):
             CheckEBreak()
             StepTableDownOneStepWithDelay()
         ok, hasTouched, measureAngle = TakeMeasurement()
@@ -298,13 +318,17 @@ def PerformScan():
             print("Error in TakeMeasurement()")
             return False
         print("Step %i touched %s angle %s" % (stepCount, str(hasTouched),str(measureAngle)))
-        if multiplier == 1 and hasTouched:
+        if stepValue == 25 and hasTouched:
+            
             print("Start revolve test?")
             while True:
                 CheckEBreak()
                 # Wait for initialise, button 14...
+                # 54 x 25 too far
+                # 53.5 x 25 too far
+                # 53.25 x 25 is so close I ran out of screw height
                 if button14.value == False:
-                    multiplier = 52 # do full revolutions
+                    stepValue = 1330
                     break
 
     print("PerformScan - done")

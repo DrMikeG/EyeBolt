@@ -401,3 +401,13 @@ void loop()
 	}
 }
 ```
+
+# Gear Ratio # 
+80 : 12
+360 / 1.8 = 200 steps per revolution.
+
+200 / 12 = 16.66667
+16.66667 * 80 = 1333.33
+
+My measured estimate was 1331
+Leap-step every 3 revolutions
