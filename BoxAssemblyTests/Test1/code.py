@@ -17,7 +17,8 @@ servoSLOW = 2
 servoPositionA = 145 # All the way back from the table
 servoPositionB = 139 # Near edge of table
 servoPositionC = 135 # Touching edge of table
-servoPositionD = 103 # At full reach across the table
+#servoPositionD = 103 # At full reach across the table
+servoPositionD = 125 # Reduce reach
 
 servoCurrentTarget = servoPositionB
 
@@ -40,7 +41,7 @@ for coil in coils:
 stepper_motor = stepper.StepperMotor(
     coils[0], coils[1], coils[2], coils[3], microsteps=None
 )
-stepperAdvanceFromHome = 35 * 100
+stepperAdvanceFromHome = 40 * 100
 
 
 button12 = digitalio.DigitalInOut(board.GP12)
@@ -284,11 +285,12 @@ def ConfirmFirstMeasureToSideOfTable():
 
 def PerformScan():
     print("PerformScan")
-
+    # One revolution is 1325 steps?
     # TurnAndMeasure
     # 100 x 25 steps didn't even clear the table
+    multiplier = 1
     for stepCount in range(100):
-        for _ in range(25):
+        for _ in range(25*multiplier):
             CheckEBreak()
             StepTableDownOneStepWithDelay()
         ok, hasTouched, measureAngle = TakeMeasurement()
@@ -296,6 +298,14 @@ def PerformScan():
             print("Error in TakeMeasurement()")
             return False
         print("Step %i touched %s angle %s" % (stepCount, str(hasTouched),str(measureAngle)))
+        if multiplier == 1 and hasTouched:
+            print("Start revolve test?")
+            while True:
+                CheckEBreak()
+                # Wait for initialise, button 14...
+                if button14.value == False:
+                    multiplier = 52 # do full revolutions
+                    break
 
     print("PerformScan - done")
     return True
@@ -368,7 +378,6 @@ def PrepareThenPerformScan():
             # Wait for initialise, button 14...
             if button14.value == False:
                 ok = PerformScan()
-                # Looping here...
 
     if ok:
          ok = PokerHomeCycle()
@@ -386,13 +395,7 @@ while True:
 
     # Wait for initialise, button 14...
     if button14.value == False:
-        #PrepareThenPerformScan()
-        FullyRetractPokerAndCheckSensor()
-        TableHomeCycle()
-        MoveTableToScanStartPosition()
-        while True:
-            if button14.value == False:
-                ok, hasTouched, measureAngle = TakeMeasurement()
+        PrepareThenPerformScan()
 
     if button12.value == False:
         print("Lower limit switch is pressed")
