@@ -411,3 +411,12 @@ void loop()
 
 My measured estimate was 1331
 Leap-step every 3 revolutions
+
+# 12th October 2021 #
+
+![Alt text](./readme_imgs/20211012_215419.jpg)
+
+Well, my box full of robot looks pretty crazy, but it's actually functioning pretty reliably.
+The latest test was to ensure that I would find the marker on the table with the measuring stick, and then perform 30 revolutions of the table, each time finding the measuring stick.
+
+I didn't print out the measurements to check for consistency - I guess that's the next test - although the table edge and home positions seem to be working pretty reliably, so there is some hope.
