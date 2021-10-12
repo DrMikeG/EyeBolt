@@ -18,7 +18,7 @@ servoPositionA = 145 # All the way back from the table
 servoPositionB = 139 # Near edge of table
 servoPositionC = 135 # Touching edge of table
 #servoPositionD = 103 # At full reach across the table
-servoPositionD = 125 # Reduce reach
+servoPositionD = 115 # Reduce reach
 
 servoCurrentTarget = servoPositionB
 
@@ -152,7 +152,7 @@ def TableHomeCycle():
         CheckEBreak()
         #Move stepper anticlockwise (down) slow
         StepTableDownOneStepWithDelay()
-        time.sleep(0.004) # extra delay to slow speed
+        #time.sleep(0.004) # extra delay to slow speed
     print("Table retract from upper limit - done")
 
     print("Table seek upper limit")
@@ -161,7 +161,7 @@ def TableHomeCycle():
         CheckEBreak()
         #Move stepper clockwise (up) slow
         StepTableUpOneStepWithDelay()
-        time.sleep(0.004) # extra delay to slow speed
+        #time.sleep(0.004) # extra delay to slow speed
     print("Table seek upper limit - done")
 
     print("Table Homed")
@@ -292,14 +292,78 @@ def Nudge():
             time.sleep(0.2)
             while button14.value == False:
                 StepTableDownOneStepWithDelay()
-                time.sleep(0.2)
+                time.sleep(0.05)
             return
+
+def RotateDownToFirstTouch():
+    # Just move roughly doing measurements until we find the stick
+    for stepCount in range(100):
+        for _ in range(26):
+            CheckEBreak()
+            StepTableDownOneStepWithDelay()
+        
+        ok, hasTouched, measureAngle = TakeMeasurement()
+        if not ok:
+            print("Error in TakeMeasurement()")
+            return False
+        if hasTouched and measureAngle < 133:
+            return True
+    
+    return False
+
+def MakeOneFullRevolveAndCheckStickIsThere(rotationNumberForLeapStep):
+    print("Revolution "+str(rotationNumberForLeapStep))
+    # 44 lots of 26 steps
+    #  6 lots of 27 steps
+    #  1 lot of 27 + (1 if rev % 3 = 0) which adds the .3
+    for stepCount in range(44):
+        for _ in range(26):
+            CheckEBreak()
+            StepTableDownOneStepWithDelay()
+    for stepCount in range(6):
+        for _ in range(27):
+            CheckEBreak()
+            StepTableDownOneStepWithDelay()
+    if rotationNumberForLeapStep % 3 == 0 :
+        for _ in range(27):
+            CheckEBreak()
+            StepTableDownOneStepWithDelay()
+    else:
+        # Lead step for sync
+        for _ in range(28):
+            CheckEBreak()
+            StepTableDownOneStepWithDelay()
+
+    # should be exactly 360 degrees later
+    ok, hasTouched, measureAngle = TakeMeasurement()
+    if not ok:
+        print("Error in TakeMeasurement()")
+        return False
+    if hasTouched and measureAngle < 133:
+        print("Found stick")
+        return True
+    return False
 
 def PerformScan():
     print("PerformScan")
 
     Nudge()    
     
+    ok = RotateDownToFirstTouch()
+    if not ok:
+        return False
+    
+    print("Found stick!")
+
+    rotationCount = 0
+    foundStick = True
+
+    while foundStick == True and rotationCount < 30:
+        ok = MakeOneFullRevolveAndCheckStickIsThere(rotationCount)
+        if not ok:
+            return False
+        rotationCount = rotationCount + 1
+
     # One revolution is 1325 steps?
     # TurnAndMeasure
     # 100 x 25 steps didn't even clear the table
@@ -307,7 +371,7 @@ def PerformScan():
     # 44 lots of 26 steps
     #  6 lots of 27 steps
     #  1 lot of 27 + (1 if rev % 3 = 0) which adds the .3
-    
+    """
     stepValue = 25 # on the perimeter, 25 steps is about the width of the pointer
     for stepCount in range(100):
         for _ in range(stepValue):
@@ -330,7 +394,7 @@ def PerformScan():
                 if button14.value == False:
                     stepValue = 1330
                     break
-
+    """
     print("PerformScan - done")
     return True
 
