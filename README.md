@@ -420,3 +420,10 @@ Well, my box full of robot looks pretty crazy, but it's actually functioning pre
 The latest test was to ensure that I would find the marker on the table with the measuring stick, and then perform 30 revolutions of the table, each time finding the measuring stick.
 
 I didn't print out the measurements to check for consistency - I guess that's the next test - although the table edge and home positions seem to be working pretty reliably, so there is some hope.
+
+44 lots of 26 steps
+ 6 lots of 27 steps
+ 1 lot of 27 + (1 if rev % 3 = 0) which adds the .3
+51
+
+360 / 51 = 

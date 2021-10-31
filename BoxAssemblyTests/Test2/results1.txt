@@ -1,0 +1,821 @@
+FullyRetractPoker
+Table Homing
+Moving table to upper limit
+Moving table to upper limit - done
+Table retract from upper limit
+Table retract from upper limit - done
+Table seek upper limit
+Table seek upper limit - done
+Table Homed
+Poker Homing
+FullyRetractPoker
+Fully retract and confirm sensor reset - done
+MovePokerToNearTableEdge
+Stage Poker and confirm sensor available - done
+FullyRetractPoker
+Fully retract poker ready for table movement - done
+Poker Homed
+ConfirmFirstMeasureToSideOfTable()
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+FullyRetractPoker
+Table measured at :134
+ConfirmFirstMeasureToSideOfTable() - done
+MoveTableToScanStartPosition()
+Done!
+Traceback (most recent call last):
+  File "code.py", line 465, in <module>
+KeyboardInterrupt: 
+
+Code done running.
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+Press any key to enter the REPL. Use CTRL-D to reload.
+
+Adafruit CircuitPython 6.3.0 on 2021-06-01; Raspberry Pi Pico with rp2040
+>>> [D
+... Traceback (most recent call last):
+  File "<stdin>", line 2
+SyntaxError: invalid syntax
+>>> 
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+
+Code stopped by auto-reload.
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+FullyRetractPoker
+Table Homing
+Moving table to upper limit
+Moving table to upper limit - done
+Table retract from upper limit
+Table retract from upper limit - done
+Table seek upper limit
+Table seek upper limit - done
+Table Homed
+Poker Homing
+FullyRetractPoker
+Fully retract and confirm sensor reset - done
+MovePokerToNearTableEdge
+Stage Poker and confirm sensor available - done
+FullyRetractPoker
+Fully retract poker ready for table movement - done
+Poker Homed
+ConfirmFirstMeasureToSideOfTable()
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+FullyRetractPoker
+Table measured at :134
+ConfirmFirstMeasureToSideOfTable() - done
+MoveTableToScanStartPosition()
+MoveTableToScanStartPosition() - done
+Press confirm to begin scan?
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+PerformScan
+Revolution 0
+Lower limit reached
+PANIC
+OK button releases panic
+
+Code stopped by auto-reload.
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+Lower limit switch is pressed
+Lower limit switch is pressed
+Lower limit switch is pressed
+Lower limit switch is pressed
+Lower limit switch is pressed
+Lower limit switch is pressed
+Lower limit switch is pressed
+
+Code stopped by auto-reload.
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+FullyRetractPoker
+Table Homing
+Moving table to upper limit
+Moving table to upper limit - done
+Table retract from upper limit
+Table retract from upper limit - done
+Table seek upper limit
+Table seek upper limit - done
+Table Homed
+Poker Homing
+FullyRetractPoker
+Fully retract and confirm sensor reset - done
+MovePokerToNearTableEdge
+Stage Poker and confirm sensor available - done
+FullyRetractPoker
+Fully retract poker ready for table movement - done
+Poker Homed
+ConfirmFirstMeasureToSideOfTable()
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+FullyRetractPoker
+Table measured at :134
+ConfirmFirstMeasureToSideOfTable() - done
+MoveTableToScanStartPosition()
+Done!
+
+Code stopped by auto-reload.
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+
+Code stopped by auto-reload.
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+FullyRetractPoker
+Table Homing
+Moving table to upper limit
+Moving table to upper limit - done
+Table retract from upper limit
+Table retract from upper limit - done
+Table seek upper limit
+Table seek upper limit - done
+Table Homed
+Poker Homing
+FullyRetractPoker
+Fully retract and confirm sensor reset - done
+MovePokerToNearTableEdge
+Stage Poker and confirm sensor available - done
+FullyRetractPoker
+Fully retract poker ready for table movement - done
+Poker Homed
+ConfirmFirstMeasureToSideOfTable()
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+FullyRetractPoker
+Table measured at :134
+ConfirmFirstMeasureToSideOfTable() - done
+MoveTableToScanStartPosition()
+MoveTableToScanStartPosition() - done
+Press confirm to begin scan?
+PerformScan
+Revolution 0
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+FullyRetractPoker
+0:0 touched True angle 118
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+FullyRetractPoker
+0:1 touched True angle 117
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+FullyRetractPoker
+0:2 touched True angle 117
+FullyRetractPoker
+MovePokerToNearTableEdge
+Measuring - starting
+PANIC
+Traceback (most recent call last):
+  File "code.py", line 463, in <module>
+  File "code.py", line 445, in PrepareThenPerformScan
+  File "code.py", line 370, in PerformScan
+  File "code.py", line 343, in MakeOneFullRevolvePrintingAngles
+  File "code.py", line 328, in StepNextChunkAndTakeMeasurement
+  File "code.py", line 249, in TakeMeasurement
+  File "code.py", line 100, in MoveServo
+  File "code.py", line 88, in CheckEBreak
+  File "code.py", line 81, in Panic
+KeyboardInterrupt: 
+
+Code done running.
+
+Press any key to enter the REPL. Use CTRL-D to reload.
+
+Adafruit CircuitPython 6.3.0 on 2021-06-01; Raspberry Pi Pico with rp2040
+>>> 
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+Table Homing
+Moving table to upper limit
+Moving table to upper limit - done
+Table retract from upper limit
+Table retract from upper limit - done
+Table seek upper limit
+Table seek upper limit - done
+Table Homed
+Poker Homing
+Fully retract and confirm sensor reset - done
+Stage Poker and confirm sensor available - done
+Fully retract poker ready for table movement - done
+Poker Homed
+ConfirmFirstMeasureToSideOfTable()
+Table measured at :134
+ConfirmFirstMeasureToSideOfTable() - done
+MoveTableToScanStartPosition()
+MoveTableToScanStartPosition() - done
+Press confirm to begin scan?
+PerformScan
+Revolution 0
+0:0 touched True angle 118
+0:1 touched True angle 117
+0:2 touched True angle 117
+0:3 touched True angle 117
+0:4 touched True angle 117
+0:5 touched True angle 116
+0:6 touched True angle 116
+0:7 touched True angle 116
+0:8 touched True angle 116
+0:9 touched True angle 115
+0:10 touched True angle 115
+0:11 touched True angle 114
+0:12 touched True angle 114
+0:13 touched True angle 114
+0:14 touched True angle 114
+0:15 touched True angle 113
+0:16 touched True angle 113
+0:17 touched True angle 113
+0:18 touched True angle 112
+0:19 touched True angle 112
+0:20 touched True angle 111
+0:21 touched True angle 111
+0:22 touched True angle 111
+0:23 touched True angle 111
+0:24 touched True angle 110
+0:25 touched True angle 110
+0:26 touched True angle 110
+0:27 touched True angle 110
+0:28 touched True angle 130
+0:29 touched True angle 130
+0:30 touched True angle 129
+0:31 touched True angle 128
+0:32 touched True angle 128
+0:33 touched True angle 127
+0:34 touched True angle 127
+0:35 touched True angle 126
+0:36 touched True angle 126
+0:37 touched True angle 125
+0:38 touched True angle 124
+0:39 touched True angle 124
+0:40 touched True angle 124
+0:41 touched True angle 123
+0:42 touched True angle 123
+0:43 touched True angle 122
+0:44 touched True angle 121
+0:45 touched True angle 121
+0:46 touched True angle 120
+0:47 touched True angle 120
+0:48 touched True angle 119
+0:49 touched True angle 119
+0:50 touched True angle 118
+Revolution 1
+1:0 touched True angle 118
+1:1 touched True angle 118
+1:2 touched True angle 118
+1:3 touched True angle 117
+1:4 touched True angle 117
+1:5 touched True angle 116
+1:6 touched True angle 116
+1:7 touched True angle 116
+1:8 touched True angle 116
+1:9 touched True angle 115
+1:10 touched True angle 115
+1:11 touched True angle 115
+1:12 touched True angle 114
+1:13 touched True angle 114
+1:14 touched True angle 114
+1:15 touched True angle 113
+1:16 touched True angle 113
+1:17 touched True angle 113
+1:18 touched True angle 113
+1:19 touched True angle 112
+1:20 touched True angle 112
+1:21 touched True angle 112
+1:22 touched True angle 111
+1:23 touched True angle 111
+1:24 touched True angle 111
+1:25 touched True angle 111
+1:26 touched True angle 110
+1:27 touched True angle 110
+1:28 touched True angle 130
+1:29 touched True angle 130
+1:30 touched True angle 129
+1:31 touched True angle 129
+1:32 touched True angle 128
+1:33 touched True angle 128
+1:34 touched True angle 127
+1:35 touched True angle 127
+1:36 touched True angle 126
+1:37 touched True angle 125
+1:38 touched True angle 125
+1:39 touched True angle 124
+1:40 touched True angle 124
+1:41 touched True angle 124
+1:42 touched True angle 123
+1:43 touched True angle 123
+1:44 touched True angle 122
+1:45 touched True angle 121
+1:46 touched True angle 121
+1:47 touched True angle 120
+1:48 touched True angle 119
+1:49 touched True angle 119
+1:50 touched True angle 119
+Revolution 2
+2:0 touched True angle 118
+2:1 touched True angle 118
+2:2 touched True angle 118
+2:3 touched True angle 117
+2:4 touched True angle 118
+2:5 touched True angle 117
+2:6 touched True angle 117
+2:7 touched True angle 116
+2:8 touched True angle 116
+2:9 touched True angle 116
+2:10 touched True angle 116
+2:11 touched True angle 115
+2:12 touched True angle 115
+2:13 touched True angle 114
+2:14 touched True angle 114
+2:15 touched True angle 114
+2:16 touched True angle 114
+2:17 touched True angle 113
+2:18 touched True angle 113
+2:19 touched True angle 113
+2:20 touched True angle 112
+2:21 touched True angle 112
+2:22 touched True angle 111
+2:23 touched True angle 111
+2:24 touched True angle 111
+2:25 touched True angle 111
+2:26 touched True angle 110
+2:27 touched True angle 110
+2:28 touched True angle 131
+2:29 touched True angle 130
+2:30 touched True angle 130
+2:31 touched True angle 129
+2:32 touched True angle 129
+2:33 touched True angle 128
+2:34 touched True angle 127
+2:35 touched True angle 127
+2:36 touched True angle 126
+2:37 touched True angle 126
+2:38 touched True angle 125
+2:39 touched True angle 125
+2:40 touched True angle 124
+2:41 touched True angle 124
+2:42 touched True angle 124
+2:43 touched True angle 123
+2:44 touched True angle 122
+2:45 touched True angle 121
+2:46 touched True angle 121
+2:47 touched True angle 120
+2:48 touched True angle 120
+2:49 touched True angle 119
+2:50 touched True angle 119
+Revolution 3
+3:0 touched True angle 119
+3:1 touched True angle 118
+3:2 touched True angle 118
+3:3 touched True angle 118
+3:4 touched True angle 118
+3:5 touched True angle 117
+3:6 touched True angle 117
+3:7 touched True angle 116
+3:8 touched True angle 116
+3:9 touched True angle 116
+3:10 touched True angle 116
+3:11 touched True angle 115
+3:12 touched True angle 115
+3:13 touched True angle 115
+3:14 touched True angle 115
+3:15 touched True angle 114
+3:16 touched True angle 114
+3:17 touched True angle 113
+3:18 touched True angle 113
+3:19 touched True angle 113
+3:20 touched True angle 112
+3:21 touched True angle 112
+3:22 touched True angle 112
+3:23 touched True angle 111
+3:24 touched True angle 111
+3:25 touched True angle 111
+3:26 touched True angle 111
+3:27 touched True angle 111
+3:28 touched True angle 131
+3:29 touched True angle 130
+3:30 touched True angle 130
+3:31 touched True angle 129
+3:32 touched True angle 129
+3:33 touched True angle 128
+3:34 touched True angle 128
+3:35 touched True angle 127
+3:36 touched True angle 126
+3:37 touched True angle 126
+3:38 touched True angle 125
+3:39 touched True angle 125
+3:40 touched True angle 125
+3:41 touched True angle 124
+3:42 touched True angle 124
+3:43 touched True angle 123
+3:44 touched True angle 122
+3:45 touched True angle 121
+3:46 touched True angle 121
+3:47 touched True angle 120
+3:48 touched True angle 120
+3:49 touched True angle 120
+3:50 touched True angle 119
+Revolution 4
+4:0 touched True angle 119
+4:1 touched True angle 118
+4:2 touched True angle 118
+4:3 touched True angle 118
+4:4 touched True angle 118
+4:5 touched True angle 117
+4:6 touched True angle 117
+4:7 touched True angle 117
+4:8 touched True angle 117
+4:9 touched True angle 116
+4:10 touched True angle 116
+4:11 touched True angle 115
+4:12 touched True angle 115
+4:13 touched True angle 115
+4:14 touched True angle 115
+4:15 touched True angle 114
+4:16 touched True angle 114
+4:17 touched True angle 114
+4:18 touched True angle 113
+4:19 touched True angle 113
+4:20 touched True angle 112
+4:21 touched True angle 112
+4:22 touched True angle 112
+4:23 touched True angle 112
+4:24 touched True angle 111
+4:25 touched True angle 111
+4:26 touched True angle 111
+4:27 touched True angle 111
+4:28 touched True angle 131
+4:29 touched True angle 130
+4:30 touched True angle 130
+4:31 touched True angle 129
+4:32 touched True angle 129
+4:33 touched True angle 128
+4:34 touched True angle 128
+4:35 touched True angle 127
+4:36 touched True angle 127
+4:37 touched True angle 126
+4:38 touched True angle 125
+4:39 touched True angle 125
+4:40 touched True angle 125
+4:41 touched True angle 124
+4:42 touched True angle 124
+4:43 touched True angle 123
+4:44 touched True angle 123
+4:45 touched True angle 122
+4:46 touched True angle 121
+4:47 touched True angle 120
+4:48 touched True angle 120
+4:49 touched True angle 120
+4:50 touched True angle 119
+PerformScan - done
+
+
+Clipped:
+0	0 	118
+0	1 	117
+0	2 	117
+0	3 	117
+0	4 	117
+0	5 	116
+0	6 	116
+0	7 	116
+0	8 	116
+0	9 	115
+0	10 	115
+0	11 	114
+0	12 	114
+0	13 	114
+0	14 	114
+0	15 	113
+0	16 	113
+0	17 	113
+0	18 	112
+0	19 	112
+0	20 	111
+0	21 	111
+0	22 	111
+0	23 	111
+0	24 	110
+0	25 	110
+0	26 	110
+0	27 	110
+0	28 	130
+0	29 	130
+0	30 	129
+0	31 	128
+0	32 	128
+0	33 	127
+0	34 	127
+0	35 	126
+0	36 	126
+0	37 	125
+0	38 	124
+0	39 	124
+0	40 	124
+0	41 	123
+0	42 	123
+0	43 	122
+0	44 	121
+0	45 	121
+0	46 	120
+0	47 	120
+0	48 	119
+0	49 	119
+0	50 	118
+1	0 	118
+1	1 	118
+1	2 	118
+1	3 	117
+1	4 	117
+1	5 	116
+1	6 	116
+1	7 	116
+1	8 	116
+1	9 	115
+1	10 	115
+1	11 	115
+1	12 	114
+1	13 	114
+1	14 	114
+1	15 	113
+1	16 	113
+1	17 	113
+1	18 	113
+1	19 	112
+1	20 	112
+1	21 	112
+1	22 	111
+1	23 	111
+1	24 	111
+1	25 	111
+1	26 	110
+1	27 	110
+1	28 	130
+1	29 	130
+1	30 	129
+1	31 	129
+1	32 	128
+1	33 	128
+1	34 	127
+1	35 	127
+1	36 	126
+1	37 	125
+1	38 	125
+1	39 	124
+1	40 	124
+1	41 	124
+1	42 	123
+1	43 	123
+1	44 	122
+1	45 	121
+1	46 	121
+1	47 	120
+1	48 	119
+1	49 	119
+1	50 	119
+2	0 	118
+2	1 	118
+2	2 	118
+2	3 	117
+2	4 	118
+2	5 	117
+2	6 	117
+2	7 	116
+2	8 	116
+2	9 	116
+2	10 	116
+2	11 	115
+2	12 	115
+2	13 	114
+2	14 	114
+2	15 	114
+2	16 	114
+2	17 	113
+2	18 	113
+2	19 	113
+2	20 	112
+2	21 	112
+2	22 	111
+2	23 	111
+2	24 	111
+2	25 	111
+2	26 	110
+2	27 	110
+2	28 	131
+2	29 	130
+2	30 	130
+2	31 	129
+2	32 	129
+2	33 	128
+2	34 	127
+2	35 	127
+2	36 	126
+2	37 	126
+2	38 	125
+2	39 	125
+2	40 	124
+2	41 	124
+2	42 	124
+2	43 	123
+2	44 	122
+2	45 	121
+2	46 	121
+2	47 	120
+2	48 	120
+2	49 	119
+2	50 	119
+3	0 	119
+3	1 	118
+3	2 	118
+3	3 	118
+3	4 	118
+3	5 	117
+3	6 	117
+3	7 	116
+3	8 	116
+3	9 	116
+3	10 	116
+3	11 	115
+3	12 	115
+3	13 	115
+3	14 	115
+3	15 	114
+3	16 	114
+3	17 	113
+3	18 	113
+3	19 	113
+3	20 	112
+3	21 	112
+3	22 	112
+3	23 	111
+3	24 	111
+3	25 	111
+3	26 	111
+3	27 	111
+3	28 	131
+3	29 	130
+3	30 	130
+3	31 	129
+3	32 	129
+3	33 	128
+3	34 	128
+3	35 	127
+3	36 	126
+3	37 	126
+3	38 	125
+3	39 	125
+3	40 	125
+3	41 	124
+3	42 	124
+3	43 	123
+3	44 	122
+3	45 	121
+3	46 	121
+3	47 	120
+3	48 	120
+3	49 	120
+3	50 	119
+4	0 	119
+4	1 	118
+4	2 	118
+4	3 	118
+4	4 	118
+4	5 	117
+4	6 	117
+4	7 	117
+4	8 	117
+4	9 	116
+4	10 	116
+4	11 	115
+4	12 	115
+4	13 	115
+4	14 	115
+4	15 	114
+4	16 	114
+4	17 	114
+4	18 	113
+4	19 	113
+4	20 	112
+4	21 	112
+4	22 	112
+4	23 	112
+4	24 	111
+4	25 	111
+4	26 	111
+4	27 	111
+4	28 	131
+4	29 	130
+4	30 	130
+4	31 	129
+4	32 	129
+4	33 	128
+4	34 	128
+4	35 	127
+4	36 	127
+4	37 	126
+4	38 	125
+4	39 	125
+4	40 	125
+4	41 	124
+4	42 	124
+4	43 	123
+4	44 	123
+4	45 	122
+4	46 	121
+4	47 	120
+4	48 	120
+4	49 	120
+4	50 	119
