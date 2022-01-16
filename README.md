@@ -371,6 +371,8 @@ Push buttons have too much spring.
 Can I get a photo interupter to work?
 KY-10 https://arduinomodules.info/ky-010-photo-interrupter-module/
 
+Connect the power line (middle) and ground (left) to +5V and GND respectively. Connect signal (S) to pin 3 on the Arduino.
+
 Operating Voltage	3.3 ~ 5V
 
 - (left)	GND
@@ -427,3 +429,31 @@ I didn't print out the measurements to check for consistency - I guess that's th
 51
 
 360 / 51 = 
+
+# 8th January 2022 #
+
+Mk1 is dead! Long live Mk2!
+
+![Alt text](./readme_imgs/mk1_final_wiring.png)
+
+This will the final wiring an pinout for mk1 (stepper, servo and photo sensor)
+
+I'm trying to wire up stepper x2 and photo sensor for mk2.
+
+# 9th January 2022 #
+
+Stepper control board 1 is dead.
+
+I wired up stepper control board 2 to be the same as control board 1.
+I then bridged the power from the bottom of control board 1 to the input of board 2 - I think this was my mistake.
+
+Board 1 no longer works - well, it seems to 75% work. All of the connections seem good, and it behaves the same with both the existing and the new stepper motor.
+
+Board 2 does however work, with both motors. It behaves just fine. I even managed to drive it from two different sets of pico pins [18,19,20,21] and [6,7,8,9]
+
+So, my best guest is that I've cooked a channel of board 1 whilst soldering on the power leads.
+I have ordered a replacement, and I will unsolder and try to resolder it, to see if it can be fixed.
+
+Generally, feels like progress.
+
+Now I know that I can in theory drive to steppers from the pico, I can start work on the CAD anyway.

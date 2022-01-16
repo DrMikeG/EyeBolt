@@ -1,6 +1,4 @@
-# First usage to measure a real shape
-# Prototype finish when no measurements for a whole revolution
-# includes quick advance
+# Integrating servo home button
 
 import time
 import board
@@ -11,7 +9,7 @@ from adafruit_motor import stepper, servo
 
 
 # Servo control
-servoPositionA = 145 # All the way back from the table
+servoPositionA = 155 # All the way back from the table
 servoPositionB = 139 # Near edge of table
 servoPositionC = 135 # Touching edge of table
 servoPositionD = 70 # At full reach across the table
@@ -30,10 +28,10 @@ my_servo = servo.Servo(pwm)
 DELAY = 0.1  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
 STEPS = 200  # this is a full 360º
 coils = (
-    DigitalInOut(board.GP21),  # A1
-    DigitalInOut(board.GP20),  # A2
-    DigitalInOut(board.GP19),  # B1
-    DigitalInOut(board.GP18),  # B2
+    DigitalInOut(board.GP9),  # A1
+    DigitalInOut(board.GP8),  # A2
+    DigitalInOut(board.GP7),  # B1
+    DigitalInOut(board.GP6),  # B2
 )
 for coil in coils:
     coil.direction = Direction.OUTPUT
@@ -42,10 +40,19 @@ stepper_motor = stepper.StepperMotor(
     coils[0], coils[1], coils[2], coils[3], microsteps=None
 )
 
+# Lower table stop
 button12 = digitalio.DigitalInOut(board.GP12)
 button12.switch_to_input(pull=digitalio.Pull.UP)
+
+# Upper table stop
 button13 = digitalio.DigitalInOut(board.GP13)
 button13.switch_to_input(pull=digitalio.Pull.UP)
+
+# Servo home table stop
+button22 = digitalio.DigitalInOut(board.GP22)
+button22.switch_to_input(pull=digitalio.Pull.UP)
+
+
 
 # Go / OK / start button
 button14 = digitalio.DigitalInOut(board.GP14)
@@ -109,7 +116,66 @@ def MoveServo(newTargetAngle):
         CheckEBreak()
         time.sleep(0.025)
 
+def ServoHomeSwitchPressed():
+    CheckEBreak()
+    # Return True if the home switch has been pressed.
+    return button22.value == False
+
+def ServoHomeCycle():
+    nonHomeValue = 115
+    homeValue = 140
+
+    print("ServoHomeCycle - start")
+    #Servo home is expected to be slightly more than 140
+    MoveServo(nonHomeValue)
+    print("ServoHomeCycle - start")
+    time.sleep(1)
+    if ServoHomeSwitchPressed():
+        print("ServoHomeCycle failed - did not expect home switch pressed with current servo angle")    
+        return False
+
+    # Decrease servo value    
+    foundHomingValue = False
+    while not foundHomingValue:
+        homeValue = homeValue + 1
+        print("Testing possible home value {}".format(homeValue))
+        MoveServo(homeValue)        
+        time.sleep(0.75)
+        if ServoHomeSwitchPressed():
+            print("Moving to home value {} triggered the home switch".format(homeValue))
+            foundHomingValue = True
+        print("Moving back away from home switch {}".format(nonHomeValue))
+        MoveServo(nonHomeValue)
+        time.sleep(0.75)
+
+    if not foundHomingValue:
+        print("ServoHomeCycle failed - did not find value at which servo home switch was pressed")
+        return False
+    else:
+        
+        print("Confirming home location triggers switch")
+        MoveServo(homeValue)
+        time.sleep(0.75)
+        if not ServoHomeSwitchPressed():
+            print("Expected home home value {} to trigger the home switch".format(homeValue))
+            return False
+        else:
+            print("Confirmed")
+            print("Moving back away from home switch {}".format(nonHomeValue))
+            MoveServo(nonHomeValue)
+            time.sleep(0.75)
+            
+        print("Confirming home location -1 does not trigger switch")
+        MoveServo(homeValue-1)
+        time.sleep(0.75)
+        if ServoHomeSwitchPressed():
+            print("Did not expected home home value -1 {} to trigger the home switch".format(homeValue-1))
+            return False
+        MoveServo(nonHomeValue)
+        time.sleep(0.75)
     
+    print("ServoHomeCycle - end")
+
 
 def StepTableUpOneStepWithDelay():
     stepper_motor.onestep(direction=stepper.BACKWARD,style=stepper.DOUBLE) # BACKWARDs is table up
@@ -124,7 +190,6 @@ def TableIsAtUpperStop():
 
 def TableIsAtLowerStop():
     return button12.value == False
-
 
 def TableHomeCycle():
     print("Table Homing")
@@ -476,6 +541,9 @@ def PrepareThenPerformScan():
     again.
     """
 
+    ServoHomeCycle()
+    return True
+
     ok = FullyRetractPokerAndCheckSensor()
     
     if ok:
@@ -509,29 +577,7 @@ def PrepareThenPerformScan():
     print("Done!")
 
 
-CheckEBreak()
-# Moving servo to servoPositionB 
-my_servo.angle = servoPositionB
-servoCurrentTarget = servoPositionB
+for _ in range(400):
+    StepTableDownOneStepWithDelay()
 
-while True:
-
-    # Wait for initialise, button 14...
-    if button14.value == False:
-        FullyRetractPokerAndCheckSensor()
-#        PrepareThenPerformScan()
-
-    if button12.value == False:
-        print("Lower limit switch is pressed")
-        time.sleep(0.5)
-
-    if button13.value == False:
-        print("Upper limit switch is pressed")
-        time.sleep(0.5)
-
-    if photoSensorPin2.value == True:
-        print("Photo sensor closed")
-        time.sleep(0.5)
     
-    CheckEBreak()
-
