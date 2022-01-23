@@ -457,3 +457,21 @@ I have ordered a replacement, and I will unsolder and try to resolder it, to see
 Generally, feels like progress.
 
 Now I know that I can in theory drive to steppers from the pico, I can start work on the CAD anyway.
+
+# 23rd January 2022 #
+
+Just finished soldering up the board shield for the mk 2.
+
+Test the individual inputs.
+
+- Photo sensor - powered and reporting data on GP3 &#9745;
+- Wired up the table top stop switch on button 10 &#9745;
+- Wired up the table top stop switch on button 11 &#9745;
+- Wired up the table top stop switch on button 12 &#9745;
+- Wired up the table top stop switch on button 13 &#9745;
+- Wired up the carriage home switch on button 14 &#9745;
+- Wired up the table top stop switch on button 15 &#9745;
+
+![Alt text](./readme_imgs/20220123_160133.jpg)
+
+Added a 3d printed frame around the proto-board, which I can zip-tie bundles to for strain relief.
