@@ -475,3 +475,18 @@ Test the individual inputs.
 ![Alt text](./readme_imgs/20220123_160133.jpg)
 
 Added a 3d printed frame around the proto-board, which I can zip-tie bundles to for strain relief.
+
+# 19th February 2022 #
+I swapped the upper limit switch for one with a roller on, and reprinted the holder so it can run right along the edge of the toothed table.
+It's a little bumpy when it contacts, but it maximises the usable area of the table.
+
+![Alt text](./readme_imgs/upper_limit.jpg)
+
+
+I used the taper measure to get some calibration numbers fo the stepper motor, and it's an incredibly pleasing straight line.
+
+![Alt text](./readme_imgs/calibration02.png)
+
+In Excel, I used ctrl-e (flash fill) to automatically split the strings given a guide first row.
+
+Now I'm going to code up a test measure of this coke can, so I can get try to get a measure of the offsets of where the measurements are taken, given an object of known size a shape.
