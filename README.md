@@ -490,3 +490,19 @@ I used the taper measure to get some calibration numbers fo the stepper motor, a
 In Excel, I used ctrl-e (flash fill) to automatically split the strings given a guide first row.
 
 Now I'm going to code up a test measure of this coke can, so I can get try to get a measure of the offsets of where the measurements are taken, given an object of known size a shape.
+
+
+
+##Taked to Doug about next steps in PK##
+- Mesh route
+- Voxels - to mesh
+- inside/outside layers (more info than point could. reduce to 2d problem
+- PVX voxel modelling system
+
+- Create profile 
+- Boolean between
+- Loft between layers (Nick?)
+- Cage and sub-d (B-spline representation in patches) - Do SE have this?
+
+
+

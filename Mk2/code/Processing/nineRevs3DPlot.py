@@ -27,12 +27,11 @@ def GetXsYsAndZsForScan(scan):
     # object is mapped in X/Y
     print(scan)
 
+    stepstoCOR = 478
     stepsPerRev51 = 51
-    revolutionHeight = 1 # 1mm
+    revolutionHeight = 10/6 # 1.66mm
     distanceToCOR = 87.3 # mm
     factor = 6.17669
-    offset = 612.21
-
     nRevolutions = scan[-1].rev + 1 # zero indexed
     assert(nRevolutions * stepsPerRev51 == len(scan))
 
@@ -47,21 +46,31 @@ def GetXsYsAndZsForScan(scan):
     stepAngleRads = math.radians(stepAngleDegrees)
     for rev_i in range(nRevolutions):
         for step_i in range(stepsPerRev51):
-            step = (scan[(rev_i * stepsPerRev51) + step_i]).distanceInSteps
-            measurementInMM = (offset - step) / factor
-            measuredRadius = distanceToCOR - measurementInMM
-            x = xHome + (measuredRadius * math.cos(stepAngleRads*step_i))
-            y = yHome + (measuredRadius * math.sin(stepAngleRads*step_i))
-            z = rev_i * revolutionHeight
-            xs.append(x)
-            ys.append(y)
-            zs.append(z)
+            measurement = scan[(rev_i * stepsPerRev51) + step_i]
+            step = measurement.distanceInSteps
+            if measurement.touched:
+                step = stepstoCOR - step # nearer things are positive numbers
+                measurementInMM = step / factor
+                measuredRadius = measurementInMM
+                x = xHome + (measuredRadius * math.cos(stepAngleRads*step_i))
+                y = yHome + (measuredRadius * math.sin(stepAngleRads*step_i))
+                z = rev_i * revolutionHeight
+                xs.append(x)
+                ys.append(y)
+                zs.append(z)
     return xs,ys,zs
 
+#478 steps to COR?
 
+
+# This scan is of the short wall.
+# The wall is 35mm long, so each end is 17.5mm from the COR
+# The two long sides of the wall, one is offset 0 from COR, one is offset 2.5mm
+# Watching the video, measurement 0:3 is the first that looks to touch the dead center / COR
+# The bar is 10mm high
 scan = [
     Measurement(line.strip())
-    for line in open(f'{sys.path[0]}/fiveRevs.txt', 'r').read().split('\n')
+    for line in open(f'{sys.path[0]}/nineRevs.txt', 'r').read().split('\n')
 ]
 
 xs, ys, zs = GetXsYsAndZsForScan(scan)
