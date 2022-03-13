@@ -3112,6 +3112,66 @@ VTK_TEST_FN(TestPKUtils042_MakeWirebodyFromCurves5)
     return true;
 }
 
+VTK_TEST_FN(TestPKUtils042_MakeWirebodyFromCurves6_ZeroLengthBaseEdge)
+{
+    //Check we can create a wirebody that contains a zero-length base edge. A root-base edge cannot be zero-length in PGM model,
+    //so this can only be an intermediate base curve that is an offset of another curve.
+    InteractionTag interaction = CreateInteraction();
+    VTK::OptionSetProfileSolverType(interaction, ProfileSolverType2D);
+
+    ConicData conicData(Position(-0.2, 0.1, 0), Position(0.5, 0.0, 0), Position(0.1, -0.4, 0), 0.4);
+    int conic = VTK::CreateConic(interaction, conicData);
+    CheckTagM(conic);
+
+    OffsetCurveData offsetData1(conic, 0.05, OffsetCurveSideRight);
+    int offsetCurve1 = VTK::CreateOffsetCurve(interaction, offsetData1);
+    CheckTagM(offsetCurve1);
+
+    OffsetCurveData offsetData2(offsetCurve1, 0.05, OffsetCurveSideRight);
+    int offsetCurve2 = VTK::CreateOffsetCurve(interaction, offsetData2);
+    CheckTagM(offsetCurve2);
+
+    PKUtils pkUtils;
+    IntArray curves, newEdges;
+    DoublePairArray intervals;
+    curves.push_back(conic);
+    curves.push_back(offsetCurve1);
+    curves.push_back(offsetCurve2);
+    intervals.push_back(DoublePair(0, 1));
+    intervals.push_back(DoublePair(0.1, 0.1));
+    intervals.push_back(DoublePair(0, 1));
+    PK_BODY_t wireBody = PKUtils().WirebodyMakeFromCurves(GetCurrentVersion(), curves, intervals, true, NULL, &newEdges);
+    CheckTagM(wireBody);
+    CheckM(newEdges.size() == 3);
+
+    //Check the edges use the input curves.
+    for (size_t i = 0; i < newEdges.size(); i++)
+    {
+        CheckM(PKUtils().TopolGetGeom(newEdges[i]) == curves[i]);
+    }
+    //Check the second edge is zero-length.
+    CheckM(pkUtils.EdgeIsZeroLength(newEdges[1]));
+    //Check the offset curve data are correct.
+    int baseCurve = 0;
+    CheckM(pkUtils.OffsetCurveGetBaseEdgeOrVirtualCurve(newEdges[1], baseCurve));
+    CheckM(baseCurve == newEdges[0]);
+    CheckM(pkUtils.OffsetCurveGetBaseEdgeOrVirtualCurve(newEdges[2], baseCurve));
+    CheckM(baseCurve == newEdges[1]);
+    IntArray offsetEnts;
+    CheckM(pkUtils.EntityIsBaseCurveOfOffsetCurve(newEdges[0], &offsetEnts));
+    CheckM(offsetEnts.size() == 1 && offsetEnts[0] == newEdges[1]);
+    offsetEnts.clear();
+    CheckM(pkUtils.EntityIsBaseCurveOfOffsetCurve(newEdges[1], &offsetEnts));
+    CheckM(offsetEnts.size() == 1 && offsetEnts[0] == newEdges[2]);
+    //There should be six vertices in total.
+    VTKBody vbody(wireBody);
+    IntArray vertices;
+    vbody.GetVertices(GetCurrentVersion(),&vertices);
+    CheckM(vertices.size() == 6);
+
+    return true;
+}
+
 VTK_TEST_FN(TestPKUtils043_SplitWirebodyIntoDisjointBodies)
 {
     ResultType result = ResultTypeOk;
@@ -7909,406 +7969,1175 @@ VTK_TEST_FN(TestPKUtils094_CreateWirebody_Finds_Accurate_Intersection_Between_Li
     return true;
 }
 
-double MyVectorFindMax(DoubleVector& input)
+VTK_TEST_FN(TestPKUtils095_GeomCheck_Ignores_SelfIntersectingState_If_CheckSelfIntSessionOptionIsOff)
 {
-    double maxValue = input[0];
-    for (double val : input)
-    {
-        if (val > maxValue)
-        {
-            maxValue = val;
-        }
-    }
-    return maxValue;
-}
-
-PK_BODY_t MyMakeWirebody(VecArray& pts, IntArray& newEdges)
-{
-    IntArray curves;
-    DoublePairArray intervals;
-    for (size_t ptInd = 0; ptInd < pts.size(); ptInd++)
-    {
-        size_t pt2 = ptInd + 1;
-        if (pt2 == pts.size())
-        {
-            pt2 = 0;
-        }
-
-        Vec ptVec = pts.at(pt2) - pts.at(ptInd);
-
-        DoublePair dp(0.0, ptVec.Mag());
-        intervals.push_back(dp);
-
-        Dir dir = Normal(ptVec);
-        curves.push_back(PKUtils().CreateLine(pts.at(ptInd), dir));
-    }
-
-    return PKUtils().CurveMakeWirebody(Version_21_00, curves, intervals, false, &newEdges);
-}
-
-
-VTK_TEST_FN(TestPKUtils_SpaceCarve02)
-{
+    //Check PKUtils::GeomCheck ignores self-intersecting state if the session option "check_self_int" option is off.
     ResultType result = ResultTypeOk;
-    Interaction* interaction = TestCreateInteraction();
-    DoubleVector inputValues = { 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,92,92,96,97,101,144,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,182,161,146,129,113,110,101,94,78,41,43,41,39,39,37,40,35,39,42,44,40,40,45,47,59,142,154,166,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255 };
-    // analyze the input array and find max value
-    double max = MyVectorFindMax(inputValues);
-    const double pivot = 65.0; // (origin is (65.0,0,0)
-    const double circleRadius = pivot;// max - pivot;
-    const int steps = 200;//steps per revolution
-    const double sampleHeight = 1.0;//mm
-    double stepAngle = TWO_PI / steps;
+    InteractionTag interaction = CreateInteraction();
 
-    Vec origin(pivot, 0, 0);
+    PositionArray controlPoints;
+    DoubleArray knots;
 
-    //PK_POINT_t originPoint_t = PKUtils().CreatePoint(origin);
-    //VTKBody baseBody = VTKBody::MakeMinimumBody(originPoint_t);
+    controlPoints.Add(Position(0, 0, 0));
+    controlPoints.Add(Position(5, 1, 0));
+    controlPoints.Add(Position(4, 2, 0));
+    controlPoints.Add(Position(3, 3, 0));
+    controlPoints.Add(Position(2, 2, 0));
+    controlPoints.Add(Position(4, 1, 0));
+    controlPoints.Add(Position(6, 0, 0));
+    knots.Add(0);
+    knots.Add(0);
+    knots.Add(0);
+    knots.Add(0);
+    knots.Add(0.25);
+    knots.Add(0.5);
+    knots.Add(0.75);
+    knots.Add(1);
+    knots.Add(1);
+    knots.Add(1);
+    knots.Add(1);
+
+    GeometryTag spline1 = VTK::CreateSplineCurve(interaction, SplineCurveData(3, false, knots, controlPoints, DoubleArray()), &result);
+    CheckResultM(result);
+    CheckTagM(spline1);
+
+    PK_LOGICAL_t checkSelfInt = PK_LOGICAL_true;
+    PK_SESSION_ask_check_self_int(&checkSelfInt);
+    CheckM(checkSelfInt == PK_LOGICAL_true);
+    //The spline is self-intersecting so it fails the check when the session option is ON.
+    bool checkPassed = PKUtils().GeomCheck(spline1);
+    CheckM(!checkPassed);
+    //The spline passes the check if the session option is switched off.
+    PK_SESSION_set_check_self_int(PK_LOGICAL_false);
+    checkPassed = PKUtils().GeomCheck(spline1);
+    CheckM(checkPassed);
+
+    //Restore the original setting.
+    PK_SESSION_set_check_self_int(PK_LOGICAL_true);
+    return true;
+}
+
+
+VTK_TEST_FN(TestPKUtils999_SortingHatPointCloudToSolid)
+{
+    //IntArray measurements = { 292,286,284,277,275,268,265,259,257,254,249,247,244,243,240,240,242,241,242,243,248,248,253,257,262,265,268,273,276,281,285,290,296,297,302,303,308,307,310,311,313,310,312,311,311,309,307,304,304,299,295,293,286,285,278,276,267,267,260,256,252,251,247,247,243,241,242,241,241,245,245,249,249,255,257,261,264,270,275,277,283,288,290,294,298,303,304,307,308,311,311,312,313,313,312,310,310,307,304,302,301,297,291,288,283,279,274,271,266,262,257,254,249,248,244,245,243,242,241,243,243,245,248,252,255,257,261,267,269,275,277,284,287,291,295,299,301,304,307,310,310,312,311,313,311,313,312,310,306,305,303,299,294,292,287,283,277,275,268,266,261,258,254,249,248,245,244,243,240,243,242,244,245,249,250,255,259,263,267,270,275,279,283,288,291,296,297,302,304,307,308,311,312,313,312,313,312,311,309,308,305,301,299,295,291,286,282,279,275,269,264,262,256,252,250,248,246,244,242,242,241,242,244,247,248,252,254,259,261,267,271,276,278,284,287,291,293,299,303,305,306,308,311,310,311,313,313,312,310,308,307,304,302,300,295 };
+    IntArray measurements = { 206,203,201,270,202,182,153,237,259,445,179,183,191,201,201,203,204,205,210,212,218,220,223,223,223,223,225,223,225,223,223,220,222,220,222,213,224,280,224,226,226,225,226,226,223,218,217,215,213,208,352,355,346,345,348,346,310,182,233,347,346,345,348,349,349,352,356,354,354,360,365,221,223,226,227,227,226,229,227,228,229,226,226,224,380,385,385,227,228,333,335,338,344,355,365,351,259,335,348,359,350,348,350,347,346,343,341,184,173,248,461,183,346,344,347,349,352,351,355,215,359,358,223,230,225,228,375,375,374,376,378,379,378,381,382,383,381,224,227,362,352,352,355,358,363,370,370,353,347,351,352,212,352,350,346,344,346,344,344,346,332,345,343,344,345,347,345,348,351,355,355,217,221,224,224,224,372,374,372,375,377,378,377,378,379,379,380,383,229,371,372,363,364,366,357,348,327,379,325,343,350,355,219,364,352,347,342,343,341,343,345,338,342,342,342,344,345,349,350,354,351,354,358,362,221,370,374,373,372,372,375,376,378,379,380,381,380,381,387,229,318,330,331,379,379,383,380,381,380,378,376,371,367,362,358,356,354,352,349,343,342,345,341,345,344,344,343,345,348,350,351,356,355,362,364,366,369,371,374,376,377,382,381,383,382,383,384,385,386,384,382,384,382,383,383,235,236,234,233,378,375,377,372,367,362,356,354,351,349,348,349,347,346,343,343,344,345,347,349,351,352,353,357,360,364,366,373,375,376,378,381,381,382,383,383,382,380,382,381,384,384,385,383,382,379,379,378,381,380,381,374,372,370,367,364,358,357,355,350,348,348,347,348,348,349,350,350,351,354,350,351,354,355,358,368,370,373,375,377,380,381,380,381,383,380,381,380,382,380,380,381,385,382,383,383,384,383,382,383,374,376,377,376,373,370,367,362,357,357,353,352,350,350,353,354,351,351,352,354,354,356,359,361,365,368,371,373,374,375,376,378,381,381,381,379,378,377,376,377,379,381,383,382,379,380,380,382,383,379,372,372,374,381,383,386,383,379,364,359,357,352,354,355,358,358,357,358,359,359,358,357,358,359,360,362,363,365,368,369,368,367,369,372,373,373,375,376,376,377,377,382,385,388,388,388,380,383,383,377,374,379,389,392,391,389,387,383,381,363,361,359,355,356,359,361,363,359,364,364,361,358,356,355,357,358,365,363,359,360,364,368,373,381,381,381,381,386,387,388,383,384,386,389,390,390,390,387,386,387,380,387,391,392,391,391,389,384,376,371,362,360,357,358,360,364,365,366,366,367,367,364,361,359,359,360,361,369,367,366,365,368,374,383,382,382,382,383,383,388,392,393,385,388,390,393,388,389,391,388,390,387,391,390,390,388,387,383,380,376,374,360,359,359,360,364,368,370,370,370,369,369,366,363,365,366,368,369,368,369,381,384,385,384,382,382,383,387,386,392,392,393,393,396,395,395,394,392,392,393,391,392,391,393,395,399,398,396,394,392,388,385,361,361,360,362,366,369,372,373,372,372,370,366,365,367,368,371,371,378,382,383,386,386,386,384,385,385,385,383,387,390,392,393,392,391,389,387,389,391,391,393,397,405,403,403,403,401,397,394,391,387,383,363,362,361,363,367,370,372,372,372,370,367,368,367,368,370,373,378,381,384,386,387,387,387,386,383,383,383,382,383,389,393,393,389,388,388,390,391,398,404,407,406,406,402,402,401,398,394,393,387,376,368,360,360,360,363,365,372,373,373,369,367,368,368,369,370,376,376,380,384,386,388,388,388,388,386,385,384,383,384,382,387,391,397,398,401,399,404,402,405,405,405,403,399,398,399,398,397,396,392,385,374,368,363,362,358,358,361,366,369,367,365,366,367,369,370,371,374,380,380,384,386,388,389,392,390,388,387,386,383,381,381,385,389,394,396,398,399,399,401,403,403,406,396,398,393,396,395,395,393,389,385,370,367,362,360,356,357,361,363,365,366,365,367,371,371,375,375,379,386,386,391,391,394,395,394,394,392,391,391,388,388,384,384,389,390,392,393,395,394,395,395,394,392,393,395,396,396,397,395,395,392,387,381,375,370,370,369,357,359,361,363,364,365,368,372,373,375,377,380,383,385,388,389,391,394,395,395,394,392,390,388,387,384,387,390,388,387,387,388,390,391,391,392,395,397,398,399,399,398,397,396,392,388,380,377,374,374,370,366,362,364,365,367,370,374,379,380,381,382,382,385,388,390,390,392,395,396,395,395,394,392,390,390,388,389,391,391,387,384,382,383,389,390,394,399,400,400,401,401,399,399,398,394,391,385,379,376,375,371,369,369,371,372,372,377,380,382,384,386,387,389,390,391,392,394,397,398,399,399,401,396,396,395,395,394,395,393,396,397,385,382,383,387,391,396,399,401,402,403,402,399,399,398,395,384,379,374,375,371,370,369,372,377,377,379,383,385,388,390,393,393,395,397,398,399,400,402,403,404,404,404,405,402,400,402,399,398,393,395,399,405,382,382,387,391,395,399,401,401,400,398,398,397,395,392,388,383,381,382,383,380,378,378,378,380,381,384,385,386,389,392,395,396,396,398,398,399,402,405,407,408,410,408,401,402,401,399,398,395,400,400,403,385,386,390,394,399,402,401,404,404,400,402,399,397,393,387,385,385,383,384,381,380,381,382,384,386,387,389,391,394,395,399,400,401,402,402,405,407,412,416,416,412,410,405,404,405,406,406,407,403,407,406,422,390,392,396,399,402,405,411,411,412,402,403,405,400,387,386,387,389,388,388,387,387,387,387,386,385,388,389,392,395,397,399,399,400,402,405,409,414,414,412,412,410,407,406,407,409,410,412,406,413,416,426,393,395,402,402,410,412,412,413,412,411,405,405,408,386,386,387,391,390,391,392,394,395,396,402,387,380,388,392,394,397,398,400,402,404,409,415,421,420,417,415,413,411,411,415,413,421,421,422,424,425,425,425,402,404,408,410,411,412,412,412,413,409,399,390,388,386,390,392,393,394,394,397,400,400,405,412,411,392,396,402,408,423,425,426,428,428,428,426,425,422,422,420,422,415,419,421,422,426,429,430,429,429,433,404,400,404,407,409,410,410,408,404,396,393,391,387,387,390,393,394,395,397,400,401,407,409,412,414,419,417,419,421,424,424,426,427,427,428,428,427,426,426,425,423,422,419,421,425,428,431,430,430,431,394,393,392,395,403,404,404,403,398,394,393,392,391,390,390,394,395,395,396,398,401,404,408,411,414,418,425,420,424,420,427,426,426,427,427,430,429,429,427,428,426,427,423,421,423,426,428,428,429,431,395,393,395,392,387,385,386,389,389,390,393,393,394,395,394,398,404,408,416,400,400,401,406,408,413,418,421,425,432,435,432,433,433,432,431,432,434,434,437,438,437,435,434,490,425,425,426,426,427,430,435,393,397,395,392,389,383,381,382,387,390,394,396,398,400,399,403,407,414,419,423,426,432,408,412,415,420,424,428,431,438,442,447,456,473,475,478,480,483,487,490,490,490,490,490,490,490,427,426,427,432,395,397,399,395,391,389,390,394,400,405,408,407,401,402,403,404,407,413,417,420,425,428,431,434,438,441,444,445,449,449,456,462,466,469,467,474,476,479,486,490,490,490,490,490,490,490,490,490,430,429,398,413,407,403,394,390,389,391,394,399,405,408,411,412,411,410,411,412,415,418,423,426,430,434,438,442,445,448,452,455,461,465,449,452,455,452,454,456,457,458,461,467,490,490,490,490,490,425,427,429,422,418,413,410,403,395,393,393,396,400,405,410,412,414,415,416,416,419,421,424,421,424,427,431,435,438,441,445,449,452,454,457,461,463,466,469,472,476,485,490,490,490,490,490,490,490,490,490,490,490,490,434,439,420,413,406,393,394,397,396,401,408,410,412,413,414,416,417,422,426,429,429,428,432,433,437,441,444,448,451,455,457,460,463,466,468,471,474,479,487,490,490,490,490,490,490,490,490,490,490,490,490,490,435,432,427,412,395,396,403,406,407,409,411,412,414,415,415,419,421,425,430,435,438,438,437,440,445,447,451,454,457,460,463,466,468,471,474,477,490,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,424,416,413,400,400,400,397,396,401,404,406,408,410,414,418,419,427,429,436,441,441,444,448,452,457,460,464,467,471,474,464,467,469,472,478,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,421,423,408,402,401,396,393,394,396,400,403,406,408,412,415,419,423,429,432,436,441,447,451,455,459,464,467,472,473,477,480,484,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,423,408,406,399,392,392,393,397,401,406,409,412,415,418,422,425,429,434,438,443,448,452,456,461,465,469,473,475,480,485,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,413,401,400,400,400,397,394,396,399,404,407,412,416,421,425,430,435,440,445,452,456,461,466,471,474,476,481,485,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,415,407,405,401,399,399,396,400,401,403,408,413,419,423,428,431,438,443,450,456,461,468,472,473,474,471,475,479,484,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,426,423,416,416,411,410,408,411,413,412,417,419,424,428,432,436,439,443,443,446,449,454,457,458,463,467,473,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,425,420,414,404,400,403,404,408,409,414,417,422,441,444,452,456,463,469,474,480,484,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,430,420,409,397,397,398,402,404,410,416,421,426,434,440,446,454,463,468,474,479,482,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,399,384,384,387,392,397,403,414,423,433,440,448,456,462,469,477,481,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,395,392,388,389,396,398,406,414,425,435,442,451,459,466,474,482,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,400,401,403,403,407,412,417,426,433,442,448,455,462,468,477,483,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,394,394,399,405,416,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,484,382,386,394,403,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,384,386,391,397,410,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,471,370,372,378,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,457,362,366,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,459,359,365,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,349,367,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490 };
+    int stepstoCOR = 478;
+    int stepsPerRev51 = 51;
+    double revolutionHeight = 10.0/6.0; // 0.8...mm
+    double distanceToCOR = 87.3; //# mm
+    double factor = 6.17669;
     
-    VTKBody baseBody = VTKBody::VTKBodyNull;
+    double xHome = 0;
+    double yHome = 0;
+    double stepAngleDegrees = 360.0 / stepsPerRev51;
+    double stepAngleRads = DegreesToRadians * stepAngleDegrees;
+
+    int rev_i = 0;
+
+    int nLayers = 32;
+
+    VTKBodyArray bodySlices;
+
+    for (int rev_i = 0; rev_i < nLayers; rev_i++)
+    {
+        VecArray layer;
+        for (int step_i = 0; step_i < stepsPerRev51; step_i++)
+        {
+            int indexOffsetForLayer = rev_i * stepsPerRev51;
+            int step = measurements[indexOffsetForLayer + step_i];
+            step = stepstoCOR - step;
+            double measurementInMM = step / factor;
+            double measuredRadius = measurementInMM;
+            Vec pos;
+            pos.x = xHome + (measuredRadius * cos(stepAngleRads * step_i));
+            pos.y = yHome + (measuredRadius * sin(stepAngleRads * step_i));
+            pos.z = rev_i * revolutionHeight;
+            layer.push_back(pos);
+        }
+
+        int nPos = (int)layer.size();
+        PK_VECTOR_t* pkVectors = new PK_VECTOR_t[nPos];
+        for (int t = 0; t < nPos; t++)
+        {
+            pkVectors[t] = layer[t].PkVector();
+        }
+
+        PK_BODY_create_sheet_planar_o_t pkSheetOpt;
+        PK_BODY_create_sheet_planar_o_m(pkSheetOpt);
+        pkSheetOpt.plane.location = pkVectors[0];
+        pkSheetOpt.plane.axis = Dir::ZDir().GetVec().PkVector();
+        PK_BODY_t       fenceBody = 0;
+        PK_ERROR_code_t pkError = PK_BODY_create_sheet_planar(nPos, pkVectors, &pkSheetOpt, &fenceBody);
+        CheckM(PK_ERROR_no_errors == pkError);
+
+        delete[] pkVectors;
+
+        VTKBody vb(fenceBody);
+        IntIntPairArray ignore;
+        double layerHeight = revolutionHeight * 1.1;
+        bool sweptOk = vb.Sweep(Dir::ZDir(), layerHeight, ignore);
+        CheckM(sweptOk);
+
+        bodySlices.push_back(vb);
+        
+    }
+
+    //VTKBody::TransmitBodies(VTK::Version_25_00, bodySlices, "D:\\temp.x_t");
+   
 
     PK_BODY_boolean_o_t boolOptions = { 0 };
     PK_BODY_boolean_o_m(boolOptions);
-    //boolOptions.merge_in_solid = PK_LOGICAL_true;
-    //boolOptions.merge_in_face = PK_LOGICAL_true;
-    //boolOptions.merge_in_edge = PK_LOGICAL_true;
-    boolOptions.merge_imprinted = PK_LOGICAL_true;
-    boolOptions.function = PK_boolean_unite;
-    
-
+    boolOptions.function = PK_boolean_unite_c;
+    boolOptions.merge_imprinted = PK_LOGICAL_false; // PK_LOGICAL_true; we don't want to merge this leaves our tag to disappear
     PKTopolTrackResults tracking;
     PK_boolean_r_t boolRes = { 0 };
-
-    // Plot positive disk to carve
-    PK_BODY_t rectBody = TagNull;
-    for (int nSteps = 0; nSteps < steps; nSteps++)
+    PK_ERROR_t pkError = 0;
+    for (int b = 1; b < bodySlices.size(); b++)
     {
-        double angle = (nSteps * stepAngle); // 90 degrees
-
-        VecArray points;
-        // On the circumference of the circle, how wide is my rectangle of 
-        double rectWidth = 1.0;
-        double rectHeight = stepAngle * circleRadius; 
-        PK_AXIS2_sf_t axis;
-
-        // A value of 255 means I measured right across the disk...
-        // So the radius should be assumed to be 0.
-        // Any value > pivot the radius should be assumed to be 0.        
-        double valueRadius = 1.0;
-        if (inputValues[nSteps] < pivot)
-        {
-            // A value of 35 means a radius from pivot of 30
-            valueRadius = pivot - inputValues[nSteps];
-        }
-        // Use value rather than radius...
-        double xOnCircumference = pivot + (sin(angle) * valueRadius);
-        double yOnCircumference = (cos(angle) * valueRadius);
-        double zLower = 0;
-        double zUpper = 1.0;
-        Vec rectBasePosVec(xOnCircumference, yOnCircumference, zLower);
-        rectBasePosVec.VecToPkVector(axis.location);
-        Vec vecToOrigin = origin - rectBasePosVec;
-        Dir directionToOrigin = Normal(vecToOrigin);
-        directionToOrigin.GetVec().VecToPkVector(axis.axis);
-        Dir::ZDir().GetVec().VecToPkVector(axis.ref_direction);
-        
-        PK_ERROR_code_t sweepError = PK_BODY_create_sheet_rectangle(rectWidth, rectHeight, &axis, &rectBody);
-        CheckPKOkM(sweepError);
-        // 2 points on the angle
-        
-        // 2 points on the angle + step
-        //double x2OnCircumference = pivot + (sin(angle+stepAngle) * circleRadius);
-        //double y2OnCircumference = 0 + (cos(angle + stepAngle) * circleRadius);
-
-        //points.push_back(Vec(xOnCircumference, yOnCircumference, zLower));
-        //points.push_back(Vec(xOnCircumference, yOnCircumference, zUpper));
-        //points.push_back(Vec(x2OnCircumference, y2OnCircumference, zUpper));
-        //points.push_back(Vec(x2OnCircumference, y2OnCircumference, zLower));
-        
-        //IntArray newEdges;
-        //rectBody = MyMakeWirebody(points, newEdges);
-
-        double distance = vecToOrigin.Mag();
-        // sweep into solid
-        VTKBody vbody(rectBody);
-        IntIntPairArray edgeFacePairs;
-        vbody.Sweep(directionToOrigin, distance, edgeFacePairs);
-        //VTKBody::CombineBodies(VTK::Version_25_00, baseBody, vbody);
-        
-        if (baseBody != VTKBody::VTKBodyNull)
-        {
-            baseBody.Boolean(vbody, &boolOptions, &tracking, &boolRes);
-            tracking.Clear();
-            PK_boolean_r_f(&boolRes);
-        }
-        else
-        {
-            baseBody = vbody;
-        }
-        //pkerror_test1((boolRes.result != PK_boolean_result_success_c), pFaces, pEdges, pBodies, checkResult);
-    }
-    
-    VTK::CreateInstance(interaction->GetTag(), baseBody.GetPKBodyTag(), Xform::IdMat, &result);
-    if (false)
-    {
-        baseBody.Transmit(VTK::Version_25_00, "D:/temp.x_t");
+        pkError = bodySlices[0].Boolean(bodySlices[b], &boolOptions, &tracking, &boolRes);
+        CheckM(PK_ERROR_no_errors == pkError);
+        tracking.Clear();
+        PK_boolean_r_f(&boolRes);
     }
 
-    SetLiveInteraction(interaction->GetTag());
+    bodySlices[0].Transmit(VTK::Version_25_00, "D:\\temp.x_t");
 
-    //interaction->Destroy();
 
     return true;
 }
 
-double MySmartAvg(double a, double b, double c)
+void SetCell(BYTE* sliceGrid,int xMax, int x, int y, bool val)
 {
-    return (a + b + c) / 6.0;
+    sliceGrid[y * xMax + x] = (val) ? 1 : 0;
 }
 
-DoubleVector MyAverageVector(DoubleVector& inputValues)
+bool GetCell(BYTE* sliceGrid, int xMax, int x, int y)
 {
-    DoubleVector outputVector;
-    outputVector.reserve(inputValues.size());
-    // First and last wrap
-    outputVector.push_back(MySmartAvg(inputValues[0], inputValues[1], inputValues[inputValues.size() - 1]));
-    for (size_t s = 1; s < inputValues.size() - 1; s++)
-    {
-        outputVector.push_back( MySmartAvg(inputValues[s-1], inputValues[s], inputValues[s+1]) );
-    }
-    outputVector.push_back( MySmartAvg(inputValues[0], inputValues[inputValues.size() - 2], inputValues[inputValues.size() - 1]));
-    return outputVector;
+    return (sliceGrid[y * xMax + x]) ==1;
 }
 
-VTK_TEST_FN(TestPKUtils_SpaceCarve03)
+void SetCellVal(BYTE* sliceGrid, int xMax, int x, int y, int value)
 {
-    ResultType result = ResultTypeOk;
-    Interaction* interaction = TestCreateInteraction();
-    // Experiment 1
-    //DoubleVector inputValues = { 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,92,92,96,97,101,144,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,182,161,146,129,113,110,101,94,78,41,43,41,39,39,37,40,35,39,42,44,40,40,45,47,59,142,154,166,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255 };
-    //DoubleVector rawInputValues = { 61, 63, 61, 64, 65, 67, 69, 72, 76, 71, 69, 71, 78, 79, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 105, 109, 112, 118, 123, 126, 137, 141, 141, 143, 149, 152, 152, 158, 158, 163, 159, 162, 164, 162, 163, 162, 156, 158, 157, 159, 149, 138, 99, 73, 90, 97, 96, 99, 96, 90, 87, 80, 79, 75, 69, 65, 61, 62, 67, 64, 63, 59, 59, 56, 59, 58, 57, 57, 53, 50, 57, 58, 56, 58, 48, 59, 57, 57, 55, 50, 50, 57, 51, 56, 53, 52, 55, 53, 44, 42, 39, 34, 39, 41, 40, 47, 55, 53, 53, 60, 57, 58, 54, 52, 50, 52, 54, 49, 56, 58, 54, 55, 57, 54, 57, 55, 54, 51, 56, 50, 56, 55, 57, 53, 57, 58, 62, 57, 57, 60, 62, 64, 72, 74, 80, 86, 92, 96, 88, 72, 74, 112, 136, 149, 155, 159, 156, 163, 161, 160, 165, 162, 162, 159, 163, 160, 158, 153, 156, 147, 145, 139, 137, 127, 123, 117, 114, 114, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 72, 72, 63, 71, 67, 69, 68, 68, 66, 63 };
-    //DoubleVector inputValues = MyAverageVector(rawInputValues);
-    DoubleVector inputValues = { 80,80,77,81,84,85,92,102,100,107,109,114,113,111,116,114,116,118,119,120,121,122,118,118,120,123,117,120,121,117,121,123,120,121,120,117,116,118,119,118,116,118,115,116,112,115,114,112,115,113,112,109,93,81,83,91,94,98,96,94,95,91,90,89,86,84,84,83,84,82,88,81,90,87,81,87,83,83,83,81,81,83,79,82,84,78,79,81,76,77,73,73,68,72,68,68,64,63,57,45,42,42,41,41,44,48,58,60,60,66,64,69,66,68,77,73,76,77,77,72,79,75,77,76,78,78,75,75,79,81,82,75,76,80,79,82,78,81,81,78,82,85,84,83,93,102,101,105,97,81,89,109,119,122,124,125,127,130,127,126,131,129,132,132,130,131,134,132,134,130,134,131,134,132,129,127,127,126,127,127,129,125,129,121,123,119,119,118,118,116,115,116,114,108,106,96,95,86,84,82};
-    
-    // analyze the input array and find max value
-    double max = MyVectorFindMax(inputValues);
-    const double pivot = 82.5; // (origin is (65.0,0,0)
-    const double circleRadius = pivot;// max - pivot;
-    const int steps = (int)inputValues.size();//steps per revolution
-    const double sampleHeight = 1.0;//mm
-    double stepAngle = TWO_PI / steps;
-
-    Vec origin(pivot, 0, 0);
-
-    VTKBody baseBody = VTKBody::VTKBodyNull;
-
-    PK_BODY_boolean_o_t boolOptions = { 0 };
-    PK_BODY_boolean_o_m(boolOptions);
-    boolOptions.merge_imprinted = PK_LOGICAL_true;
-    boolOptions.function = PK_boolean_unite;
-    PKTopolTrackResults tracking;
-    PK_boolean_r_t boolRes = { 0 };
-
-    PK_BODY_boolean_o_t boolOptions2 = { 0 };
-    PK_BODY_boolean_o_m(boolOptions2);
-    boolOptions2.merge_imprinted = PK_LOGICAL_true;
-    boolOptions2.function = PK_boolean_subtract;
-    
-    double rectWidth = 1.0;
-    double rectHeight = stepAngle * circleRadius;
-
-    // Make base slice
-    PK_BODY_t rectBody = TagNull;
-    for (int nSteps = 0; nSteps < steps; nSteps++)
-    {
-        double angle = (nSteps * stepAngle);
-        // On the circumference of the circle, how wide is my rectangle of 
-        // Use value rather than radius...
-        double xOnCircumference = pivot + (sin(angle) * circleRadius);
-        double yOnCircumference = (cos(angle) * circleRadius);
-        double zLower = 0.0;
-        double zUpper = 1.0;
-        Vec rectBasePosVec(xOnCircumference, yOnCircumference, zLower);
-        Vec rectBasePosVecShiftedDown(xOnCircumference, yOnCircumference, zLower-1.0);
-        PK_AXIS2_sf_t axis;
-        rectBasePosVecShiftedDown.VecToPkVector(axis.location);
-        Vec vecToOrigin = origin - rectBasePosVec;
-        Dir directionToOrigin = Normal(vecToOrigin);
-        directionToOrigin.GetVec().VecToPkVector(axis.axis);
-        Dir::ZDir().GetVec().VecToPkVector(axis.ref_direction);
-        PK_ERROR_code_t sweepError = PK_BODY_create_sheet_rectangle(2*rectWidth, rectHeight, &axis, &rectBody);
-        CheckPKOkM(sweepError);
-        double distance = vecToOrigin.Mag();
-        // sweep into solid
-        VTKBody vbody(rectBody);
-        IntIntPairArray edgeFacePairs;
-        vbody.Sweep(directionToOrigin, distance, edgeFacePairs);
-        if (baseBody != VTKBody::VTKBodyNull)
-        {
-            baseBody.Boolean(vbody, &boolOptions, &tracking, &boolRes);
-            tracking.Clear();
-            PK_boolean_r_f(&boolRes);
-        }
-        else
-        {
-            baseBody = vbody;
-        }
-    }
-    // start carving
-    
-    for (int nSteps = 0; nSteps < steps; nSteps++)
-    {
-        double angle = (nSteps * stepAngle);
-        // On the circumference of the circle, how wide is my rectangle of 
-        // Use value rather than radius...
-        double xOnCircumference = pivot + (sin(angle) * circleRadius);
-        double yOnCircumference = (cos(angle) * circleRadius);
-        double zLower = 0;
-        double zUpper = 1.0;
-        Vec rectBasePosVec(xOnCircumference, yOnCircumference, zLower);
-        PK_AXIS2_sf_t axis;
-        rectBasePosVec.VecToPkVector(axis.location);
-        Vec vecToOrigin = origin - rectBasePosVec;
-        Dir directionToOrigin = Normal(vecToOrigin);
-        directionToOrigin.GetVec().VecToPkVector(axis.axis);
-        Dir::ZDir().GetVec().VecToPkVector(axis.ref_direction);
-        PK_ERROR_code_t sweepError = PK_BODY_create_sheet_rectangle(rectWidth, 0.4, &axis, &rectBody);
-        CheckPKOkM(sweepError);
-
-        double distance = inputValues[nSteps];
-        if (distance >  circleRadius)
-        {
-            distance = circleRadius;
-        }
-        // sweep into solid
-        VTKBody vbody(rectBody);
-        IntIntPairArray edgeFacePairs;
-        vbody.Sweep(directionToOrigin, distance, edgeFacePairs);
-
-        if (false){
-            // Carve off chunk
-            baseBody.Boolean(vbody, &boolOptions2, &tracking, &boolRes);
-            tracking.Clear();
-            PK_boolean_r_f(&boolRes);
-        }
-    }
-    
-
-    VTK::CreateInstance(interaction->GetTag(), baseBody.GetPKBodyTag(), Xform::IdMat, &result);
-    if (false)
-    {
-        baseBody.Transmit(VTK::Version_25_00, "D:/temp.x_t");
-    }
-
-    SetLiveInteraction(interaction->GetTag());
-
-    //interaction->Destroy();
-
-    return true;
+    sliceGrid[y * xMax + x] = value;
 }
-VTK_TEST_FN(TestPKUtils_SpaceCarve01)
+
+int GetCellVal(BYTE* sliceGrid, int xMax, int x, int y)
 {
-    ResultType result = ResultTypeOk;
-    Interaction* interaction = TestCreateInteraction();
-    DoubleVector inputValues = { 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,92,92,96,97,101,144,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,182,161,146,129,113,110,101,94,78,41,43,41,39,39,37,40,35,39,42,44,40,40,45,47,59,142,154,166,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255 };
-    // analyze the input array and find max value
-    double max = MyVectorFindMax(inputValues);
-    const double pivot = 65.0; // (origin is (65.0,0,0)
-    const double circleRadius = pivot;//max - pivot;
-    const int steps = 200;//steps per revolution
-    const double sampleHeight = 1.0;//mm
-    double stepAngle = TWO_PI / steps;
+    return (int)(sliceGrid[y * xMax + x]);
+}
 
-    Vec origin(pivot, 0, 0);
-
-    //PK_POINT_t originPoint_t = PKUtils().CreatePoint(origin);
-    //VTKBody baseBody = VTKBody::MakeMinimumBody(originPoint_t);
-
-    VTKBody baseBody = VTKBody::VTKBodyNull;
-
-    PK_BODY_boolean_o_t boolOptions = { 0 };
-    PK_BODY_boolean_o_m(boolOptions);
-    //boolOptions.merge_in_solid = PK_LOGICAL_true;
-    //boolOptions.merge_in_face = PK_LOGICAL_true;
-    //boolOptions.merge_in_edge = PK_LOGICAL_true;
-    boolOptions.merge_imprinted = PK_LOGICAL_true;
-    boolOptions.function = PK_boolean_unite;
-
-
-    PKTopolTrackResults tracking;
-    PK_boolean_r_t boolRes = { 0 };
-
-    // Plot positive disk to carve
-    PK_BODY_t rectBody = TagNull;
-    for (int nSteps = 0; nSteps < steps; nSteps++)
-    {
-        double angle = (nSteps * stepAngle); // 90 degrees
-
-        VecArray points;
-        // On the circumference of the circle, how wide is my rectangle of 
-        double rectWidth = 1.0;
-        double rectHeight = stepAngle * circleRadius;
-        PK_AXIS2_sf_t axis;
-        double xOnCircumference = pivot + (sin(angle) * circleRadius);
-        double yOnCircumference = (cos(angle) * circleRadius);
-        double zLower = 0;
-        double zUpper = 1.0;
-        Vec rectBasePosVec(xOnCircumference, yOnCircumference, zLower);
-        rectBasePosVec.VecToPkVector(axis.location);
-        Vec vecToOrigin = origin - rectBasePosVec;
-        Dir directionToOrigin = Normal(vecToOrigin);
-        directionToOrigin.GetVec().VecToPkVector(axis.axis);
-        Dir::ZDir().GetVec().VecToPkVector(axis.ref_direction);
-
-        PK_ERROR_code_t sweepError = PK_BODY_create_sheet_rectangle(rectWidth, rectHeight, &axis, &rectBody);
-        CheckPKOkM(sweepError);
-        // 2 points on the angle
-
-        // 2 points on the angle + step
-        //double x2OnCircumference = pivot + (sin(angle+stepAngle) * circleRadius);
-        //double y2OnCircumference = 0 + (cos(angle + stepAngle) * circleRadius);
-
-        //points.push_back(Vec(xOnCircumference, yOnCircumference, zLower));
-        //points.push_back(Vec(xOnCircumference, yOnCircumference, zUpper));
-        //points.push_back(Vec(x2OnCircumference, y2OnCircumference, zUpper));
-        //points.push_back(Vec(x2OnCircumference, y2OnCircumference, zLower));
-
-        //IntArray newEdges;
-        //rectBody = MyMakeWirebody(points, newEdges);
-
-        double distance = vecToOrigin.Mag();
-        // sweep into solid
-        VTKBody vbody(rectBody);
-        IntIntPairArray edgeFacePairs;
-        vbody.Sweep(directionToOrigin, distance, edgeFacePairs);
-        //VTKBody::CombineBodies(VTK::Version_25_00, baseBody, vbody);
-
-        if (baseBody != VTKBody::VTKBodyNull)
-        {
-            baseBody.Boolean(vbody, &boolOptions, &tracking, &boolRes);
-            tracking.Clear();
-            PK_boolean_r_f(&boolRes);
-        }
-        else
-        {
-            baseBody = vbody;
-        }
-        //pkerror_test1((boolRes.result != PK_boolean_result_success_c), pFaces, pEdges, pBodies, checkResult);
-    }
-
-    VTK::CreateInstance(interaction->GetTag(), baseBody.GetPKBodyTag(), Xform::IdMat, &result);
-    if (false)
-    {
-        baseBody.Transmit(VTK::Version_25_00, "D:/temp.x_t");
-    }
-
-    SetLiveInteraction(interaction->GetTag());
-
-    //interaction->Destroy();
-
+bool isValidXY(int x, int y, int xMax, int yMax)
+{
+    if (x < 0)
+        return false;
+    if (y < 0)
+        return false;
+    if (x >= xMax)
+        return false;
+    if (y >= yMax)
+        return false;
     return true;
 }
 
+double DistanceFromCor(int xMax, int yMax, int x, int y)
+{
+    double midX = xMax / 2.0;
+    double midY = yMax / 2.0;
+    double x2 = (x - midX) * (x - midX);
+    double y2 = (y - midY) * (y - midY);
+    double d = sqrt(x2 + y2);
+    return d;
+}
+
+
+void printSlice(BYTE* sliceGrid, int xMax, int yMax)
+{
+    if (true)
+    {
+
+
+        std::cout << std::endl;
+        for (int y = 0; y < yMax; y++)
+        {
+            String row = "";
+            for (int x = 0; x < xMax; x++)
+            {
+                row.append(StringUtils::Format("%u", GetCellVal(sliceGrid, xMax, x, y)).c_str());
+            }
+            std::cout << row << std::endl;
+        }
+        std::cout << std::endl;
+    }
+}
+
+IntArray HasCellWithValue(BYTE* sliceGrid, int xMax, int yMax, int value)
+{
+    for (int y = 0; y < yMax; y++)
+    {
+        for (int x = 0; x < xMax; x++)
+        {
+            if (GetCellVal(sliceGrid, xMax, x, y) == value)
+            {
+                return IntArray{ x,y };
+            }
+        }
+    }
+    return IntArray{};
+}
+
+
+void ContiguousExpandFromStartPointBy8(BYTE* sliceGrid, int xMax, int yMax, int xStart, int yStart, int regionKey)
+{
+    IntIntPairSet expanded;
+    IntIntPairSet toExpand;
+
+    toExpand.insert(IntIntPair(xStart, yStart));
+
+    while (!toExpand.empty())
+    {
+        IntIntPairSet nextToExpand;
+
+        for (auto p : toExpand)
+        {
+            int xBase = p.first;
+            int yBase = p.second;
+            // This cell becomes a member of this region
+            DEB_assert( GetCell(sliceGrid, xMax, xBase, yBase) );
+            // NB this sets the value to a number > 1
+            SetCellVal(sliceGrid, xMax, xBase, yBase, regionKey);
+
+            // For every cell in the toExpand set, get the 8 surrounding cells
+            
+            for (int y = yBase - 1; y <= yBase + 1; y++)
+            {
+                for (int x = xBase - 1; x <= xBase + 1; x++)
+                {
+                    if (y == yBase && x == xBase)
+                        continue;
+                    if (isValidXY(x, y, xMax, yMax) && GetCell(sliceGrid, xMax, x, y))
+                    {
+                        IntIntPair candidate(x, y);
+                        if (expanded.find(candidate) == expanded.end() && toExpand.find(candidate) == toExpand.end())
+                        {
+                            // if the cells have value KEY and are not already in the expanded or the toExpand set
+                            // add them to the nextToExpand set 
+                            nextToExpand.insert(candidate);
+                        }
+                    }
+                }
+            }
+            // We just expanded p
+            expanded.insert(p);
+        }
+        toExpand.swap(nextToExpand);
+        nextToExpand.clear();
+        //printSlice(sliceGrid, xMax, yMax);
+    }
+}
+
+int ContiguousExpandFromStartPointBy4(BYTE* sliceGrid, int xMax, int yMax, int xStart, int yStart, int regionKey)
+{
+    IntIntPairSet expanded;
+    IntIntPairSet toExpand;
+
+    toExpand.insert(IntIntPair(xStart, yStart));
+
+    while (!toExpand.empty())
+    {
+        IntIntPairSet nextToExpand;
+
+        for (auto p : toExpand)
+        {
+            int xBase = p.first;
+            int yBase = p.second;
+            // This cell becomes a member of this region
+            DEB_assert(GetCell(sliceGrid, xMax, xBase, yBase));
+            // NB this sets the value to a number > 1
+            SetCellVal(sliceGrid, xMax, xBase, yBase, regionKey);
+
+            // For every cell in the toExpand set, get the 8 surrounding cells
+
+            IntIntPairArray valid;
+            valid.push_back(IntIntPair(-1, 0)); // W
+            valid.push_back(IntIntPair(1,  0)); // E
+            valid.push_back(IntIntPair(0, -1)); // N
+            valid.push_back(IntIntPair(0,  1)); // S
+
+            
+            for (IntIntPair offset : valid)
+            {
+                int y = yBase + offset.first;
+                int x = xBase + offset.second;
+
+                if (isValidXY(x, y, xMax, yMax) && GetCell(sliceGrid, xMax, x, y))
+                {
+                    IntIntPair candidate(x, y);
+                    if (expanded.find(candidate) == expanded.end() && toExpand.find(candidate) == toExpand.end())
+                    {
+                        // if the cells have value KEY and are not already in the expanded or the toExpand set
+                        // add them to the nextToExpand set 
+                        nextToExpand.insert(candidate);
+                    }
+                }
+            }
+            // We just expanded p
+            expanded.insert(p);
+        }
+        toExpand.swap(nextToExpand);
+        nextToExpand.clear();
+        //printSlice(sliceGrid, xMax, yMax);
+    }
+    return (int)expanded.size();
+}
+
+
+IntArray FindAndNumberDisjointRegionsInSlice(BYTE* sliceGrid, int xMax, int yMax)
+{
+    // This will change values in sliceGrid
+    // All zero values will remain 0
+    // All 1 values will be replaced with a higher number based on which region their are contiguous members of
+    // Diagonal connections will not be allowed
+
+    int regionKey = 2;
+    IntArray regionKeys;
+
+    while (true)
+    {
+        IntArray startFrom = HasCellWithValue(sliceGrid, xMax, yMax, 1);
+        if (startFrom.empty())
+            break;
+        // Found a starting point
+        // Mark all contiguous as part of this region
+        int regionSize = ContiguousExpandFromStartPointBy4(sliceGrid, xMax, yMax, startFrom[0], startFrom[1], regionKey);
+        // Repeat whilst there are more starting points
+        if (regionSize > 2)
+        {
+            regionKeys.push_back(regionKey);
+        }
+        regionKey += 1;
+    }
+
+    return regionKeys;
+}
+
+static IntIntPair pNORTH(0, -1);
+static IntIntPair pEAST(1, 0);
+static IntIntPair pSOUTH(0, 1);
+static IntIntPair pWEST(-1, 0);
+
+void GoLeft(IntIntPair& p) {
+    // Change current hearing p, 90 degrees anti-clockwise
+    if (p == pNORTH) // N
+    {
+        p.first = pWEST.first;
+        p.second = pWEST.second;
+    }
+    else if (p == pEAST) // E
+    {
+        p.first = pNORTH.first;
+        p.second = pNORTH.second; // N
+    }
+    else if (p == pSOUTH) // S
+    {
+        p.first = pEAST.first;
+        p.second = pEAST.second; // E
+    }
+    else if (p == pWEST) // W
+    {
+        p.first = pSOUTH.first;
+        p.second = pSOUTH.second; // S
+    }
+}
+void GoRight(IntIntPair& p) { 
+    // Change current hearing p, 90 degrees clockwise
+    if (p == pNORTH) // N
+    {
+        p.first = pEAST.first;
+        p.second = pEAST.second; // E
+    }
+    else if (p == pEAST) // E
+    {
+        p.first = pSOUTH.first;
+        p.second = pSOUTH.second; // S
+    }
+    else if (p == pSOUTH) // S
+    {
+        p.first = pWEST.first;
+        p.second = pWEST.second; // W
+    }
+    else if (p == pWEST) // W
+    {
+        p.first = pNORTH.first;
+        p.second = pNORTH.second; // N
+    }
+}
+
+void TraceOutlinesOfNumberedDisjointRegionInSlice(BYTE* sliceGrid, int xMax, int yMax, int regionKey, VecArray& layerPerim, double zValue)
+{
+    // https://en.wikipedia.org/wiki/Boundary_tracing
+    // From all contiguous cells labelled with regionKey, find the Vec positions of the perimeter
+
+    // There are n-contiguous cells in sliceGrid with value 'regionKey' - find the perimeter
+    // First, scan from the upper left to right and row by row to find first cell of region key
+    //Upon entering your first white cell, the core of the algorithm starts.It consists mainly of two rules :
+    //
+    // If you are in a white cell, go left.
+    // If you are in a black cell, go right.
+    // Keep in mind that it matters how you entered the current cell, so that left and right can be defined.
+    IntArray startFrom = HasCellWithValue(sliceGrid, xMax, yMax, regionKey);
+    if (startFrom.empty())
+        return;
+    //DEB_assert(startFrom.size() > 0);
+    IntIntPair start(startFrom[0], startFrom[1]);
+
+    IntIntPairSet boundaryPointsSet; //prevent double occurrences
+    IntIntPairArray boundaryPointsOrderedWalk;
+
+     // We found at least one pixel
+    boundaryPointsSet.insert(start);
+    boundaryPointsOrderedWalk.push_back(start);
+
+    // The first pixel you encounter is a white one by definition, so we go left. 
+    // Our initial direction was going from left to right, hence (1, 0)
+    IntIntPair nextStep;
+    nextStep.first = pEAST.first;
+    nextStep.second = pEAST.second;
+    GoLeft(nextStep);
+    IntIntPair next;
+    next.first = start.first + nextStep.first;
+    next.second = start.second + nextStep.second;
+
+    while (next != start)
+    {
+        // We found a black cell, so we go right and don't add this cell to our HashSet
+        int cellVal = GetCellVal(sliceGrid, xMax, next.first, next.second);
+        if (cellVal != regionKey)
+        {
+            //next = next - nextStep;
+            next.first -= nextStep.first;
+            next.second -= nextStep.second;
+            //next = next + nextStep;
+            GoRight(nextStep);
+            next.first += nextStep.first;
+            next.second += nextStep.second;
+        }
+        // Alternatively we found a white cell, we do add this to our HashSet
+        else
+        {
+            // Only store unique
+            if (boundaryPointsSet.find(next) == boundaryPointsSet.end())
+            {
+                boundaryPointsSet.insert(next);
+                boundaryPointsOrderedWalk.push_back(next);
+            }
+            GoLeft(nextStep);
+            //next = next + nextStep;
+            next.first += nextStep.first;
+            next.second += nextStep.second;
+        }
+    }
+
+
+    if (!boundaryPointsOrderedWalk.empty())
+    {
+        bool resetInteriorTo0 = true;
+        if (resetInteriorTo0)
+        {
+            for (int y = 0; y < yMax; y++)
+            {
+                for (int x = 0; x < xMax; x++)
+                {
+                    int cellVal = GetCellVal(sliceGrid, xMax, next.first, next.second);
+                    if (cellVal == regionKey)
+                    {
+                        if (boundaryPointsSet.find(IntIntPair(x, y)) == boundaryPointsSet.end())
+                        {
+                            SetCell(sliceGrid, xMax, x, y, false);
+                        }
+                    }
+                }
+            }
+        }
+        printSlice(sliceGrid, xMax, yMax);
+
+        bool skipFirst = true;
+        double scale = 1.0;
+        for (auto p : boundaryPointsOrderedWalk)
+        {
+            if (skipFirst)
+            {
+                skipFirst = false;
+                continue;
+            }
+            Vec forPoint(scale * p.first, scale * p.second, zValue);
+            layerPerim.push_back(forPoint);
+            //SetCellVal(sliceGrid, xMax, p.first, p.second, 9);
+        }
+        
+    }
+}
+
+
+
+
+bool CarveSlice(int layerIndex, IntArray& allMeasurements, VecArrayArray& layerPerims, double zValue)
+{
+    // The voxel region for a slice is 180 x 180mm
+    int xMax = 180;
+    int yMax = 180;
+    int area = xMax * yMax;
+    BYTE* sliceGrid = new BYTE[area];
+    // The center of rotation is in the middle of the voxel grid
+
+    int processLayer = 0;
+
+    // Turn off all cells...
+    for (int y = 0; y < yMax; y++) {
+        for (int x = 0; x < xMax; x++) {
+            SetCell(sliceGrid, xMax, x, y, false);
+        }
+    }
+
+    double tableCenterX = xMax / 2.0;
+    double tableCenterY = yMax / 2.0;
+
+
+    int stepsPerRev103 = 103;
+    double stepAngleDegrees = 360.0 / stepsPerRev103;
+    double stepAngleRads = DegreesToRadians * stepAngleDegrees;
+
+    {
+        double stepstoCOR = 416.7;
+        double revolutionHeight = 10.0 / 6.0; // 0.8...mm
+        double distanceToCOR = 67.21; // mm
+        double factor = -6.202;
+        double probeWidth = 5.0 / 2.0; // m
+        int rev_i = layerIndex;
+        double maxRadius = 80.0;
+            
+        if (true)
+        {
+            maxRadius = 1.0; // mm
+            // Pre-scan for smallest measurment 
+            for (int step_i = 0; step_i < stepsPerRev103; step_i++)
+            {
+                int indexOffsetForLayer = rev_i * stepsPerRev103;
+                int step = allMeasurements[indexOffsetForLayer + step_i];
+                double measurementInMM = (step - stepstoCOR) / factor;
+                double measuredRadius = measurementInMM;
+                if (measuredRadius > maxRadius)
+                {
+                    maxRadius = measuredRadius;
+                }
+            }
+            printSlice(sliceGrid, xMax, yMax);
+        }
+
+        if (true)
+        {
+            // Turn on all cells within radius of X table...        
+            for (int y = 0; y < yMax; y++) {
+                for (int x = 0; x < xMax; x++) {
+                    double distanceFromCenter = DistanceFromCor(xMax, yMax, x, y);
+                    if (distanceFromCenter <= 80)
+                    {
+                        SetCellVal(sliceGrid, xMax, x, y, 7);
+                    }
+                }
+            }
+            // At the point we should have a complete disk.
+            printSlice(sliceGrid, xMax, yMax);
+        }
+
+
+        // Turn on all cells within radius of X table...
+        for (int y = 0; y < yMax; y++) {
+            for (int x = 0; x < xMax; x++) {
+                double distanceFromCenter = DistanceFromCor(xMax, yMax, x, y);
+                if (distanceFromCenter <= maxRadius)
+                {
+                    SetCell(sliceGrid, xMax, x, y, true);
+                }
+            }
+        }
+        // At the point we should have a complete disk.
+        printSlice(sliceGrid, xMax, yMax);
+
+        // 
+
+        for (int step_i = 0; step_i < stepsPerRev103; step_i++)
+        {
+            int indexOffsetForLayer = rev_i * stepsPerRev103;
+            int step = allMeasurements[indexOffsetForLayer + step_i];
+            double measurementInMM = (step - stepstoCOR) / factor;
+            double measuredRadiusFromCor = measurementInMM;
+            //Vec pos;
+            //pos.x = xHome + (measuredRadius * cos(stepAngleRads * step_i));
+            //pos.y = yHome + (measuredRadius * sin(stepAngleRads * step_i));
+            //pos.z = rev_i * revolutionHeight;
+
+            // Recall that the COR is in the middle of the output array...
+            double offsetDistance = -2.5;
+            double angle = (stepAngleRads * step_i);
+            double angleMinus90 = angle - (PI/2.0);
+            
+            //Vec linePos(tableCenterX + (offsetDistance * cos(angleMinus90)), tableCenterY - (offsetDistance * sin(angleMinus90)),0.0);
+            //Vec outsidePos(tableCenterX+(distanceToCOR * cos(stepAngleRads * step_i)), tableCenterY-(distanceToCOR* sin(stepAngleRads * step_i)), 0.0) ;
+            //outsidePos = linePos + outsidePos;
+
+            Vec linePos(tableCenterX, tableCenterY,0.0);
+            // To generate a position on the boundary of the circle, it must be relative to the COR
+            Vec outsidePos(tableCenterX+(distanceToCOR * cos(stepAngleRads * step_i)), tableCenterY-(distanceToCOR* sin(stepAngleRads * step_i)), 0.0) ;
+            
+            Dir lineDir = Normal(outsidePos-linePos);
+            // Iterate over output array
+
+            for (int y = 0; y < yMax; y++)
+            {
+                for (int x = 0; x < xMax; x++)
+                {
+                    Vec v(1.0 * x, 1.0 * y, 0.0);
+                    Vec projection = GeomUtils::ProjectPointOnLine(v, linePos, lineDir);
+                    double cellDistanceFromTraceLine = (v - projection).Mag();
+
+                    
+                    //double distanceToCOR = 67.21; // mm
+                    double probeTravelDistance = distanceToCOR - measuredRadiusFromCor;
+
+                    double cellDistanceFromOutsidePos = (outsidePos - v).Mag();
+                    
+                    // At the center of rotation I want the test to be distance < (1.0*probeWidth)
+                    // At distanceFromM, I want the test to be distance < (2.25*probeWidth)
+                    double factor = 1.0;// 1 + (1.6 * ((distanceToCOR - distanceOfXYFromCor) / distanceToCOR));
+                    double testDistance = factor * probeWidth;
+
+                    if (ResEqual(cellDistanceFromTraceLine, testDistance) || cellDistanceFromTraceLine < testDistance)
+                    {
+                        // This is in the right angle, does it need turning off?
+                        
+                        if (ResEqual(cellDistanceFromOutsidePos, probeTravelDistance) || cellDistanceFromOutsidePos < probeTravelDistance)
+                        {
+                            // Turn this cell off
+                            SetCell(sliceGrid, xMax, x, y, false);
+                        }
+                    }
+                }
+            }
+            printSlice(sliceGrid, xMax, yMax);
+           int bob = 1;
+            //for a given X/Y
+                //1a) project onto vector
+                //1b) measure distance to projection
+                //2) measure distance from COR
+
+
+        }
+    }
+
+
+
+   // printSlice(sliceGrid, xMax, yMax);
+    double zCoordinateOfSlice = zValue;
+    IntArray regionKeys = FindAndNumberDisjointRegionsInSlice(sliceGrid, xMax, yMax);
+
+    printSlice(sliceGrid, xMax, yMax);
+
+    // Obtain the outlines of all bounded regions within this slide as VecArrayArray
+    for (auto key : regionKeys)
+    {
+        VecArray perim;
+        TraceOutlinesOfNumberedDisjointRegionInSlice(sliceGrid, xMax, yMax, key, perim, zCoordinateOfSlice);
+        layerPerims.push_back(perim);
+    }
+    printSlice(sliceGrid, xMax, yMax);
+
+
+    // Turn 
+    delete[] sliceGrid;
+
+    return true;
+}
+
+
+
+VTK_TEST_FN(TestPKUtils999_SpaceCarveSpriteCan001)
+{
+
+    IntArray measurements = {290,289,287,289,289,289,290,289,288,288,289,285,285,284,284,286,283,281,279,278,278,277,277,263,263,266,269,266,265,263,262,259,258,257,253,250,248,248,245,245,244,242,230,227,228,229,231,233,235,235,237,236,231,234,234,236,221,218,218,223,228,235,241,244,227,229,247,248,248,248,250,254,255,258,253,255,255,257,264,268,271,273,275,276,278,280,282,283,286,286,287,287,288,287,292,292,294,296,296,293,296,295,297,297,287,284,286,290,297,298,297,297,295,294,293,292,291,292,290,289,290,289,286,283,282,267,265,264,267,274,274,272,270,267,265,263,262,257,253,249,249,248,249,249,242,233,232,231,234,234,239,239,239,241,237,237,238,238,239,220,218,216,226,233,237,243,226,227,224,248,248,246,247,252,252,252,252,255,258,257,260,265,271,274,275,278,280,284,284,286,287,288,289,292,290,292,290,294,296,296,297,297,297,299,296,299,301,291,290,290,292,300,300,296,298,298,296,284,284,279,283,285,280,264,271,267,267,270,271,266,266,267,273,274,275,272,271,268,263,264,258,256,254,252,250,250,249,245,235,233,234,233,236,239,239,238,239,238,239,237,237,238,222,220,223,230,232,237,243,229,231,226,235,237,236,239,252,250,245,253,257,251,250,252,265,271,275,278,278,282,281,282,283,287,290,289,291,289,292,290,295,297,298,298,298,299,299,298,301,302,291,290,293,293,299,302,300,300,300,297,265,263,264,291,300,295,276,265,256,255,254,276,259,255,271,276,278,277,276,274,271,270,265,260,258,257,254,254,253,253,249,237,236,235,236,238,240,241,240,240,193,239,240,240,241,224,223,224,229,233,241,204,206,206,209,203,210,210,214,214,218,220,221,220,225,227,228,229,232,232,234,231,238,236,241,241,243,245,248,242,249,247,251,252,253,252,255,253,254,254,254,255,255,255,255,255,255,254,253,254,253,247,250,248,250,245,246,247,243,242,241,239,237,234,233,230,228,224,222,222,219,218,216,213,211,208,207,205,206,201,200,202,197,193,195,193,192,191,191,193,192,189,189,189,189,189,188,188,188,191,189,190,192,194,192,196,196,199,201,202,205,206,207,210,210,210,216,217,222,221,224,224,226,228,226,231,232,235,232,237,237,240,240,242,243,245,246,246,250,248,248,251,249,252,250,250,250,250,251,250,250,249,249,247,248,246,248,244,244,240,240,239,238,236,234,232,229,227,227,224,221,219,219,216,215,211,207,210,206,204,202,201,196,198,198,194,194,191,190,192,188,186,187,184,188,186,185,184,185,186,185,186,187,189,189,190,192,192,194,195,196,199,200,202,203,205,207,210,212,213,214,215,218,220,221,225,226,230,229,230,232,233,235,237,239,240,239,243,243,244,244,247,247,247,246,248,248,249};
+    //double stepstoCOR = 416.87;
+    //double factor = -6.202;
+    //double distanceToCOR = 67.21; //# mm
+    //double xHome = 0;
+    //double yHome = 0;
+    
+    int stepsPerRev103 = 103;
+    double revolutionHeight = 10.0 / 6.0; // 0.8...mm
+    double stepAngleDegrees = 360.0 / stepsPerRev103;
+    double stepAngleRads = DegreesToRadians * stepAngleDegrees;
+
+    int maxLayers = (int)measurements.size() / stepsPerRev103;
+
+    int rev_i = 0;
+    int nLayers = maxLayers;
+    int layerOffset = 0;
+
+    VTKBodyArray bodySlices;
+
+    for (int rev_i = 0; rev_i < nLayers; rev_i++)
+    {
+        VecArrayArray layerPerims;
+        CarveSlice(rev_i + layerOffset, measurements, layerPerims, revolutionHeight * (rev_i + layerOffset));
+
+
+        // Make sheet from each perim and sweep into body
+        for (VecArray layer : layerPerims)
+        {
+            int nPos = (int)layer.size();
+            PK_VECTOR_t* pkVectors = new PK_VECTOR_t[nPos];
+            for (int t = 0; t < nPos; t++)
+            {
+                pkVectors[t] = layer[t].PkVector();
+            }
+
+            PK_BODY_create_sheet_planar_o_t pkSheetOpt;
+            PK_BODY_create_sheet_planar_o_m(pkSheetOpt);
+            pkSheetOpt.plane.location = pkVectors[0];
+            pkSheetOpt.plane.axis = Dir::ZDir().GetVec().PkVector();
+            PK_BODY_t       fenceBody = 0;
+            PK_ERROR_code_t pkError = PK_BODY_create_sheet_planar(nPos, pkVectors, &pkSheetOpt, &fenceBody);
+            //CheckM(PK_ERROR_no_errors == pkError);
+            if (PK_ERROR_no_errors == pkError)
+            {
+
+
+                VTKBody vb(fenceBody);
+                IntIntPairArray ignore;
+                double layerHeight = revolutionHeight * 1.1;
+                bool sweptOk = vb.Sweep(Dir::ZDir(), layerHeight, ignore);
+                //CheckM(sweptOk);
+                if (sweptOk)
+                {
+                    bodySlices.push_back(vb);
+                }
+
+            }
+            delete[] pkVectors;
+        }
+
+    }
+
+    VTKBody::TransmitBodies(VTK::Version_25_00, bodySlices, "D:\\slices.x_t");
+
+
+    PK_BODY_boolean_o_t boolOptions = { 0 };
+    PK_BODY_boolean_o_m(boolOptions);
+    boolOptions.function = PK_boolean_unite_c;
+    boolOptions.merge_imprinted = PK_LOGICAL_false; // PK_LOGICAL_true; we don't want to merge this leaves our tag to disappear
+    PKTopolTrackResults tracking;
+    PK_boolean_r_t boolRes = { 0 };
+    PK_ERROR_t pkError = 0;
+    for (int b = 1; b < bodySlices.size(); b++)
+    {
+        pkError = bodySlices[0].Boolean(bodySlices[b], &boolOptions, &tracking, &boolRes);
+        CheckM(PK_ERROR_no_errors == pkError);
+        tracking.Clear();
+        PK_boolean_r_f(&boolRes);
+    }
+
+    bodySlices[0].Transmit(VTK::Version_25_00, "D:\\temp.x_t");
+
+
+    return true;
+}
+
+void DoCreateCylinder(VTKBody vbody)
+{
+
+    PK_CYL_sf_t theCylSF = { 0 };
+
+    theCylSF.radius = 32;
+    theCylSF.basis_set.location.coord[0] = 80.0;
+    theCylSF.basis_set.location.coord[1] = 90.3;
+    theCylSF.basis_set.location.coord[2] = 0;
+    theCylSF.basis_set.axis.coord[0] = 0.0;
+    theCylSF.basis_set.axis.coord[1] = 0.0;
+    theCylSF.basis_set.axis.coord[2] = 1.0;
+
+   
+    theCylSF.basis_set.ref_direction.coord[0] = 1.0;
+    theCylSF.basis_set.ref_direction.coord[1] = 0.0;
+    theCylSF.basis_set.ref_direction.coord[2] = 0.0;
+    PK_CYL_t cyl = PK_ENTITY_null;
+    PK_ERROR_t error = PK_CYL_create(&theCylSF, &cyl);
+    vbody.AddGeoms(cyl);
+
+}
+
+
+VTK_TEST_FN(TestPKUtils999_SpaceCarveSpriteCan002)
+{
+    // Full scan
+
+    IntArray measurements = { 287,286,288,288,289,288,288,288,287,286,286,284,283,283,282,280,279,280,278,276,277,262,263,265,270,265,264,262,261,260,257,256,252,249,247,247,244,243,243,243,230,226,227,228,231,233,235,236,235,234,233,234,234,234,219,216,217,222,228,232,239,245,226,228,245,247,247,248,246,254,253,257,255,253,255,257,264,267,271,272,273,272,279,278,281,282,283,285,286,287,288,286,292,292,293,294,296,294,297,298,298,298,288,286,285,289,295,298,298,297,295,293,291,291,288,293,291,289,285,285,282,283,277,270,264,266,265,271,273,270,272,266,265,261,258,255,253,250,248,249,248,247,247,234,225,230,232,233,235,236,237,238,236,235,235,235,236,220,218,215,224,228,234,241,244,226,225,245,247,248,248,249,253,253,252,255,255,254,257,263,267,270,272,274,276,279,281,282,285,286,288,289,289,289,287,293,294,294,295,295,297,297,298,298,299,292,288,287,290,295,300,298,298,299,296,279,273,273,291,291,291,279,261,263,261,256,267,259,258,267,266,272,270,268,267,266,262,262,257,255,253,250,249,248,248,245,235,232,232,233,234,236,237,237,236,236,235,236,235,236,221,221,219,228,231,235,240,228,226,224,237,246,247,243,244,247,247,249,256,249,248,248,252,264,271,272,277,277,279,280,280,283,286,285,288,280,291,289,293,292,295,296,297,297,297,298,297,299,292,291,290,291,296,300,300,301,298,299,264,260,260,294,295,293,291,270,258,249,252,269,253,246,256,262,264,274,271,268,265,264,263,259,257,254,251,251,200,249,249,236,197,233,235,200,197,196,196,194,192,193,193,194,194,195,195,198,197,197,199,199,203,204,204,202,207,209,211,212,214,217,218,222,220,224,221,227,228,231,230,235,232,238,237,241,242,245,242,246,246,248,247,250,251,251,251,249,252,251,253,254,253,254,255,253,253,253,252,251,253,248,250,248,246,245,244,243,241,240,238,236,235,233,231,230,228,224,223,221,220,218,215,213,210,208,207,206,203,201,202,199,197,193,195,193,192,191,190,189,189,186,190,188,189,187,188,188,188,188,189,190,191,192,194,195,196,198,200,201,204,203,207,206,210,210,216,212,218,217,223,223,226,224,228,229,233,233,234,236,238,238,242,242,244,244,245,246,247,247,249,249,248,249,249,250,249,249,248,250,249,248,246,247,246,246,245,244,244,241,240,238,237,236,235,230,230,227,227,224,222,219,220,216,215,211,209,209,207,205,202,200,199,199,197,194,191,191,190,189,187,187,183,185,185,185,183,184,184,184,185,184,185,188,189,191,191,190,191,193,197,198,197,203,200,203,204,209,210,212,211,214,215,219,218,222,223,226,227,229,229,232,233,237,238,239,239,241,241,243,241,247,245,247,245,246,246,247,247,248,248,248,247,246,247,247,246,245,244,244,242,240,241,238,237,236,235,233,231,228,228,226,224,220,219,217,214,211,210,206,206,204,202,201,199,197,195,195,193,190,189,188,188,185,184,188,185,185,183,184,182,184,181,184,185,185,186,186,188,192,189,191,192,195,195,198,199,202,201,205,209,208,212,211,212,214,216,218,222,223,223,228,227,231,231,233,235,235,238,238,238,241,243,243,246,245,247,245,247,247,247,248,247,247,247,247,246,246,247,247,244,244,242,241,240,240,238,236,236,234,231,229,229,227,225,224,221,219,217,216,212,211,208,209,205,201,198,198,197,195,193,194,190,191,189,190,185,186,183,183,184,183,182,186,185,183,185,182,186,186,188,188,190,188,192,191,195,194,199,198,201,201,204,206,211,209,213,212,216,217,220,219,223,224,227,232,231,233,233,233,238,238,238,239,240,241,242,244,245,246,246,244,246,246,246,250,247,247,247,246,246,245,245,243,241,241,241,239,239,237,236,234,233,231,232,228,226,224,223,219,220,218,215,212,210,208,208,204,201,200,198,197,197,191,189,192,190,189,187,186,184,186,185,184,184,186,182,182,183,184,184,183,185,186,189,189,188,192,192,193,195,196,199,200,202,205,205,208,211,213,214,215,217,221,222,223,224,226,230,230,231,232,235,236,237,242,239,240,241,243,244,247,244,246,247,246,246,248,247,248,247,246,247,244,245,244,245,242,242,242,240,240,238,238,236,235,234,229,229,227,225,222,219,217,216,213,212,210,207,205,205,202,199,198,198,196,194,191,189,187,187,186,185,185,184,184,185,186,184,183,184,183,183,185,185,185,186,185,188,189,193,194,194,197,197,200,200,203,205,207,208,210,211,214,215,219,220,221,224,226,228,228,232,232,234,234,237,235,238,239,242,243,243,244,244,248,246,247,247,247,248,247,250,247,247,247,247,246,246,245,242,242,242,242,241,238,236,235,233,232,228,229,227,225,223,222,221,216,214,214,210,206,208,205,201,199,197,196,195,194,193,192,191,189,187,185,185,184,184,184,182,183,183,184,184,184,184,185,184,188,187,188,189,190,191,194,196,199,200,201,203,205,205,210,210,212,216,215,217,218,221,225,224,227,228,229,232,232,235,238,237,239,240,242,242,243,244,246,245,246,245,246,246,246,248,246,249,245,245,244,245,244,243,242,241,240,239,240,237,236,234,233,232,230,227,226,225,221,220,218,216,214,213,211,207,206,204,202,202,198,196,196,192,191,190,188,187,187,187,185,187,186,184,184,184,182,183,183,182,185,185,185,186,188,189,189,192,194,194,195,196,201,201,202,204,206,209,212,211,216,214,218,220,221,222,226,226,228,229,231,233,236,236,237,239,239,243,241,243,244,244,245,247,245,244,245,246,249,247,247,247,245,247,246,247,244,242,241,241,239,237,236,235,235,234,232,230,230,226,224,223,221,219,216,214,210,208,208,206,203,201,201,197,199,194,193,193,189,190,187,184,185,184,184,183,184,184,183,185,183,185,184,183,184,187,185,187,189,190,192,194,195,198,198,201,203,204,205,209,209,211,212,215,214,217,219,221,224,224,227,228,231,231,233,235,236,238,239,240,243,245,244,247,246,246,247,246,247,246,248,247,246,246,248,246,246,245,244,242,241,241,240,239,240,238,234,234,233,230,228,228,227,225,224,220,218,215,213,212,209,207,206,204,201,199,199,197,195,194,191,189,189,188,186,184,185,183,183,184,182,184,183,182,183,183,182,183,186,189,189,190,191,191,193,194,197,197,200,202,203,208,207,209,210,214,213,215,216,220,222,224,226,227,230,230,233,233,234,235,239,237,242,242,242,244,246,244,245,246,245,246,247,247,248,246,246,247,247,246,245,244,243,242,241,241,239,238,236,236,234,233,230,229,227,224,224,222,218,219,216,214,212,212,208,207,205,203,201,198,197,195,193,190,189,188,187,186,188,188,186,185,184,181,181,183,181,182,183,183,186,186,185,189,188,190,193,193,195,195,199,201,202,203,207,210,210,211,214,216,219,219,220,222,223,225,228,228,231,233,234,235,237,236,239,241,243,243,243,243,247,245,246,247,247,245,245,248,246,247,247,246,245,245,245,244,242,241,241,238,237,238,235,234,232,232,229,227,225,224,221,219,217,218,213,212,209,207,205,204,202,200,199,196,194,193,193,190,187,187,186,185,185,183,184,182,184,184,184,183,183,183,185,184,185,185,188,190,192,190,192,194,197,197,200,201,203,204,209,211,211,215,213,218,218,218,221,224,227,227,229,232,231,233,236,236,238,238,240,241,243,243,246,245,246,246,249,247,247,247,246,247,248,246,246,245,245,244,245,242,242,241,239,238,235,235,235,232,232,228,227,227,224,221,220,219,217,216,212,210,209,205,204,202,198,197,197,194,192,192,189,188,188,185,185,185,186,182,182,182,182,184,181,182,183,185,184,184,187,189,189,191,191,192,196,198,197,198,202,202,207,208,209,213,212,215,216,219,220,221,222,227,227,230,230,232,234,236,237,237,238,241,241,242,243,245,244,246,246,246,248,248,244,248,247,247,247,245,246,245,244,242,241,240,240,239,239,237,237,235,232,231,229,227,225,223,221,218,218,217,214,212,211,207,207,203,202,200,197,197,193,192,190,188,189,188,186,185,184,185,185,182,184,183,182,182,182,184,184,184,186,188,189,189,191,192,194,193,196,199,200,202,205,207,210,210,211,214,215,217,219,221,223,224,227,227,230,231,233,235,235,237,239,240,240,242,244,245,246,245,247,247,246,247,248,246,246,246,247,246,246,246,244,243,243,242,241,240,239,238,235,235,234,233,231,228,229,227,222,222,220,216,216,214,211,208,206,206,205,202,198,197,196,194,193,191,189,188,188,186,185,184,185,184,185,184,185,183,185,183,183,184,184,186,186,189,188,191,191,193,194,198,198,201,202,202,206,209,210,214,213,215,217,218,219,221,224,225,228,229,232,231,235,235,237,238,241,240,241,242,246,245,246,248,249,248,246,246,248,246,247,247,246,246,246,245,245,244,241,243,240,240,239,237,235,234,233,230,229,229,226,223,224,220,217,214,215,211,211,207,207,205,202,198,198,196,194,192,192,189,190,187,187,186,184,184,186,184,183,184,182,185,182,184,184,186,186,187,188,190,192,191,193,195,197,199,200,204,204,210,209,210,213,216,215,217,219,223,223,226,226,228,231,231,232,233,237,239,238,242,241,242,244,244,244,245,246,247,246,248,247,246,245,247,246,246,245,248,247,245,244,242,242,241,239,239,239,236,233,233,230,230,227,227,223,220,216,216,216,213,211,210,210,206,203,202,199,197,195,194,192,190,190,189,188,186,186,185,185,187,182,182,181,182,184,183,184,183,187,186,187,191,189,190,191,193,196,196,200,200,203,204,207,208,210,211,212,215,219,218,222,223,224,227,229,229,232,233,234,235,238,238,240,242,242,243,245,247,246,246,247,247,246,247,249,246,249,247,246,246,248,245,245,245,244,243,241,240,237,236,236,236,234,232,230,228,227,225,223,221,216,217,214,210,211,208,206,204,204,199,198,197,195,193,191,191,189,188,185,184,185,184,185,183,185,182,183,184,183,184,184,186,186,187,189,188,190,193,194,195,199,198,200,203,205,206,211,211,213,215,217,217,218,219,222,225,226,228,231,232,232,235,236,238,240,240,240,242,244,246,245,246,249,248,248,247,247,248,247,248,247,248,247,246,246,245,245,244,242,241,240,238,236,235,234,231,230,229,226,225,223,223,219,217,217,214,212,210,208,205,204,200,198,197,198,193,192,190,190,188,188,186,185,184,184,185,182,184,182,184,183,184,185,183,186,186,188,189,189,191,191,193,196,198,198,198,202,205,207,208,211,214,214,214,217,219,221,221,224,226,228,232,230,233,233,238,237,241,240,241,244,244,245,244,245,247,248,248,249,249,247,247,248,248,247,247,246,245,243,244,243,243,241,241,240,237,236,235,234,232,229,229,225,223,221,219,218,215,214,213,210,209,206,206,202,202,196,194,193,191,189,189,190,189,186,186,185,185,185,184,183,182,182,184,183,184,185,185,185,187,189,189,191,191,195,195,195,199,200,203,205,208,210,212,212,212,215,219,217,223,223,223,227,228,232,232,233,234,237,238,238,240,240,244,243,246,245,247,246,247,246,247,247,247,248,248,246,248,246,247,247,245,244,244,241,240,239,237,236,235,234,231,232,228,227,226,223,220,218,217,214,213,211,209,209,207,205,201,199,197,197,196,193,191,189,189,187,187,186,186,184,184,183,185,182,183,183,183,183,184,187,186,188,188,189,190,191,193,196,197,200,201,204,204,206,209,211,212,214,216,217,219,221,223,224,226,230,231,232,233,235,236,238,239,242,241,242,243,244,244,246,247,247,247,247,249,247,247,247,247,247,246,246,246,245,243,242,243,241,238,238,236,234,234,230,229,228,228,227,223,223,218,217,215,214,211,209,207,207,202,201,198,196,197,194,192,192,190,191,187,185,185,186,184,183,183,181,183,184,184,183,185,186,188,188,188,188,190,191,194,194,196,198,200,201,203,206,207,208,209,214,214,214,217,219,222,222,224,227,230,229,232,233,234,237,239,238,241,242,243,243,244,245,246,246,247,246,247,247,247,247,248,247,246,249,246,246,244,243,243,241,240,239,240,236,237,233,232,229,230,226,224,222,221,218,218,215,216,211,209,209,206,204,201,201,199,196,192,191,189,189,188,188,187,187,185,183,183,183,182,182,181,182,183,183,184,184,186,188,188,190,191,195,195,197,197,201,201,202,205,207,208,210,212,215,216,216,221,222,221,226,227,227,230,232,233,235,236,237,239,241,241,243,243,244,244,245,248,245,247,248,247,247,247,247,248,246,246,248,246,245,244,243,241,240,239,237,237,235,235,232,230,228,228,223,223,222,218,216,215,214,211,209,206,204,202,201,201,197,196,193,191,190,189,190,186,186,184,185,185,183,183,185,183,183,183,183,184,184,185,188,186,188,188,190,190,192,196,198,199,202,203,205,207,208,210,211,215,216,220,219,221,225,224,225,227,229,231,235,234,236,240,240,243,241,243,243,247,244,246,246,247,247,247,245,245,247,247,246,247,246,247,244,244,243,241,241,241,239,237,236,235,234,231,228,230,227,225,225,220,220,217,214,212,210,209,207,205,203,202,199,197,196,193,192,193,189,189,186,185,184,184,183,183,183,182,184,182,182,184,183,184,185,188,186,189,189,190,192,194,195,198,199,201,202,205,209,209,212,212,213,217,217,220,222,223,225,225,229,230,231,233,234,237,237,240,242,242,243,245,246,245,246,246,247,248,248,247,248,247,248,247,247,246,246,245,244,243,242,242,241,240,240,236,236,235,234,230,228,226,226,221,220,219,217,215,214,212,209,207,206,204,201,200,197,196,193,192,190,189,188,187,187,186,185,186,186,185,183,183,182,183,183,184,184,186,188,187,189,190,190,192,195,198,200,200,202,202,206,206,207,209,213,216,216,220,220,223,223,225,228,229,231,233,234,236,237,239,240,242,243,245,246,245,246,246,249,248,247,248,247,248,248,247,247,248,248,247,247,245,244,243,242,241,239,240,238,236,234,233,230,227,226,226,224,220,219,216,215,212,210,208,208,204,203,201,199,198,196,194,193,190,188,188,186,185,186,185,184,184,182,183,184,184,185,184,186,185,186,186,187,189,189,190,193,196,196,197,201,201,203,206,208,211,211,212,214,216,219,221,221,224,226,226,229,230,231,234,235,236,238,240,242,242,244,245,247,247,246,247,247,248,248,248,249,249,247,248,247,248,247,246,246,243,242,241,241,239,237,237,235,231,233,227,227,226,223,221,220,218,217,214,213,210,207,207,205,202,199,197,196,194,192,193,190,189,188,186,186,184,185,184,183,182,182,182,183,183,184,183,184,185,188,189,189,187,190,192,194,196,199,199,203,204,207,210,211,213,214,216,218,220,219,223,224,227,228,230,231,234,235,237,239,239,241,240,244,244,246,246,249,247,248,248,248,247,246,248,248,248,248,247,247,247,246,244,244,243,242,242,241,237,236,234,233,233,230,227,226,225,222,220,219,218,215,213,211,209,206,206,204,200,196,198,194,191,190,189,188,187,186,186,184,184,185,183,182,184,182,181,184,182,186,185,187,188,189,188,190,192,193,194,196,198,199,201,203,206,207,211,212,213,214,217,220,220,222,223,228,229,229,233,235,234,235,237,239,243,241,242,243,245,247,246,248,248,248,249,249,247,249,247,247,247,246,246,246,245,244,244,242,241,239,240,236,236,234,233,231,231,227,224,224,220,219,216,214,212,209,210,206,204,205,201,202,197,196,193,192,190,188,187,186,185,186,185,184,185,185,185,182,184,185,185,183,185,184,186,187,187,190,191,190,192,193,198,197,200,203,205,206,207,209,212,213,215,216,220,221,221,223,225,228,230,232,232,234,237,237,238,241,241,242,243,244,246,246,249,246,247,246,248,247,247,247,247,247,246,246,247,245,246,243,242,241,240,239,237,234,234,232,230,230,228,226,223,221,220,217,218,214,212,210,208,206,201,203,200,197,197,194,191,190,190,189,187,186,186,185,184,184,185,182,182,182,184,185,185,185,187,188,187,187,188,192,193,193,195,196,198,200,203,203,209,209,210,212,214,216,219,221,219,224,224,227,229,230,231,233,235,235,237,238,240,241,244,245,246,245,248,247,248,248,248,248,248,248,248,248,248,249,247,247,246,245,245,242,242,240,239,238,235,234,235,230,228,227,225,223,221,217,218,215,213,212,210,210,206,205,204,200,200,195,194,191,190,188,189,188,188,187,187,186,186,186,184,183,182,182,184,184,185,186,186,187,188,188,190,192,196,195,197,199,202,203,205,207,208,212,214,213,216,218,220,220,224,225,225,228,230,232,232,235,236,238,239,241,243,244,245,244,247,248,247,247,248,248,249,248,248,249,249,248,248,246,247,245,243,243,244,242,241,240,238,238,235,233,231,230,226,225,224,220,218,218,215,214,210,209,208,206,205,202,199,198,199,194,191,192,189,188,186,187,186,184,184,184,183,185,182,184,184,184,184,185,184,187,186,190,190,191,193,193,195,195,198,200,202,202,207,208,209,212,214,216,216,218,222,222,223,226,228,228,230,232,235,238,237,240,241,242,243,244,246,246,246,246,249,248,247,248,246,247,248,247,247,248,247,245,248,246,245,244,243,243,240,238,237,234,232,229,228,227,225,223,223,219,217,215,213,211,209,207,205,203,201,200,198,196,195,191,190,190,188,187,187,186,186,185,185,183,183,182,183,183,183,184,186,185,185,188,188,188,190,190,193,195,199,198,201,204,206,206,208,211,211,215,215,217,219,222,225,224,226,227,230,230,233,235,236,239,239,240,243,243,243,246,247,246,248,248,248,249,249,249,249,248,248,247,247,246,246,246,245,244,242,242,240,239,237,237,236,232,231,229,228,225,223,220,219,216,214,214,212,209,208,207,205,203,199,198,197,193,191,190,191,188,189,187,187,187,186,184,185,182,182,182,182,185,183,185,185,185,189,188,189,193,192,195,197,198,200,201,203,205,207,208,210,212,214,217,218,220,221,222,226,226,230,232,234,232,236,237,238,240,241,243,242,243,246,248,247,249,248,248,248,249,248,248,249,248,248,248,246,247,246,246,244,243,242,242,239,238,236,235,234,231,230,227,225,224,220,220,217,217,212,209,207,206,205,206,201,201,199,197,195,193,192,189,187,189,188,186,186,186,184,184,183,184,184,184,185,182,185,187,187,188,188,191,189,191,193,195,197,198,201,203,206,206,208,211,214,216,216,217,219,221,221,224,227,229,229,230,232,235,236,239,240,239,243,243,243,245,245,247,248,247,247,247,248,248,248,249,247,247,246,247,248,246,244,242,242,244,241,239,236,235,233,234,230,229,226,225,222,221,220,217,214,213,210,209,208,205,204,201,199,197,196,195,193,190,188,190,189,188,187,187,185,185,184,183,183,183,184,184,184,185,186,187,187,188,190,190,191,195,197,197,197,200,202,206,208,207,210,213,213,215,219,218,222,222,223,226,227,230,230,234,233,236,237,238,242,244,243,244,245,248,246,246,246,248,247,246,246,247,247,248,247,246,247,247,246,245,244,243,242,242,239,236,235,234,234,231,229,226,224,225,219,218,218,215,214,214,208,208,206,205,202,201,198,195,194,190,190,188,186,187,187,184,187,184,184,182,181,182,182,182,184,185,184,185,185,186,187,188,189,191,193,194,195,197,200,203,204,206,208,210,213,214,215,219,220,224,223,224,228,227,229,231,232,233,234,240,239,242,243,244,245,246,247,248,248,248,248,249,248,249,248,249,248,248,246,246,246,246,245,244,243,244,240,239,237,236,234,232,230,228,229,227,222,220,221,216,215,213,210,209,208,205,204,202,200,197,195,194,190,190,188,187,187,186,185,186,186,184,184,185,185,184,185,183,183,186,185,186,189,187,190,190,193,194,196,198,199,203,203,204,207,211,213,213,218,217,217,219,221,223,224,226,228,229,233,233,234,236,238,239,241,242,243,244,245,245,246,246,249,246,247,247,247,247,246,246,246,246,246,245,245,246,244,241,242,242,238,237,236,234,232,230,230,226,224,221,220,218,215,216,215,210,209,209,206,203,200,197,198,194,193,191,189,188,187,186,188,184,184,185,184,182,185,184,183,183,182,183,186,186,186,186,189,189,192,191,194,196,197,200,200,203,205,207,208,213,214,215,219,217,219,223,222,225,226,227,231,231,232,234,237,238,239,243,241,243,244,245,245,249,248,247,247,250,247,246,247,246,247,246,246,246,244,244,245,243,244,240,239,237,235,234,234,230,228,229,226,222,220,220,217,215,213,214,210,208,205,203,201,201,196,194,193,190,192,191,188,187,187,186,185,185,184,183,182,182,182,182,185,182,185,185,185,187,189,189,189,193,193,194,195,198,199,201,206,207,208,211,212,214,218,218,220,220,222,223,226,228,228,230,233,233,235,239,239,243,244,242,244,246,246,247,247,250,248,250,248,248,249,249,248,248,247,247,246,244,244,243,241,241,241,239,238,236,234,234,231,228,227,225,223,223,220,216,214,214,211,210,207,205,203,202,200,197,196,192,191,191,190,189,188,187,185,185,184,184,183,183,183,183,183,183,183,184,185,186,187,189,190,191,192,193,195,196,198,200,202,202,206,208,211,211,215,216,218,219,221,223,225,226,229,229,232,233,235,236,238,239,240,241,243,244,246,246,247,247,247,248,248,248,248,248,247,247,247,247,246,246,246,245,244,243,242,241,240,238,236,234,232,231,228,227,225,223,221,219,217,216,214,212,210,208,206,203,201,199,196,195,194,191,191,189,189,188,187,186,185,184,184,183,182,182,182,183,183,184,185,186,186,187,188,189,190,191,193,196,197,198,200,202,204,206,207,210,213,214,216,218,220,221,223,225,227,228,230,231,232,234,236,238,238,241,240,243,244,245,246,247,247,247,248,248,247,248,248,248,248,247,247,246,246,245,245,243,243,242,241,239,237,236,234,232,230,228,226,223,222,221,219,217,215,213,212,209,208,205,203,201,199,196,195,192,190,190,188,189,187,186,185,184,184,183,183,183,183,182,183,183,184,184,185,186,186,188,188,191,192,193,195,197,199,199,203,206,208,208,210,213,215,217,218,220,222,223,225,225,228,231,232,234,235,236,238,240,241,241,243,245,245,246,247,247,247,247,247,248,248,247,248,247,247,247,247,247,245,245,244,242,242,240,238,237,236,234,231,230,228,227,225,222,220,219,217,214,212,210,209,206,205,203,201,199,197,195,193,192,190,188,188,187,185,184,185,184,184,182,183,182,183,183,184,183,184,185,186,188,189,190,190,193,194,196,197,198,200,203,205,207,210,211,213,215,217,218,220,222,222,225,226,229,230,231,233,234,237,240,240,242,243,243,245,246,247,247,247,247,247,248,247,247,248,248,247,247,247,246,246,246,244,243,243,242,240,239,238,235,233,230,230,228,226,225,223,221,218,217,215,213,211,208,207,205,203,201,198,196,195,193,192,190,189,188,187,187,186,185,185,184,183,183,182,182,183,183,184,184,185,186,188,188,188,191,192,194,196,195,199,201,202,204,205,211,211,212,215,216,219,220,222,223,224,227,228,230,232,233,235,236,238,240,243,243,244,245,248,247,247,248,248,247,250,248,247,248,248,247,248,247,246,246,245,244,244,241,242,240,238,236,235,233,232,229,227,225,223,221,219,218,217,214,213,211,210,206,205,203,200,198,196,194,192,190,190,189,188,186,187,185,185,184,184,183,183,184,181,185,183,184,185,187,187,188,189,191,190,191,194,196,198,200,200,205,208,208,209,212,214,216,218,220,222,222,224,226,228,229,231,232,235,237,237,239,241,242,243,245,245,246,247,247,247,248,248,248,248,248,247,247,248,247,247,247,246,245,245,243,243,240,239,240,237,236,233,233,229,228,227,225,222,220,218,216,214,212,210,206,207,205,204,200,198,196,194,192,191,190,189,187,187,185,185,184,184,184,183,182,182,183,183,184,184,185,185,187,187,189,190,191,193,195,198,198,200,202,204,206,208,210,212,214,216,218,219,221,223,225,225,227,229,230,233,234,236,238,240,241,242,243,244,246,246,246,247,247,248,248,248,248,248,247,247,247,247,247,246,245,245,244,243,242,241,239,238,236,233,232,230,228,227,225,223,221,220,218,216,214,213,210,207,205,203,201,199,197,195,194,192,190,190,188,187,187,186,186,184,184,183,183,184,183,183,183,183,184,185,186,187,188,189,190,192,194,195,197,198,201,203,205,207,209,210,212,214,217,219,220,221,224,225,228,228,230,231,233,234,236,238,239,241,242,245,245,246,247,248,248,248,248,248,248,248,248,248,247,247,247,247,246,246,245,244,243,242,241,240,237,236,235,233,230,229,227,224,223,221,218,217,218,213,212,210,208,206,203,201,200,197,194,193,191,190,189,188,188,187,186,185,184,184,184,183,182,183,182,184,183,185,186,187,187,189,189,190,191,193,195,197,199,201,202,205,207,209,211,213,215,217,218,220,221,224,225,227,227,230,232,233,235,236,238,240,241,242,244,245,246,246,247,247,248,248,248,248,248,248,248,247,247,247,247,246,246,245,244,243,242,241,239,237,235,234,233,230,229,227,225,222,221,220,217,216,213,211,209,207,206,204,202,200,197,195,193,192,191,189,188,187,185,185,185,183,184,182,182,183,183,183,183,183,184,185,186,188,188,190,190,192,194,195,197,199,200,203,204,207,209,211,213,216,217,218,220,222,224,224,227,229,230,232,233,235,237,237,240,242,243,244,245,247,247,246,247,248,248,248,248,247,248,247,248,247,248,247,246,246,245,244,243,242,241,240,238,236,233,233,230,228,226,225,223,221,218,217,215,214,212,209,207,207,205,200,198,197,197,193,191,192,189,189,187,187,185,185,184,184,183,183,182,183,183,184,184,185,186,186,188,189,190,192,193,195,196,198,202,202,205,207,208,210,212,214,216,217,220,221,223,225,226,227,229,230,232,235,235,237,238,240,242,243,244,245,246,247,247,247,248,247,248,248,248,247,247,247,247,247,246,245,245,245,242,241,241,240,237,237,234,235,231,229,227,225,222,223,219,216,216,216,213,210,208,206,204,202,199,199,195,193,192,190,189,188,187,187,188,184,184,184,184,183,183,184,183,183,184,184,186,186,188,188,189,189,192,193,196,196,199,201,203,205,207,209,210,213,214,216,217,220,221,223,224,227,228,228,232,235,234,236,238,239,240,242,243,245,248,246,247,247,249,248,248,248,250,248,248,247,247,249,247,246,246,245,243,244,242,240,238,236,235,234,233,231,229,226,225,223,220,219,217,215,213,211,209,207,206,205,201,199,197,195,192,191,190,189,188,188,186,186,184,184,186,183,182,181,182,182,183,184,185,188,186,188,189,190,192,194,194,194,196,201,199,202,204,206,209,211,212,215,217,218,220,222,224,225,228,228,229,232,233,235,237,238,240,242,242,243,244,247,246,247,246,249,247,247,248,248,248,248,249,247,246,248,246,246,247,245,243,241,241,240,238,235,232,230,231,228,226,226,222,221,220,217,216,214,212,211,208,204,205,200,197,195,193,195,191,190,189,188,187,186,185,185,184,183,183,184,184,182,182,183,184,184,184,185,186,190,188,189,191,192,194,196,199,201,201,204,206,208,213,212,214,216,218,221,222,222,224,226,229,230,230,232,233,238,238,239,241,241,244,244,245,245,247,248,246,248,248,248,250,248,248,248,247,247,246,245,245,244,244,243,241,241,239,236,234,234,232,231,228,226,224,222,220,218,217,215,214,211,209,207,205,203,201,198,196,194,194,191,190,189,188,187,186,184,184,184,183,184,183,182,182,182,179,183,185,185,185,188,187,189,191,191,193,194,197,198,200,202,207,209,209,213,214,215,215,217,220,223,223,225,229,228,229,231,233,235,235,238,239,241,241,242,244,245,246,248,250,246,248,248,248,248,248,248,247,247,245,246,246,246,247,243,245,242,239,238,237,235,233,232,231,228,227,223,223,220,218,217,215,213,211,209,207,205,203,201,197,197,195,193,191,190,189,187,187,185,185,184,184,184,183,181,182,183,182,183,183,184,186,185,186,189,188,190,191,193,195,196,198,201,202,204,208,209,211,215,215,217,219,220,221,224,225,227,227,229,231,235,235,239,237,239,240,245,243,243,246,247,246,246,248,250,248,248,248,247,248,246,247,247,245,245,244,244,243,243,242,241,239,240,237,234,231,229,227,226,224,222,220,218,217,215,213,210,209,207,204,202,199,198,196,194,192,191,189,189,188,186,185,185,185,184,183,183,181,182,181,181,183,183,184,185,185,188,187,190,192,191,194,195,199,198,200,204,205,207,208,209,211,213,215,218,220,222,223,225,227,229,229,232,232,235,236,238,239,240,241,243,244,245,245,246,247,248,248,248,247,247,247,250,246,246,246,248,245,247,244,243,243,241,241,239,237,235,233,232,230,229,227,225,222,222,218,215,215,212,210,208,205,204,201,200,198,196,194,193,191,189,190,190,186,186,185,184,184,182,180,182,182,181,181,182,183,183,184,186,188,188,189,192,190,193,195,195,199,201,202,207,207,209,211,212,214,215,218,220,222,225,225,226,229,228,231,234,235,239,238,239,241,243,244,245,248,246,246,247,246,247,247,247,247,247,248,248,246,246,247,246,245,245,244,242,241,238,238,235,233,233,231,229,227,225,225,224,220,217,217,213,214,209,207,205,203,201,199,197,195,194,194,190,188,188,187,188,185,185,184,184,182,182,183,182,182,182,182,182,185,185,186,188,189,188,190,194,193,196,197,198,202,202,205,207,210,212,214,215,216,217,221,222,224,225,227,228,230,231,236,234,237,239,241,242,246,244,247,245,245,247,246,247,250,248,247,248,248,246,249,246,246 };
+
+    int stepsPerRev103 = 103;
+    double revolutionHeight = 10.0 / 6.0; // 0.8...mm
+    double stepAngleDegrees = 360.0 / stepsPerRev103;
+    double stepAngleRads = DegreesToRadians * stepAngleDegrees;
+
+    int maxLayers = (int)measurements.size() / stepsPerRev103;
+
+    int nLayers = maxLayers;
+    int layerOffset = 0;
+
+    VTKBodyArray bodySlices;
+
+    for (int rev_i = 0; rev_i < nLayers; rev_i++)
+    {
+        VecArrayArray layerPerims;
+        CarveSlice(rev_i + layerOffset, measurements, layerPerims, revolutionHeight * (rev_i + layerOffset));
+
+
+        // Make sheet from each perim and sweep into body
+        for (VecArray layer : layerPerims)
+        {
+            int nPos = (int)layer.size();
+            PK_VECTOR_t* pkVectors = new PK_VECTOR_t[nPos];
+            for (int t = 0; t < nPos; t++)
+            {
+                pkVectors[t] = layer[t].PkVector();
+            }
+
+            PK_BODY_create_sheet_planar_o_t pkSheetOpt;
+            PK_BODY_create_sheet_planar_o_m(pkSheetOpt);
+            pkSheetOpt.plane.location = pkVectors[0];
+            pkSheetOpt.plane.axis = Dir::ZDir().GetVec().PkVector();
+            PK_BODY_t       fenceBody = 0;
+            PK_ERROR_code_t pkError = PK_BODY_create_sheet_planar(nPos, pkVectors, &pkSheetOpt, &fenceBody);
+            //CheckM(PK_ERROR_no_errors == pkError);
+            if (PK_ERROR_no_errors == pkError)
+            {
+
+
+                VTKBody vb(fenceBody);
+                IntIntPairArray ignore;
+                double layerHeight = revolutionHeight * 1.1;
+                bool sweptOk = vb.Sweep(Dir::ZDir(), layerHeight, ignore);
+                //CheckM(sweptOk);
+                if (sweptOk)
+                {
+                    bodySlices.push_back(vb);
+                }
+
+            }
+            delete[] pkVectors;
+        }
+
+    }
+    //DoCreateCylinder(bodySlices[0]);
+    VTKBody::TransmitBodies(VTK::Version_25_00, bodySlices, "D:\\slices.x_t");
+
+
+    PK_BODY_boolean_o_t boolOptions = { 0 };
+    PK_BODY_boolean_o_m(boolOptions);
+    boolOptions.function = PK_boolean_unite_c;
+    boolOptions.merge_imprinted = PK_LOGICAL_false; // PK_LOGICAL_true; we don't want to merge this leaves our tag to disappear
+    PKTopolTrackResults tracking;
+    PK_boolean_r_t boolRes = { 0 };
+    PK_ERROR_t pkError = 0;
+    for (int b = 1; b < bodySlices.size(); b++)
+    {
+        pkError = bodySlices[0].Boolean(bodySlices[b], &boolOptions, &tracking, &boolRes);
+        CheckM(PK_ERROR_no_errors == pkError);
+        tracking.Clear();
+        PK_boolean_r_f(&boolRes);
+    }
+
+    bodySlices[0].Transmit(VTK::Version_25_00, "D:\\temp.x_t");
+    
+
+
+    return true;
+}
+VTK_TEST_FN(TestPKUtils999_SpaceCarveSortingHat001)
+{
+    // Full scan
+
+    IntArray measurements = { 142,145,153,34,156,153,150,33,34,158,165,175,32,188,186,192,201,210,240,241,247,243,225,207,195,182,183,184,180,180,180,179,180,182,182,181,178,178,175,178,144,171,169,172,155,166,165,166,168,169,168,168,168,167,166,167,166,165,165,163,162,157,156,155,155,154,153,151,150,145,145,142,141,138,136,134,130,128,126,126,124,122,120,118,116,114,112,112,110,108,108,115,150,168,171,163,137,130,128,134,174,173,145,142,146,158,164,162,161,159,159,162,169,182,191,196,202,205,208,210,213,233,245,263,266,262,184,184,179,178,179,325,329,332,332,332,334,334,334,335,336,337,339,340,340,344,325,324,328,333,334,332,333,335,334,331,330,330,328,327,324,322,321,317,318,316,315,311,309,307,306,304,301,299,146,293,293,292,136,283,132,282,280,278,276,270,268,118,116,114,112,109,109,106,107,107,108,115,117,128,127,133,138,176,180,148,144,153,188,179,180,182,186,186,189,193,198,207,209,212,213,215,212,212,220,247,266,181,178,176,176,322,320,323,326,328,327,327,329,329,331,330,334,333,333,334,334,337,341,324,324,326,331,333,334,331,331,332,331,329,327,326,323,322,320,319,318,316,313,310,310,306,305,303,302,298,298,293,293,294,293,287,286,283,280,279,277,276,272,272,271,270,268,267,266,266,267,111,110,109,108,110,112,124,136,148,177,197,135,152,190,189,182,185,191,193,196,199,199,207,212,210,209,208,205,207,211,218,253,181,177,176,178,322,324,324,325,324,327,326,327,328,331,332,332,332,334,335,336,336,336,335,339,328,327,329,332,332,335,332,333,330,331,329,327,325,326,321,319,318,316,314,310,311,308,307,302,303,300,297,297,296,294,291,289,286,284,282,284,280,278,275,272,270,270,270,270,268,266,267,267,266,271,270,113,112,115,117,119,128,207,127,151,154,177,167,176,181,183,186,189,192,194,197,202,203,200,204,206,210,178,180,174,176,325,330,330,331,330,330,333,333,335,336,337,336,337,337,340,338,342,340,340,340,340,338,341,333,335,340,337,339,337,337,337,336,337,335,334,332,330,328,326,320,319,322,319,319,307,307,306,303,302,305,301,301,296,296,291,291,289,286,285,282,278,277,279,276,274,273,271,273,271,268,273,270,270,275,277,116,116,120,122,129,128,140,142,146,155,155,161,166,168,173,177,179,186,194,203,204,205,181,178,178,175,178,323,328,327,330,329,330,333,333,335,335,336,335,338,337,339,339,339,340,339,339,340,341,341,342,341,340,341,341,340,339,339,338,336,338,334,332,331,330,329,327,325,325,322,322,318,320,317,313,308,306,303,301,298,297,293,290,288,287,287,284,282,280,278,277,275,273,271,270,271,270,269,270,270,273,272,274,276,277,124,124,126,128,131,137,140,143,150,154,156,160,165,169,171,177,185,180,178,176,176,175,178,321,319,322,324,325,327,329,331,331,332,334,333,334,334,336,339,340,339,340,342,344,342,343,344,344,345,346,345,345,345,346,345,343,341,342,341,339,339,336,332,330,328,323,321,322,320,317,312,308,306,305,301,299,297,294,291,283,281,281,279,280,278,276,274,270,271,270,268,267,268,267,266,265,266,269,270,273,274,273,275,277,279,285,133,138,137,140,143,147,151,154,157,162,166,167,169,171,173,174,176,176,323,322,321,321,323,324,326,329,330,331,331,334,336,334,334,336,339,340,339,340,341,345,347,348,349,348,350,350,351,350,351,351,351,350,347,347,344,344,343,340,334,331,328,324,321,318,316,315,312,310,308,306,304,298,295,291,288,284,281,282,280,279,275,274,270,271,268,269,268,267,266,265,265,265,267,269,270,271,272,272,274,274,277,280,281,284,287,285,287,148,151,152,154,158,160,163,164,168,171,174,175,178,322,322,324,323,325,324,327,328,330,331,333,334,335,338,337,338,337,340,341,343,347,347,349,350,351,353,354,355,354,355,357,356,354,356,356,355,352,351,348,343,338,337,332,329,325,322,321,318,317,316,314,315,309,301,297,292,290,289,290,285,283,280,280,278,274,274,270,270,269,268,265,265,265,266,268,272,272,273,275,273,273,273,275,278,279,281,282,283,282,283,286,288,293,297,304,311,167,168,172,323,323,324,326,329,328,328,328,327,328,328,330,333,333,334,336,335,337,338,341,340,344,346,347,351,352,353,357,357,357,358,357,359,357,357,360,359,359,359,357,357,353,352,347,345,338,336,334,330,327,325,324,324,324,317,313,311,303,302,300,299,310,307,304,295,289,286,284,283,284,281,281,283,275,270,269,269,269,271,273,276,277,278,277,276,276,275,278,283,281,282,281,281,284,289,309,309,311,313,319,319,321,323,326,325,327,328,329,328,328,328,328,328,329,331,334,335,335,337,336,338,341,343,346,347,350,352,353,356,359,358,361,363,362,364,363,362,362,363,362,362,361,360,357,355,353,350,345,341,340,339,336,333,331,329,326,325,320,316,318,320,320,318,314,308,305,303,296,292,290,286,285,283,281,281,282,283,284,279,274,274,273,276,277,279,278,280,279,278,278,283,284,282,283,287,297,303,304,306,309,313,314,316,317,319,321,322,323,325,326,326,325,324,327,328,327,329,330,332,335,336,337,339,341,343,346,346,350,355,354,359,360,361,363,363,365,365,367,367,366,366,365,364,364,365,362,358,354,351,349,343,341,340,339,338,335,332,333,330,328,328,326,325,322,319,316,313,311,307,304,297,295,290,288,284,283,282,281,282,284,282,282,281,279,279,279,280,281,281,281,282,284,283,287,287,291,291,294,297,300,305,309,310,312,313,316,317,319,321,322,325,328,327,328,329,326,326,327,327,329,331,334,334,337,339,340,341,345,348,350,352,354,356,360,360,362,365,366,369,368,368,368,369,367,366,364,361,359,358,354,354,349,347,345,343,341,341,339,335,336,334,333,332,331,330,328,325,322,319,318,310,308,304,295,292,291,286,283,280,280,279,280,284,283,280,280,280,278,277,276,276,278,280,283,285,287,289,292,293,295,297,301,306,308,311,314,314,318,320,322,324,326,334,334,335,334,335,333,327,327,327,329,330,332,334,335,338,339,340,344,344,346,350,352,354,356,359,360,363,364,364,366,366,367,365,363,364,360,357,354,353,350,351,351,348,347,346,342,341,340,339,338,337,334,334,331,329,329,328,324,323,319,316,313,309,305,299,295,291,286,282,278,279,276,278,281,285,282,279,277,278,276,276,277,280,282,285,287,293,291,298,303,308,311,311,314,316,316,319,322,324,325,326,326,329,329,331,332,334,331,330,329,330,330,330,332,334,336,337,339,339,341,342,343,347,348,352,353,356,356,359,360,361,360,359,361,361,357,355,354,352,352,353,353,352,351,350,350,348,344,343,343,341,340,339,337,336,335,333,331,328,327,323,323,318,317,314,311,306,302,295,291,288,284,279,278,277,276,280,283,285,286,280,279,281,280,282,286,294,296,299,301,302,304,305,306,308,309,311,317,317,322,323,325,324,327,326,328,329,329,328,328,329,328,330,330,331,329,333,336,336,338,340,339,340,340,342,344,346,347,349,352,353,354,356,353,352,354,353,354,354,352,352,352,353,353,353,352,352,350,353,349,348,345,342,343,339,340,340,337,335,334,333,328,327,324,323,322,317,313,311,308,300,294,294,288,283,280,277,276,275,277,281,280,283,285,285,287,289,290,293,296,297,299,299,300,300,301,303,304,310,312,314,318,321,324,324,326,327,329,327,328,327,327,327,329,328,332,330,331,332,333,335,336,338,338,339,340,342,341,342,344,346,346,347,351,351,353,355,352,355,354,355,355,354,354,356,355,355,356,356,357,356,356,357,355,353,351,349,346,345,344,339,338,336,332,331,329,327,323,321,319,316,314,310,304,299,294,291,286,281,278,278,278,278,280,278,279,280,281,284,286,287,288,292,293,293,294,295,297,299,303,305,310,311,317,318,321,324,326,329,329,329,330,330,329,330,331,330,330,330,332,334,338,338,338,340,340,343,341,344,343,343,344,346,347,349,350,350,352,352,354,354,355,356,357,357,357,358,358,359,360,360,360,361,361,362,361,361,359,358,357,354,351,348,344,342,340,337,335,329,328,326,323,319,318,317,311,306,299,296,293,291,286,281,280,280,280,278,277,277,275,278,279,280,282,285,288,288,291,292,295,298,301,305,309,311,315,317,318,322,325,327,329,330,332,332,333,334,333,335,335,336,337,338,340,341,343,346,348,349,351,351,350,351,349,350,350,351,351,352,353,356,358,358,359,359,360,362,363,362,363,365,365,366,365,365,366,367,366,370,365,364,365,362,359,358,354,351,349,346,341,338,335,332,328,326,324,319,316,314,308,301,300,297,293,288,285,283,282,286,281,278,275,273,273,272,276,277,278,286,288,290,294,297,300,303,306,308,312,316,318,321,323,327,328,329,331,334,334,335,338,336,338,339,341,341,343,344,345,347,349,350,351,351,351,354,354,354,354,355,355,357,358,361,361,363,365,364,366,367,368,367,369,369,369,371,370,370,370,371,370,369,368,367,366,366,363,362,360,358,354,352,351,344,339,337,332,333,328,327,323,321,317,314,310,303,299,297,293,290,288,287,286,284,285,278,274,274,273,273,277,282,283,289,293,297,298,302,306,310,312,316,319,321,322,324,327,331,331,334,336,336,340,339,340,341,343,344,344,344,345,348,350,352,352,352,355,355,355,356,357,357,358,361,361,363,366,366,367,370,370,372,372,371,372,373,375,373,373,374,373,374,372,371,371,371,367,368,369,365,363,363,361,358,355,351,347,341,336,333,334,330,331,329,327,322,320,313,308,302,300,298,295,288,287,286,286,288,285,276,273,273,274,278,283,288,292,293,300,303,306,310,312,315,317,318,320,322,325,327,330,332,335,335,336,339,340,341,342,342,344,344,345,349,350,352,354,355,356,360,359,359,361,360,363,363,365,368,368,371,373,371,372,374,375,376,375,376,376,376,376,376,378,378,383,371,371,372,376,367,367,365,364,361,359,359,358,354,349,345,341,337,335,335,333,332,332,334,324,320,311,307,304,302,298,297,294,292,292,290,291,293,281,277,276,278,281,283,288,293,298,302,306,306,310,311,313,317,318,319,326,328,329,331,333,331,336,338,338,341,342,341,344,344,345,351,353,356,358,358,361,364,365,365,366,368,368,370,373,372,373,374,375,377,377,377,380,380,380,381,381,381,381,381,377,378,382,375,363,365,367,368,369,367,370,362,361,358,358,354,352,349,344,342,337,336,337,337,338,337,337,328,322,317,310,306,305,302,301,300,300,294,294,294,297,299,280,278,279,281,287,290,296,300,304,305,307,310,312,317,318,319,321,325,326,331,334,336,336,338,339,340,341,342,343,347,347,346,353,354,357,361,363,365,367,368,369,371,371,374,375,375,377,379,382,381,382,383,383,385,386,387,387,390,389,392,392,396,399,403,409,413,365,367,368,367,371,373,376,362,361,358,356,354,351,348,346,343,341,341,340,341,341,340,342,332,322,313,311,309,308,305,303,302,302,299,300,303,304,313,283,284,284,290,296,299,302,304,312,316,321,320,325,323,325,325,327,331,333,338,339,338,339,340,340,341,342,345,346,349,351,354,357,360,363,366,368,369,371,374,374,377,377,379,381,381,382,385,387,387,388,390,391,392,395,398,401,407,396,398,399,399,402,406,408,490,490,490,490,372,375,371,373,377,378,476,392,394,396,398,390,391,387,384,374,362,358,355,331,331,317,317,313,313,310,312,313,312,311,310,311,312,313,292,291,292,295,298,304,308,311,314,318,319,323,325,329,330,330,332,335,334,335,335,336,339,338,341,340,341,344,347,351,352,356,359,363,364,367,369,372,373,377,378,379,381,383,386,385,388,391,392,392,394,396,395,399,398,401,403,403,406,408,409,411,416,423,426,438,490,422,490,490,478,479,481,482,473,388,390,394,468,386,387,388,461,456,453,377,355,342,336,333,328,322,316,315,313,314,314,315,317,319,317,315,313,301,295,293,295,298,300,307,310,313,315,318,321,323,325,326,326,327,329,331,331,332,335,335,337,339,341,343,345,348,350,353,355,358,362,366,367,371,373,376,377,379,382,382,385,386,388,389,390,392,395,395,396,398,400,401,402,404,405,408,409,412,412,416,419,417,490,490,490,490,490,490,490,480,490,490,472,470,466,465,461,456,453,451,449,449,448,356,349,344,335,330,326,317,315,315,316,316,317,319,318,316,314,317,287,288,286,289,289,294,301,306,308,310,312,316,317,317,318,321,322,323,325,330,331,333,334,338,340,343,344,346,348,351,353,357,361,363,366,369,371,373,375,379,381,382,384,386,386,388,390,392,393,395,396,397,398,399,402,403,405,408,410,410,412,415,417,420,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,462,453,451,450,451,450,451,490,490,490,490,490,490,421,317,317,316,316,316,315,314,314,289,285,286,285,287,288,290,289,290,292,295,300,302,305,308,311,314,315,320,324,325,328,331,333,336,339,342,344,347,349,352,355,360,370,372,372,373,374,375,377,380,381,383,385,386,388,390,390,394,394,397,397,399,400,402,403,403,406,409,410,413,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,411,410,319,318,315,313,313,313,287,285,284,284,287,291,291,290,288,289,288,288,290,292,296,301,305,309,314,319,322,327,330,332,336,340,342,345,348,352,354,359,365,367,373,376,381,384,386,392,396,398,400,404,406,409,412,416,419,421,424,427,432,433,437,442,446,451,456,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,407,407,408,316,313,311,289,287,287,286,287,289,292,291,291,290,289,288,290,289,290,291,295,302,303,310,316,321,325,329,334,337,341,343,347,349,354,356,362,365,369,373,377,381,383,388,390,394,395,398,402,404,408,410,414,415,419,421,424,425,429,434,434,435,441,451,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,407,409,318,313,306,297,291,289,289,290,296,294,291,290,291,284,290,292,294,297,303,307,314,321,324,326,329,333,333,335,338,343,345,348,352,355,359,362,365,371,375,378,383,386,388,389,393,397,400,401,405,407,410,412,415,418,420,424,426,428,429,433,436,440,447,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,404,407,318,317,316,332,316,308,304,300,297,294,291,290,289,290,291,292,295,299,304,312,317,320,326,330,334,337,340,344,345,350,352,354,358,361,366,372,375,377,381,384,386,389,393,397,396,400,404,406,408,411,414,417,419,421,422,424,428,430,433,438,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,418,419,421,326,311,307,305,301,297,294,290,290,289,292,291,293,300,303,309,315,322,325,330,333,336,343,344,348,352,354,357,360,366,372,375,380,382,384,387,390,392,396,398,400,402,404,407,410,413,413,417,419,422,423,428,446,448,452,455,460,465,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,423,422,422,421,322,318,315,314,302,301,296,291,292,291,295,299,306,306,311,316,320,324,328,333,334,339,342,346,349,352,355,360,364,367,372,376,379,383,388,391,395,397,401,402,406,409,411,415,417,420,423,426,430,435,438,438,441,444,447,449,455,466,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,436,423,421,419,420,322,319,314,310,307,304,297,294,293,298,300,304,307,310,313,316,320,324,327,332,335,338,343,346,351,352,358,363,367,368,371,376,380,383,386,391,395,396,401,404,406,407,412,414,418,419,422,425,428,432,435,437,440,442,445,451,456,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,419,417,417,321,316,312,309,308,300,298,298,298,300,301,301,303,306,309,312,319,322,327,330,334,337,343,346,350,355,358,361,366,369,373,377,381,384,386,390,393,398,399,401,406,410,411,414,417,419,423,426,429,433,434,436,438,443,445,449,455,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,423,414,414,414,320,315,308,304,300,301,298,296,295,296,296,298,300,304,307,312,317,321,328,331,338,342,347,349,353,358,363,366,370,373,377,381,384,388,392,393,398,402,404,406,410,412,416,417,420,423,427,430,432,435,437,441,445,449,453,465,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,417,411,412,414,318,315,306,302,300,298,295,295,294,296,298,300,303,305,311,315,320,325,331,335,340,346,351,354,359,364,368,373,376,380,384,386,390,394,397,400,404,407,409,412,416,418,420,424,426,429,432,434,439,441,444,447,451,456,468,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,414,411,411,323,319,310,305,301,298,296,297,302,301,302,305,308,307,311,316,321,324,330,335,342,345,351,355,360,363,369,374,379,384,386,390,392,395,399,401,406,409,413,417,417,421,423,427,427,432,436,438,441,443,447,449,453,459,473,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,410,407,405,317,309,305,301,302,306,306,307,307,311,309,313,315,315,317,321,327,329,338,342,349,352,359,363,368,372,376,382,385,390,393,396,400,402,406,409,412,416,417,421,424,426,429,433,434,439,442,445,446,452,455,461,469,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,411,405,409,413,319,311,314,309,307,307,306,306,307,307,312,317,318,322,324,329,332,338,344,350,355,361,369,374,380,382,388,390,394,399,402,405,409,412,415,418,421,423,427,429,431,436,437,440,442,445,450,454,459,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,410,413,412,319,316,311,308,304,301,301,304,302,304,309,313,319,325,328,340,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,450,446,446,448,451,453,457,460,464,467,471,475,480,484,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,409,409,409,313,310,306,301,300,300,299,299,303,306,309,315,320,334,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,452,452,452,454,457,459,461,464,468,473,476,482,488,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,404,405,405,309,303,304,300,299,299,301,301,304,308,315,321,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,456,457,457,459,461,466,467,472,475,478,483,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,405,400,403,307,304,303,304,301,303,305,308,306,309,314,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,466,466,468,471,475,478,483,489,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,403,403,490,387,307,305,301,300,302,303,308,311,313,317,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,379,382,300,294,295,298,300,309,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,393,374,379,295,287,288,292,303,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,392,367,370,376,280,282,288,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,361,365,278,276,280,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,352,360,268,270,490,490,490,490,490,490,490,490 };
+
+    for (size_t s = 0; s < measurements.size(); s++)
+    {
+        if (measurements[s] < 50)
+        {
+            measurements[s] = measurements[s - 1];
+        }
+    }
+
+
+    int stepsPerRev103 = 103;
+    double revolutionHeight = 10.0 / 6.0; // 0.8...mm
+    double stepAngleDegrees = 360.0 / stepsPerRev103;
+    double stepAngleRads = DegreesToRadians * stepAngleDegrees;
+
+    int maxLayers = (int)measurements.size() / stepsPerRev103;
+
+    int nLayers = maxLayers;
+    int layerOffset = 0;
+
+    VTKBodyArray bodySlices;
+    nLayers = 1;
+    for (int rev_i = 0; rev_i < nLayers; rev_i++)
+    {
+        VecArrayArray layerPerims;
+        CarveSlice(rev_i + layerOffset, measurements, layerPerims, revolutionHeight * (rev_i + layerOffset));
+
+
+        // Make sheet from each perim and sweep into body
+        for (VecArray layer : layerPerims)
+        {
+            int nPos = (int)layer.size();
+            PK_VECTOR_t* pkVectors = new PK_VECTOR_t[nPos];
+            for (int t = 0; t < nPos; t++)
+            {
+                pkVectors[t] = layer[t].PkVector();
+            }
+
+            PK_BODY_create_sheet_planar_o_t pkSheetOpt;
+            PK_BODY_create_sheet_planar_o_m(pkSheetOpt);
+            pkSheetOpt.plane.location = pkVectors[0];
+            pkSheetOpt.plane.axis = Dir::ZDir().GetVec().PkVector();
+            PK_BODY_t       fenceBody = 0;
+            PK_ERROR_code_t pkError = PK_BODY_create_sheet_planar(nPos, pkVectors, &pkSheetOpt, &fenceBody);
+            //CheckM(PK_ERROR_no_errors == pkError);
+            DEB_assert(PK_ERROR_no_errors == pkError);
+            if (PK_ERROR_no_errors == pkError)
+            {
+
+
+                VTKBody vb(fenceBody);
+                IntIntPairArray ignore;
+                double layerHeight = revolutionHeight * 1.1;
+                bool sweptOk = vb.Sweep(Dir::ZDir(), layerHeight, ignore);
+                //CheckM(sweptOk);
+                if (sweptOk)
+                {
+                    bodySlices.push_back(vb);
+                }
+
+            }
+            delete[] pkVectors;
+        }
+
+    }
+    //DoCreateCylinder(bodySlices[0]);
+    VTKBody::TransmitBodies(VTK::Version_25_00, bodySlices, "D:\\hat_slices.x_t");
+
+
+    PK_BODY_boolean_o_t boolOptions = { 0 };
+    PK_BODY_boolean_o_m(boolOptions);
+    boolOptions.function = PK_boolean_unite_c;
+    boolOptions.merge_imprinted = PK_LOGICAL_false; // PK_LOGICAL_true; we don't want to merge this leaves our tag to disappear
+    PKTopolTrackResults tracking;
+    PK_boolean_r_t boolRes = { 0 };
+    PK_ERROR_t pkError = 0;
+    for (int b = 1; b < bodySlices.size(); b++)
+    {
+        pkError = bodySlices[0].Boolean(bodySlices[b], &boolOptions, &tracking, &boolRes);
+        CheckM(PK_ERROR_no_errors == pkError);
+        tracking.Clear();
+        PK_boolean_r_f(&boolRes);
+    }
+
+    bodySlices[0].Transmit(VTK::Version_25_00, "D:\\hat_bool.x_t");
+
+
+
+    return true;
+}
+
+
+
+VTK_TEST_FN(TestPKUtils999_SpaceCarveShortWall001)
+{
+    
+    IntArray measurements = { 377, 370, 35, 377, 55, 35, 35, 389, 395, 395, 34, 410, 411, 409, 411, 416, 417, 422, 425, 36, 432, 443, 443, 35, 450, 490, 490, 490, 490, 490, 490, 490, 490, 490, 490, 490, 490, 490, 408, 411, 412, 320, 320, 320, 317, 320, 318, 490, 406, 393, 394, 390, 390, 391, 393, 394, 399, 403, 404, 409, 409, 414, 415, 421, 418, 427, 429, 435, 435, 438, 442, 445, 449, 455, 461, 469, 471, 471, 478, 476, 483, 483, 490, 490, 490, 490, 490, 490, 490, 411, 410, 414, 319, 321, 320, 320, 321, 323, 490, 490, 450, 402, 388, 372, 370, 369, 372, 374, 378, 383, 380, 390, 388, 396, 395, 401, 403, 405, 412, 409, 416, 418, 421, 422, 427, 428, 435, 437, 443, 450, 475, 490, 490, 490, 490, 490, 490, 490, 490, 490, 490, 490, 490, 410, 408, 321, 317, 320, 318, 317, 316, 317, 490, 415, 398, 396, 390, 388, 388, 393, 395, 400, 402, 403, 408, 410, 412, 417, 420, 422, 425, 426, 433, 433, 441, 440, 445, 449, 453, 458, 464, 471, 474, 477, 479, 481, 482, 489, 490, 490, 490, 490, 490, 490, 490, 408, 412, 319, 320, 320, 321, 320, 321, 317, 439, 395 };
+    double stepstoCOR = 416.87;
+    double factor = -6.202;
+
+    int stepsPerRev103 = 103;
+    double revolutionHeight = 10.0 / 6.0; // 0.8...mm
+    double distanceToCOR = 67.21; //# mm
+    
+    double xHome = 0;
+    double yHome = 0;
+    double stepAngleDegrees = 360.0 / stepsPerRev103;
+    double stepAngleRads = DegreesToRadians * stepAngleDegrees;
+
+    int maxLayers = (int)measurements.size() / stepsPerRev103;
+
+    int rev_i = 0;
+    int nLayers = maxLayers;
+    int layerOffset = 0;
+
+    VTKBodyArray bodySlices;
+
+    for (int rev_i = 0; rev_i < nLayers; rev_i++)
+    {
+        VecArrayArray layerPerims;
+        CarveSlice(rev_i + layerOffset, measurements, layerPerims, revolutionHeight * (rev_i + layerOffset));
+
+
+        // Make sheet from each perim and sweep into body
+        for (VecArray layer : layerPerims)
+        {
+            int nPos = (int)layer.size();
+            PK_VECTOR_t* pkVectors = new PK_VECTOR_t[nPos];
+            for (int t = 0; t < nPos; t++)
+            {
+                pkVectors[t] = layer[t].PkVector();
+            }
+
+            PK_BODY_create_sheet_planar_o_t pkSheetOpt;
+            PK_BODY_create_sheet_planar_o_m(pkSheetOpt);
+            pkSheetOpt.plane.location = pkVectors[0];
+            pkSheetOpt.plane.axis = Dir::ZDir().GetVec().PkVector();
+            PK_BODY_t       fenceBody = 0;
+            PK_ERROR_code_t pkError = PK_BODY_create_sheet_planar(nPos, pkVectors, &pkSheetOpt, &fenceBody);
+            //CheckM(PK_ERROR_no_errors == pkError);
+            if (PK_ERROR_no_errors == pkError)
+            {
+
+
+                VTKBody vb(fenceBody);
+                IntIntPairArray ignore;
+                double layerHeight = revolutionHeight * 1.1;
+                bool sweptOk = vb.Sweep(Dir::ZDir(), layerHeight, ignore);
+                //CheckM(sweptOk);
+                if (sweptOk)
+                {
+                    bodySlices.push_back(vb);
+                }
+
+            }
+            delete[] pkVectors;
+        }
+
+    }
+
+    VTKBody::TransmitBodies(VTK::Version_25_00, bodySlices, "D:\\slices.x_t");
+
+
+    PK_BODY_boolean_o_t boolOptions = { 0 };
+    PK_BODY_boolean_o_m(boolOptions);
+    boolOptions.function = PK_boolean_unite_c;
+    boolOptions.merge_imprinted = PK_LOGICAL_false; // PK_LOGICAL_true; we don't want to merge this leaves our tag to disappear
+    PKTopolTrackResults tracking;
+    PK_boolean_r_t boolRes = { 0 };
+    PK_ERROR_t pkError = 0;
+    for (int b = 1; b < bodySlices.size(); b++)
+    {
+        pkError = bodySlices[0].Boolean(bodySlices[b], &boolOptions, &tracking, &boolRes);
+        CheckM(PK_ERROR_no_errors == pkError);
+        tracking.Clear();
+        PK_boolean_r_f(&boolRes);
+    }
+
+    bodySlices[0].Transmit(VTK::Version_25_00, "D:\\temp.x_t");
+
+
+    return true;
+}
+
+VTK_TEST_FN(TestPKUtils999_SpaceCarve001)
+{
+    //IntArray measurements = { 292,286,284,277,275,268,265,259,257,254,249,247,244,243,240,240,242,241,242,243,248,248,253,257,262,265,268,273,276,281,285,290,296,297,302,303,308,307,310,311,313,310,312,311,311,309,307,304,304,299,295,293,286,285,278,276,267,267,260,256,252,251,247,247,243,241,242,241,241,245,245,249,249,255,257,261,264,270,275,277,283,288,290,294,298,303,304,307,308,311,311,312,313,313,312,310,310,307,304,302,301,297,291,288,283,279,274,271,266,262,257,254,249,248,244,245,243,242,241,243,243,245,248,252,255,257,261,267,269,275,277,284,287,291,295,299,301,304,307,310,310,312,311,313,311,313,312,310,306,305,303,299,294,292,287,283,277,275,268,266,261,258,254,249,248,245,244,243,240,243,242,244,245,249,250,255,259,263,267,270,275,279,283,288,291,296,297,302,304,307,308,311,312,313,312,313,312,311,309,308,305,301,299,295,291,286,282,279,275,269,264,262,256,252,250,248,246,244,242,242,241,242,244,247,248,252,254,259,261,267,271,276,278,284,287,291,293,299,303,305,306,308,311,310,311,313,313,312,310,308,307,304,302,300,295 };
+    IntArray measurements = { 206,203,201,270,202,182,153,237,259,445,179,183,191,201,201,203,204,205,210,212,218,220,223,223,223,223,225,223,225,223,223,220,222,220,222,213,224,280,224,226,226,225,226,226,223,218,217,215,213,208,352,355,346,345,348,346,310,182,233,347,346,345,348,349,349,352,356,354,354,360,365,221,223,226,227,227,226,229,227,228,229,226,226,224,380,385,385,227,228,333,335,338,344,355,365,351,259,335,348,359,350,348,350,347,346,343,341,184,173,248,461,183,346,344,347,349,352,351,355,215,359,358,223,230,225,228,375,375,374,376,378,379,378,381,382,383,381,224,227,362,352,352,355,358,363,370,370,353,347,351,352,212,352,350,346,344,346,344,344,346,332,345,343,344,345,347,345,348,351,355,355,217,221,224,224,224,372,374,372,375,377,378,377,378,379,379,380,383,229,371,372,363,364,366,357,348,327,379,325,343,350,355,219,364,352,347,342,343,341,343,345,338,342,342,342,344,345,349,350,354,351,354,358,362,221,370,374,373,372,372,375,376,378,379,380,381,380,381,387,229,318,330,331,379,379,383,380,381,380,378,376,371,367,362,358,356,354,352,349,343,342,345,341,345,344,344,343,345,348,350,351,356,355,362,364,366,369,371,374,376,377,382,381,383,382,383,384,385,386,384,382,384,382,383,383,235,236,234,233,378,375,377,372,367,362,356,354,351,349,348,349,347,346,343,343,344,345,347,349,351,352,353,357,360,364,366,373,375,376,378,381,381,382,383,383,382,380,382,381,384,384,385,383,382,379,379,378,381,380,381,374,372,370,367,364,358,357,355,350,348,348,347,348,348,349,350,350,351,354,350,351,354,355,358,368,370,373,375,377,380,381,380,381,383,380,381,380,382,380,380,381,385,382,383,383,384,383,382,383,374,376,377,376,373,370,367,362,357,357,353,352,350,350,353,354,351,351,352,354,354,356,359,361,365,368,371,373,374,375,376,378,381,381,381,379,378,377,376,377,379,381,383,382,379,380,380,382,383,379,372,372,374,381,383,386,383,379,364,359,357,352,354,355,358,358,357,358,359,359,358,357,358,359,360,362,363,365,368,369,368,367,369,372,373,373,375,376,376,377,377,382,385,388,388,388,380,383,383,377,374,379,389,392,391,389,387,383,381,363,361,359,355,356,359,361,363,359,364,364,361,358,356,355,357,358,365,363,359,360,364,368,373,381,381,381,381,386,387,388,383,384,386,389,390,390,390,387,386,387,380,387,391,392,391,391,389,384,376,371,362,360,357,358,360,364,365,366,366,367,367,364,361,359,359,360,361,369,367,366,365,368,374,383,382,382,382,383,383,388,392,393,385,388,390,393,388,389,391,388,390,387,391,390,390,388,387,383,380,376,374,360,359,359,360,364,368,370,370,370,369,369,366,363,365,366,368,369,368,369,381,384,385,384,382,382,383,387,386,392,392,393,393,396,395,395,394,392,392,393,391,392,391,393,395,399,398,396,394,392,388,385,361,361,360,362,366,369,372,373,372,372,370,366,365,367,368,371,371,378,382,383,386,386,386,384,385,385,385,383,387,390,392,393,392,391,389,387,389,391,391,393,397,405,403,403,403,401,397,394,391,387,383,363,362,361,363,367,370,372,372,372,370,367,368,367,368,370,373,378,381,384,386,387,387,387,386,383,383,383,382,383,389,393,393,389,388,388,390,391,398,404,407,406,406,402,402,401,398,394,393,387,376,368,360,360,360,363,365,372,373,373,369,367,368,368,369,370,376,376,380,384,386,388,388,388,388,386,385,384,383,384,382,387,391,397,398,401,399,404,402,405,405,405,403,399,398,399,398,397,396,392,385,374,368,363,362,358,358,361,366,369,367,365,366,367,369,370,371,374,380,380,384,386,388,389,392,390,388,387,386,383,381,381,385,389,394,396,398,399,399,401,403,403,406,396,398,393,396,395,395,393,389,385,370,367,362,360,356,357,361,363,365,366,365,367,371,371,375,375,379,386,386,391,391,394,395,394,394,392,391,391,388,388,384,384,389,390,392,393,395,394,395,395,394,392,393,395,396,396,397,395,395,392,387,381,375,370,370,369,357,359,361,363,364,365,368,372,373,375,377,380,383,385,388,389,391,394,395,395,394,392,390,388,387,384,387,390,388,387,387,388,390,391,391,392,395,397,398,399,399,398,397,396,392,388,380,377,374,374,370,366,362,364,365,367,370,374,379,380,381,382,382,385,388,390,390,392,395,396,395,395,394,392,390,390,388,389,391,391,387,384,382,383,389,390,394,399,400,400,401,401,399,399,398,394,391,385,379,376,375,371,369,369,371,372,372,377,380,382,384,386,387,389,390,391,392,394,397,398,399,399,401,396,396,395,395,394,395,393,396,397,385,382,383,387,391,396,399,401,402,403,402,399,399,398,395,384,379,374,375,371,370,369,372,377,377,379,383,385,388,390,393,393,395,397,398,399,400,402,403,404,404,404,405,402,400,402,399,398,393,395,399,405,382,382,387,391,395,399,401,401,400,398,398,397,395,392,388,383,381,382,383,380,378,378,378,380,381,384,385,386,389,392,395,396,396,398,398,399,402,405,407,408,410,408,401,402,401,399,398,395,400,400,403,385,386,390,394,399,402,401,404,404,400,402,399,397,393,387,385,385,383,384,381,380,381,382,384,386,387,389,391,394,395,399,400,401,402,402,405,407,412,416,416,412,410,405,404,405,406,406,407,403,407,406,422,390,392,396,399,402,405,411,411,412,402,403,405,400,387,386,387,389,388,388,387,387,387,387,386,385,388,389,392,395,397,399,399,400,402,405,409,414,414,412,412,410,407,406,407,409,410,412,406,413,416,426,393,395,402,402,410,412,412,413,412,411,405,405,408,386,386,387,391,390,391,392,394,395,396,402,387,380,388,392,394,397,398,400,402,404,409,415,421,420,417,415,413,411,411,415,413,421,421,422,424,425,425,425,402,404,408,410,411,412,412,412,413,409,399,390,388,386,390,392,393,394,394,397,400,400,405,412,411,392,396,402,408,423,425,426,428,428,428,426,425,422,422,420,422,415,419,421,422,426,429,430,429,429,433,404,400,404,407,409,410,410,408,404,396,393,391,387,387,390,393,394,395,397,400,401,407,409,412,414,419,417,419,421,424,424,426,427,427,428,428,427,426,426,425,423,422,419,421,425,428,431,430,430,431,394,393,392,395,403,404,404,403,398,394,393,392,391,390,390,394,395,395,396,398,401,404,408,411,414,418,425,420,424,420,427,426,426,427,427,430,429,429,427,428,426,427,423,421,423,426,428,428,429,431,395,393,395,392,387,385,386,389,389,390,393,393,394,395,394,398,404,408,416,400,400,401,406,408,413,418,421,425,432,435,432,433,433,432,431,432,434,434,437,438,437,435,434,490,425,425,426,426,427,430,435,393,397,395,392,389,383,381,382,387,390,394,396,398,400,399,403,407,414,419,423,426,432,408,412,415,420,424,428,431,438,442,447,456,473,475,478,480,483,487,490,490,490,490,490,490,490,427,426,427,432,395,397,399,395,391,389,390,394,400,405,408,407,401,402,403,404,407,413,417,420,425,428,431,434,438,441,444,445,449,449,456,462,466,469,467,474,476,479,486,490,490,490,490,490,490,490,490,490,430,429,398,413,407,403,394,390,389,391,394,399,405,408,411,412,411,410,411,412,415,418,423,426,430,434,438,442,445,448,452,455,461,465,449,452,455,452,454,456,457,458,461,467,490,490,490,490,490,425,427,429,422,418,413,410,403,395,393,393,396,400,405,410,412,414,415,416,416,419,421,424,421,424,427,431,435,438,441,445,449,452,454,457,461,463,466,469,472,476,485,490,490,490,490,490,490,490,490,490,490,490,490,434,439,420,413,406,393,394,397,396,401,408,410,412,413,414,416,417,422,426,429,429,428,432,433,437,441,444,448,451,455,457,460,463,466,468,471,474,479,487,490,490,490,490,490,490,490,490,490,490,490,490,490,435,432,427,412,395,396,403,406,407,409,411,412,414,415,415,419,421,425,430,435,438,438,437,440,445,447,451,454,457,460,463,466,468,471,474,477,490,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,424,416,413,400,400,400,397,396,401,404,406,408,410,414,418,419,427,429,436,441,441,444,448,452,457,460,464,467,471,474,464,467,469,472,478,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,421,423,408,402,401,396,393,394,396,400,403,406,408,412,415,419,423,429,432,436,441,447,451,455,459,464,467,472,473,477,480,484,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,423,408,406,399,392,392,393,397,401,406,409,412,415,418,422,425,429,434,438,443,448,452,456,461,465,469,473,475,480,485,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,413,401,400,400,400,397,394,396,399,404,407,412,416,421,425,430,435,440,445,452,456,461,466,471,474,476,481,485,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,415,407,405,401,399,399,396,400,401,403,408,413,419,423,428,431,438,443,450,456,461,468,472,473,474,471,475,479,484,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,426,423,416,416,411,410,408,411,413,412,417,419,424,428,432,436,439,443,443,446,449,454,457,458,463,467,473,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,425,420,414,404,400,403,404,408,409,414,417,422,441,444,452,456,463,469,474,480,484,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,430,420,409,397,397,398,402,404,410,416,421,426,434,440,446,454,463,468,474,479,482,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,399,384,384,387,392,397,403,414,423,433,440,448,456,462,469,477,481,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,395,392,388,389,396,398,406,414,425,435,442,451,459,466,474,482,487,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,400,401,403,403,407,412,417,426,433,442,448,455,462,468,477,483,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,394,394,399,405,416,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,484,382,386,394,403,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,384,386,391,397,410,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,471,370,372,378,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,457,362,366,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,459,359,365,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,349,367,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490,490 };
+    int stepstoCOR = 478;
+    int stepsPerRev51 = 51;
+    double revolutionHeight = 10.0 / 6.0; // 0.8...mm
+    double distanceToCOR = 87.3; //# mm
+    double factor = 6.17669;
+
+    double xHome = 0;
+    double yHome = 0;
+    double stepAngleDegrees = 360.0 / stepsPerRev51;
+    double stepAngleRads = DegreesToRadians * stepAngleDegrees;
+
+    int maxLayers = (int)measurements.size() / stepsPerRev51;
+
+    int rev_i = 0;
+    int nLayers = maxLayers;
+    int layerOffset =0;
+
+    VTKBodyArray bodySlices;
+
+    for (int rev_i = 0; rev_i < nLayers; rev_i++)
+    {
+        VecArrayArray layerPerims;
+        CarveSlice(rev_i+ layerOffset,measurements, layerPerims, revolutionHeight* (rev_i+ layerOffset));
+
+
+        // Make sheet from each perim and sweep into body
+        for (VecArray layer : layerPerims)
+        {
+            int nPos = (int)layer.size();
+            PK_VECTOR_t* pkVectors = new PK_VECTOR_t[nPos];
+            for (int t = 0; t < nPos; t++)
+            {
+                pkVectors[t] = layer[t].PkVector();
+            }
+
+            PK_BODY_create_sheet_planar_o_t pkSheetOpt;
+            PK_BODY_create_sheet_planar_o_m(pkSheetOpt);
+            pkSheetOpt.plane.location = pkVectors[0];
+            pkSheetOpt.plane.axis = Dir::ZDir().GetVec().PkVector();
+            PK_BODY_t       fenceBody = 0;
+            PK_ERROR_code_t pkError = PK_BODY_create_sheet_planar(nPos, pkVectors, &pkSheetOpt, &fenceBody);
+            //CheckM(PK_ERROR_no_errors == pkError);
+            if (PK_ERROR_no_errors == pkError)
+            {
+
+
+                VTKBody vb(fenceBody);
+                IntIntPairArray ignore;
+                double layerHeight = revolutionHeight * 1.1;
+                bool sweptOk = vb.Sweep(Dir::ZDir(), layerHeight, ignore);
+                //CheckM(sweptOk);
+                if (sweptOk)
+                {
+                 bodySlices.push_back(vb);
+                }
+               
+            }
+            delete[] pkVectors;
+        }
+
+    }
+
+    VTKBody::TransmitBodies(VTK::Version_25_00, bodySlices, "D:\\slices.x_t");
+
+
+    PK_BODY_boolean_o_t boolOptions = { 0 };
+    PK_BODY_boolean_o_m(boolOptions);
+    boolOptions.function = PK_boolean_unite_c;
+    boolOptions.merge_imprinted = PK_LOGICAL_false; // PK_LOGICAL_true; we don't want to merge this leaves our tag to disappear
+    PKTopolTrackResults tracking;
+    PK_boolean_r_t boolRes = { 0 };
+    PK_ERROR_t pkError = 0;
+    for (int b = 1; b < bodySlices.size(); b++)
+    {
+        pkError = bodySlices[0].Boolean(bodySlices[b], &boolOptions, &tracking, &boolRes);
+        CheckM(PK_ERROR_no_errors == pkError);
+        tracking.Clear();
+        PK_boolean_r_f(&boolRes);
+    }
+
+    bodySlices[0].Transmit(VTK::Version_25_00, "D:\\temp.x_t");
+
+
+    return true;
+}
 
 bool TestPKUtils()
 {
@@ -8400,6 +9229,7 @@ bool TestPKUtils()
     TestM(TestPKUtils042_MakeWirebodyFromCurves3);
     TestM(TestPKUtils042_MakeWirebodyFromCurves4);
     TestM(TestPKUtils042_MakeWirebodyFromCurves5);
+    TestM(TestPKUtils042_MakeWirebodyFromCurves6_ZeroLengthBaseEdge);
 
     TestM(TestPKUtils043_SplitWirebodyIntoDisjointBodies);
     TestM(TestPKUtils044_CurveHasAtLeastG1Continuity);
@@ -8536,8 +9366,14 @@ bool TestPKUtils()
 
     TestM(TestPKUtils094_CreateWirebody_Finds_Accurate_Intersection_Between_Line_And_OffsetCurve);
 
-    TestM(TestPKUtils_SpaceCarve01);
-    TestM(TestPKUtils_SpaceCarve02);
-    TestM(TestPKUtils_SpaceCarve03);
+    TestM(TestPKUtils095_GeomCheck_Ignores_SelfIntersectingState_If_CheckSelfIntSessionOptionIsOff);
+    TestM(TestPKUtils999_SortingHatPointCloudToSolid);
+    TestM(TestPKUtils999_SpaceCarveShortWall001);
+    TestM(TestPKUtils999_SpaceCarveSpriteCan001);
+    TestM(TestPKUtils999_SpaceCarveSpriteCan002);
+    TestM(TestPKUtils999_SpaceCarveSortingHat001);
+    TestM(TestPKUtils999_SpaceCarve001);
+    
+
     return true;
 }
