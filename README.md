@@ -505,4 +505,55 @@ Now I'm going to code up a test measure of this coke can, so I can get try to ge
 - Cage and sub-d (B-spline representation in patches) - Do SE have this?
 
 
+# 8th March 2022 #
+
+Something wrong with my space carving.
+Each revolution of 51 steps has a measurement width of 5mm
+So, at the radius of the table (80mm), the circumference is PI*160 = ~500mm
+I've only got 51*5mm of edge measured = ~255mm
+This means my measurements go: measure 5 mm, skip 5mm, measure 5 mm, skip 5mm...
+
+I think I used radius not diameter in my original calculation.
+I really want 102 steps per revolution!
+
+# 44 lots of 26 steps
+#  6 lots of 27 steps
+#  1 lot of 27 + (1 if rev % 3 = 0) which adds the .3
+
+
+# Table #
+| Chunk  | N     | Steps       |
+|----|------|--------|
+| 44 | 26   | 1144   |
+| 6  | 27   | 162    |
+| 1  | 27.3 | 27.3   |
+|    |      | 1333.3 |
+
+51 chunks of different number of motor steps
+1333.3 steps makes one table revolution/
+.3 is achieved using leap step every third revolution
+
+| Chunk  | N     | Steps       | diff |
+|----|------|--------|---|
+| 97 | 13   | 1261   |   |
+| 5  | 12   | 60     |   |
+| 1  | 12.3 | 12.3   |   |
+|    |      | 1333.3 | 0 |
+
+103 chunks of different number of motor steps.
+including a leap step.
+
+103 x 5mm = 515mm
+160 mm*PI = 502mm
+
+
+# 9th March 2022 #
+
+Hit various problems with boundary tracing.
+Firstly, had to reduce tracing to 4-connected from 8-connected
+Then remove small regions,
+
+Now, with my new spring can scan, I have a boundary on level rev_i == 3 where the path crosses itself:
+
+![Alt text](./readme_imgs/2022_09_03_01.png)
 

@@ -1,28 +1,9 @@
-80  mm =   118
-75  mm =   153
-70  mm =   179
-65  mm =   211
-60  mm =   239
-55  mm =   274
-50  mm =   300
-45  mm =   333
-40  mm =   367
-35  mm =   389
-30  mm =   435
-30  mm =   431
-25  mm =   461 
+Short wall 0mm COR 417 steps
+Short wall 0mm COR 417 steps
+Short wall 2.5mm COR  401
+Short wall end 17.5mm COR 319 steps
 
-
-80  118
-75  153
-70  179
-65  211
-60  239
-55  274
-50  300
-45  333
-40  367
-35  389
-30  435
-30  431
-25  461 
+pin in outer hole 50mm COR 106 steps
+pin 2nd hold 40mm COR 167 steps
+pin 3rd hold 30mm COR 233 steps
+pin 4th hold 20mm COR 289 steps

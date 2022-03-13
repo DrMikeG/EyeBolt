@@ -4,6 +4,8 @@ import digitalio
 from digitalio import DigitalInOut, Direction, Pull
 from adafruit_motor import stepper
 
+# This is designed for the new needle which is 10mm ish longer.
+# I'm also increasing the steps per revolution
 
 # Carriage rear stop
 button10 = digitalio.DigitalInOut(board.GP10)
@@ -27,11 +29,14 @@ button15.switch_to_input(pull=digitalio.Pull.UP)
 photoSensorPin2 = digitalio.DigitalInOut(board.GP3)
 photoSensorPin2.switch_to_input(pull=digitalio.Pull.UP)
 
-stepperAdvanceFromHome = 40 * 100
+# Table
+stepperAdvanceFromHome = 50 * 100
 numberOfRotationsToAttempt = 100
 
+# Poker
 maxTrackSteps = 490
-stepsForPokerToTouchTable = 100
+# Not sure, but changed down from 100
+stepsForPokerToTouchTable = 31
 
 # Stepper motor 1 setup
 DELAY = 0.1  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
@@ -359,32 +364,32 @@ def MakeOneFullRevolvePrintingSteps(rotationNumberForLeapStep):
 
     # A series of chunks makes up a revolution (chunks are not quite uniform divisions)
     chunk = 0
-    # 44 lots of 26 steps
-    #  6 lots of 27 steps
+    # 97 lots of 13 steps
+    #  5 lots of 12 steps
     #  1 lot of 27 + (1 if rev % 3 = 0) which adds the .3
-    for stepCount in range(44):
-        ok, hasTouched = StepNextChunkAndTakeMeasurement(26,chunk,rotationNumberForLeapStep)
+    for stepCount in range(97):
+        ok, hasTouched = StepNextChunkAndTakeMeasurement(13,chunk,rotationNumberForLeapStep)
         if hasTouched:
             hasTouchedInThisRevolution = True
         chunk = chunk + 1
         if not ok : return False
 
-    for stepCount in range(6):
-        ok, hasTouched = StepNextChunkAndTakeMeasurement(27,chunk,rotationNumberForLeapStep)
+    for stepCount in range(5):
+        ok, hasTouched = StepNextChunkAndTakeMeasurement(12,chunk,rotationNumberForLeapStep)
         if hasTouched:
             hasTouchedInThisRevolution = True
         chunk = chunk + 1
         if not ok : return False
             
     if rotationNumberForLeapStep % 3 == 0 :
-        ok, hasTouched = StepNextChunkAndTakeMeasurement(27,chunk,rotationNumberForLeapStep)
+        ok, hasTouched = StepNextChunkAndTakeMeasurement(12,chunk,rotationNumberForLeapStep)
         if hasTouched:
             hasTouchedInThisRevolution = True
         chunk = chunk + 1
         if not ok : return False
     else:
         # Lead step for sync
-        ok, hasTouched = StepNextChunkAndTakeMeasurement(28,chunk,rotationNumberForLeapStep)
+        ok, hasTouched = StepNextChunkAndTakeMeasurement(13,chunk,rotationNumberForLeapStep)
         if hasTouched:
             hasTouchedInThisRevolution = True
         chunk = chunk + 1

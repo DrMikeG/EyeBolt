@@ -27,11 +27,12 @@ button15.switch_to_input(pull=digitalio.Pull.UP)
 photoSensorPin2 = digitalio.DigitalInOut(board.GP3)
 photoSensorPin2.switch_to_input(pull=digitalio.Pull.UP)
 
-stepperAdvanceFromHome = 40 * 100
-numberOfRotationsToAttempt = 100
 
+#maxTableRevolutions = 75
+maxTableRevolutions = 1
+stepperAdvanceFromHome = 100 * 100
 maxTrackSteps = 490
-stepsForPokerToTouchTable = 100
+stepsForPokerToTouchTable = 31
 
 # Stepper motor 1 setup
 DELAY = 0.1  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
@@ -132,7 +133,11 @@ def CarriageAtRearStop():
     return button10.value == False
 
 
-def TableMoveToUpperLimit():
+def TableHomeAtPointerTouchHeight():
+    print("Table Homing")
+
+    TableTakeStepperPower()
+
     # Move table up until upper limit reached
     print("Moving table to upper limit")
     while not TableIsAtUpperStop():
@@ -140,14 +145,6 @@ def TableMoveToUpperLimit():
         #Move stepper clockwise (up) fast
         StepTableUpOneStepWithMinDelay()
     print("Moving table to upper limit - done")
-
-def TableHomeAtPointerTouchHeight():
-    print("Table Homing")
-
-    TableTakeStepperPower()
-
-    # Move table up until upper limit reached
-    TableMoveToUpperLimit()
 
     print("Table retract from upper limit")
     # Move slowly down until upper limit switch releases
@@ -180,7 +177,9 @@ def MoveTableToScanStartPosition():
 
     # This assert cannot be the result of mistiming and should not be re-tried
     # This can be wrong if the table has been nudged away from the switch
-    TableMoveToUpperLimit()
+    #if not TableIsAtUpperStop():
+        #print("Table not at upper stop?")
+        #return False
     
     for _ in range(stepperAdvanceFromHome):
         StepTableDownOneStepWithMinDelay()
@@ -252,7 +251,7 @@ def PokerIsReset():
 def TakeMeasurement(allowFastforward = True):
     global servoCurrentTarget
 
-    #print("Measuring")
+    print("Measuring")
 
     if not CarriageAtRearStop():
         print("** ERROR ** TakeMeasurement() Carriage not are rear stop")
@@ -275,7 +274,7 @@ def TakeMeasurement(allowFastforward = True):
         return False, False, 0
 
     # ignore limit for now
-    #print("Measuring - starting")
+    print("Measuring - starting")
     measureSteps =0 
     hasTouched = False
 
@@ -289,7 +288,7 @@ def TakeMeasurement(allowFastforward = True):
         if measureSteps >= maxTrackSteps:
             break
 
-    #print("Measuring - done")
+    print("Measuring - done")
 
     BeltReleaseStepperPower()
 
@@ -395,23 +394,26 @@ def MakeOneFullRevolvePrintingSteps(rotationNumberForLeapStep):
 def PerformScan():
     print("PerformScan")
 
-    rotationCount = 0
-    success = True
+    allowFastFwd = False # table will be in the way, so cannot sneak in to reduced radius of measurement
+    print("Press confirm to take measurement")
+    while True:
+        CheckEBreak()
+        # Wait for initialise, button 14...
+        if button14.value == False:
+            ok, hasTouched, measureAngle = TakeMeasurement(allowFastFwd)
 
-    while rotationCount < numberOfRotationsToAttempt:
-        ok, hasTouchedInThisRevolution = MakeOneFullRevolvePrintingSteps(rotationCount)
-        # If there was an error then stop
-        if not ok:
-            success = False
-            break
-        # If there were no measurements for a whole revolution then stop
-        if not hasTouchedInThisRevolution:
-            print("** INFO ** Did not touch object during previous revolution so stopping scan")    
-            break
-        rotationCount = rotationCount + 1
+            if not ok:
+                print("Error in TakeMeasurement()")
+                return False
 
-    print("PerformScan - done (revolutions %u)" %(rotationCount))
-    return success
+            if not hasTouched:
+                print("Error Confirming first measurement to side of table - did not touch")
+                return False
+
+            print("Table measured at :"+str(measureAngle))
+    
+    return False
+
 
 def AssertBeltHasMotorPower():
     assert stepperMgr['Belt'] ==True
@@ -438,19 +440,19 @@ def BeltReleaseStepperPower():
     stepperMgr['Belt'] =False
     # disable coils
     beltMotor.release()
-    #print("Belt motor released")
+    print("Belt motor released")
 
 def TableReleaseStepperPower():
     AssertTableHasMotorPower()
     stepperMgr['Table'] =False
     tableMotor.release()
-    #print("Table motor released")
+    print("Table motor released")
 
 def PokerHome():
     """Run the homing cycle for the poker
     """
 
-    #print("Poker Homing")
+    print("Poker Homing")
 
     BeltTakeStepperPower()
 
@@ -475,7 +477,7 @@ def PokerHome():
     # Confirm poker sensor is reset
     assert PokerIsReset()
 
-    #print("Fully retract and confirm sensor reset - done")
+    print("Fully retract and confirm sensor reset - done")
 
     return True
 
@@ -504,6 +506,7 @@ def PrepareThenPerformScan():
         ok = MoveTableToScanStartPosition()
 
     if ok:
+        print("Place tape measure onto table")
         print("Press confirm to begin scan?")
         while True:
             CheckEBreak()
