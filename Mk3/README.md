@@ -28,3 +28,19 @@ Voltage : 5v
 Output high level when receive laser signal
 Output low level when not receive laser signal
 Size : 1.5cm x 1.9cm
+
+https://www.codrey.com/electronic-circuits/the-mysterious-laser-receiver-sensor-module/
+
+
+```
+A cryptic 3-pin sensor?
+The 3-pin sensor is actually a minuscule light sensor (receiver) diode with an integrated amplifier and an open-collector transistor at its output. Output of the module, designed to operate on 5VDC power supply, can only go low (L), and the open-collector transistor inside the 3-pin sensor can sink about 20mA current. The description “non-modulator tube” actually points the fact that the light sensor can handle any source of light and it’s not like a 3-pin  infrared sensor module (TSOP1838 for example) that only detects an infrared pulse train within a particular frequency band.
+
+...the sensor is known in China as “ISO203 Laser Receiver”. You can see its pin notation in the image provided below.
+```
+
+![Alt text](./readme_imgs/sensor2.png)
+
+
+![Alt text](./readme_imgs/20220330_133722.jpg)
+This is going to be so cool!
