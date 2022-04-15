@@ -33,6 +33,9 @@ numberOfRotationsToAttempt = 100
 maxTrackSteps = 460
 midTrackSteps = 235
 
+stepsBetweenMeasures = 46
+nMeasurementsPerSweep = 100
+
 # Stepper motor 1 setup
 DELAY = 0.1  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
 STEPS = 200  # this is a full 360º
@@ -71,6 +74,7 @@ stepperMgr['Table'] = False
 beltMotor = stepper_motor1
 tableMotor = stepper_motor2
 
+## LED ##########################
 
 led = DigitalInOut(board.LED)
 led.direction = Direction.OUTPUT
@@ -82,6 +86,8 @@ def blink(times):
         time.sleep(0.1)
         led.value = True
         time.sleep(0.1)
+
+## Sensor inputs ##########################
 
 def Panic():
     # Park Servo
@@ -99,6 +105,28 @@ def CheckEBreak():
     # Wait for OK
     if button15.value == False:
         Panic()
+
+def TableIsAtUpperStop():
+    return button13.value == False
+
+def TableIsAtLowerStop():
+    return button12.value == False
+
+def CarriageAtRearStop():
+    #print("Checking CarriageAtRearStop {}".format(button10.value == False))
+    return button10.value == False
+
+def BeamIsNotBroken():
+    # Sensor open means not touched
+    return photoSensorPin2.value == False # False is open
+
+def BeamIsBroken():
+    # Sensor closed means not touched
+    return photoSensorPin2.value == True # True is closed
+
+
+## Motor Movements (RP = require power) ###################
+# You have to take correct motor out of standby before calling these methods
 
 def rpStepTableUpOneStepWithMinDelay():
     AssertTableHasMotorPower() # This might be too slow to check here?
@@ -120,17 +148,6 @@ def rpStepCarriageForwardOneStepWithMinDelay():
     beltMotor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE) # FORWARDs is table down
     time.sleep(0.002)
 
-def TableIsAtUpperStop():
-    return button13.value == False
-
-def TableIsAtLowerStop():
-    return button12.value == False
-
-def CarriageAtRearStop():
-    #print("Checking CarriageAtRearStop {}".format(button10.value == False))
-    return button10.value == False
-
-
 def rpTableMoveToUpperLimit():
     # Move table up until upper limit reached
     print("Moving table to upper limit")
@@ -140,6 +157,44 @@ def rpTableMoveToUpperLimit():
         rpStepTableUpOneStepWithMinDelay()
     print("Moving table to upper limit - done")
 
+## Power control and test ###############################
+def AssertBeltHasMotorPower():
+    assert stepperMgr['Belt'] ==True
+def AssertTableHasMotorPower():
+    assert stepperMgr['Table'] ==True
+def AssertNeitherMotorHasMotorPower():
+    assert stepperMgr['Belt'] ==False
+    assert stepperMgr['Table'] ==False
+
+# You can only take control of the power if power is not current assigned to either motor
+# else we are in an error condition
+def BeltTakeStepperPower():
+    AssertNeitherMotorHasMotorPower()
+    stepperMgr['Belt'] = True
+
+def TableTakeStepperPower():
+    AssertNeitherMotorHasMotorPower()
+    stepperMgr['Table'] = True
+
+# You can only release the power if it is currently assigned to the motor that is releasing it
+# else we are in an error condition
+def BeltReleaseStepperPower():
+    AssertBeltHasMotorPower()
+    stepperMgr['Belt'] =False
+    # disable coils
+    beltMotor.release()
+    #print("Belt motor released")
+
+def TableReleaseStepperPower():
+    AssertTableHasMotorPower()
+    stepperMgr['Table'] =False
+    tableMotor.release()
+    #print("Table motor released")
+
+## Move one or more elements ############################
+
+# Assign motor power and move one or more thing in a set way
+# Release power at the end
 
 def MoveTableToPreScanPosition():
     print("MoveTableToPreScanPosition()")
@@ -192,70 +247,117 @@ def MoveGantryAndTableToScanStartPosition():
     print("Laser should be glancing over top of table")
     return True
 
+def LaserGantryHome():
+    
+    print("Homing Laser gantry")
 
-def BeamIsNotBroken():
-    # Sensor open means not touched
-    return photoSensorPin2.value == False # False is open
+    BeltTakeStepperPower()
 
-def BeamIsBroken():
-    # Sensor closed means not touched
-    return photoSensorPin2.value == True # True is closed
+    # Go Home
+    while not CarriageAtRearStop():
+        rpStepCarriageBackOneStepWithMinDelay()
+        CheckEBreak()
+    
+    # Gently leave Home
+    while CarriageAtRearStop():
+        rpStepCarriageForwardOneStepWithMinDelay()
+        time.sleep(0.01)
+        CheckEBreak()
+
+    # Go Home
+    while not CarriageAtRearStop():
+        rpStepCarriageBackOneStepWithMinDelay()
+        CheckEBreak()
+    
+    BeltReleaseStepperPower()
+
+    assert BeamIsNotBroken()
+
+    print("Fully retracted and confirmed laser received - done")
+
+    return True
+
+def LaserGantryTestSweep():
+    print("Test sweep of Laser gantry")
+    
+    assert BeamIsNotBroken()
+    
+    BeltTakeStepperPower()    
+
+    # Go Home
+    while not CarriageAtRearStop():
+        rpStepCarriageBackOneStepWithMinDelay()
+        CheckEBreak()
+    
+
+    beamBrokenAtSomePoint = False
+
+    # Move gantry to limit
+    for _ in range(maxTrackSteps):
+        rpStepCarriageForwardOneStepWithMinDelay()
+        if BeamIsBroken:
+            beamBrokenAtSomePoint = True
+        CheckEBreak()
+        time.sleep(0.001)
+    
+    # Go Home
+    while not CarriageAtRearStop():
+        rpStepCarriageBackOneStepWithMinDelay()
+        CheckEBreak()
+    
+    BeltReleaseStepperPower()
+
+    assert BeamIsNotBroken()
+    print("Test sweep of Laser gantry - done")
+
+    return beamBrokenAtSomePoint
 
 
+def TakeMeasurements():
 
-def TakeMeasurement(allowFastforward = True):
-    global servoCurrentTarget
-
-    #print("Measuring")
+    print("Measuring sweep")
 
     if not CarriageAtRearStop():
-        print("** ERROR ** TakeMeasurement() Carriage not are rear stop")
+        print("** ERROR ** TakeMeasurements() Carriage not are rear stop")
         return False, False, 0
 
     if BeamIsBroken():
-        print("** ERROR ** TakeMeasurement() Beam is broken at start of sweep cannot measure")
+        print("** ERROR ** TakeMeasurements() Beam is broken at start of sweep cannot measure")
         return False, False, 0
 
     BeltTakeStepperPower()
 
-    # Move closer to save time
-    # Nothing should register before servoPositionE
-    # Not yet supported
-    #if (allowFastforward):
-    #    MovePokerToAdvancePositionOverTable()
+    #stepsBetweenMeasures = 46
+    #nMeasurementsPerSweep = 100
+    beamMeasurements = []
 
-    if BeamIsBroken():
-        print("** ERROR ** TakeMeasurement() Beam is broken as sweep began, cannot measure")
-        return False, False, 0
+    beamBroken = False
 
-    # ignore limit for now
-    #print("Measuring - starting")
-    measureSteps =0 
-    hasTouched = False
+    for stepsInSweep in range(nMeasurementsPerSweep):
+        if BeamIsBroken():
+            beamMeasurements.append(1)
+            beamBroken = True
+        else:
+            beamMeasurements.append(0)
+        
+        for _ in range(stepsBetweenMeasures):
+            rpStepCarriageForwardOneStepWithMinDelay()
+            CheckEBreak()
+            time.sleep(0.001)
 
-    while not hasTouched:
-        rpStepCarriageForwardOneStepWithMinDelay()
-        CheckEBreak()
-        time.sleep(0.001)
-        measureSteps = measureSteps + 1
-        hasTouched = BeamIsBroken()
-        # Step before end of track
-        if measureSteps >= maxTrackSteps:
-            break
-
-    #print("Measuring - done")
+    print("Measuring sweep - done")
 
     BeltReleaseStepperPower()
 
     # PokerHome Takes Power for itself
     ok = LaserGantryHome()
 
-    return ok, hasTouched, measureSteps
+    return ok, beamBroken, beamMeasurements
 
 
 def StepNextChunkAndTakeMeasurement(stepsToChunk,chunkNumber,rotationNumber):
-    # Advance table down
-    hasTouched = False
+    
+    beamBroken = False
 
     TableTakeStepperPower()
 
@@ -266,19 +368,21 @@ def StepNextChunkAndTakeMeasurement(stepsToChunk,chunkNumber,rotationNumber):
         if TableIsAtLowerStop():
             print("Lower limit reached")
             Panic()
-            return False, hasTouched
+            return False, beamBroken
     
     # disable coils
     TableReleaseStepperPower()
 
-    # Take measurement
-    ok, hasTouched, measuredSteps = TakeMeasurement()
+    # Perform measurement sweep
+    ok, beamBroken, beamMeasurements = TakeMeasurements()
     if not ok:
-        print("Error in TakeMeasurement()")
-        return False, hasTouched
-    print("%i:%i touched %s steps %s" % (rotationNumber,chunkNumber,str(hasTouched),str(measuredSteps)))
+        print("Error in TakeMeasurements()")
+        return False, beamBroken
     
-    return True, hasTouched
+    # Print measurements
+    print("%i:%i beam Broken %s steps %s" % (rotationNumber,chunkNumber,str(beamBroken),str(beamMeasurements)))
+    
+    return True, beamBroken
 
 def MakeOneFullRevolvePrintingSteps(rotationNumberForLeapStep):
     print("Revolution "+str(rotationNumberForLeapStep))
@@ -327,119 +431,19 @@ def PerformScan():
     success = True
 
     while rotationCount < numberOfRotationsToAttempt:
-        ok, hasTouchedInThisRevolution = MakeOneFullRevolvePrintingSteps(rotationCount)
+        ok, beamWasBrokenOnThisRevolution = MakeOneFullRevolvePrintingSteps(rotationCount)
         # If there was an error then stop
         if not ok:
             success = False
             break
         # If there were no measurements for a whole revolution then stop
-        if not hasTouchedInThisRevolution:
-            print("** INFO ** Did not touch object during previous revolution so stopping scan")    
+        if not beamWasBrokenOnThisRevolution:
+            print("** INFO ** Object did not break beam during previous revolution so stopping scan")    
             break
         rotationCount = rotationCount + 1
 
     print("PerformScan - done (revolutions %u)" %(rotationCount))
     return success
-
-def AssertBeltHasMotorPower():
-    assert stepperMgr['Belt'] ==True
-def AssertTableHasMotorPower():
-    assert stepperMgr['Table'] ==True
-def AssertNeitherMotorHasMotorPower():
-    assert stepperMgr['Belt'] ==False
-    assert stepperMgr['Table'] ==False
-
-# You can only take control of the power if power is not current assigned to either motor
-# else we are in an error condition
-def BeltTakeStepperPower():
-    AssertNeitherMotorHasMotorPower()
-    stepperMgr['Belt'] = True
-
-def TableTakeStepperPower():
-    AssertNeitherMotorHasMotorPower()
-    stepperMgr['Table'] = True
-
-# You can only release the power if it is currently assigned to the motor that is releasing it
-# else we are in an error condition
-def BeltReleaseStepperPower():
-    AssertBeltHasMotorPower()
-    stepperMgr['Belt'] =False
-    # disable coils
-    beltMotor.release()
-    #print("Belt motor released")
-
-def TableReleaseStepperPower():
-    AssertTableHasMotorPower()
-    stepperMgr['Table'] =False
-    tableMotor.release()
-    #print("Table motor released")
-
-
-def LaserGantryTestSweep():
-    print("Test sweep of Laser gantry")
-    
-    assert BeamIsNotBroken()
-    
-    BeltTakeStepperPower()    
-
-    # Go Home
-    while not CarriageAtRearStop():
-        rpStepCarriageBackOneStepWithMinDelay()
-        CheckEBreak()
-    
-
-    beamBrokenAtSomePoint = False
-
-    # Move gantry to limit
-    for _ in range(maxTrackSteps):
-        rpStepCarriageForwardOneStepWithMinDelay()
-        if BeamIsBroken:
-            beamBrokenAtSomePoint = True
-        CheckEBreak()
-        time.sleep(0.001)
-    
-    # Go Home
-    while not CarriageAtRearStop():
-        rpStepCarriageBackOneStepWithMinDelay()
-        CheckEBreak()
-    
-    BeltReleaseStepperPower()
-
-    assert BeamIsNotBroken()
-    print("Test sweep of Laser gantry - done")
-
-    return beamBrokenAtSomePoint
-
-def LaserGantryHome():
-    
-    print("Homing Laser gantry")
-
-    BeltTakeStepperPower()
-
-    # Go Home
-    while not CarriageAtRearStop():
-        rpStepCarriageBackOneStepWithMinDelay()
-        CheckEBreak()
-    
-    # Gently leave Home
-    while CarriageAtRearStop():
-        rpStepCarriageForwardOneStepWithMinDelay()
-        time.sleep(0.01)
-        CheckEBreak()
-
-    # Go Home
-    while not CarriageAtRearStop():
-        rpStepCarriageBackOneStepWithMinDelay()
-        CheckEBreak()
-    
-    BeltReleaseStepperPower()
-
-    assert BeamIsNotBroken()
-
-    print("Fully retracted and confirmed laser received - done")
-
-    return True
-
 
 def PrepareThenPerformScan():
     
@@ -458,16 +462,16 @@ def PrepareThenPerformScan():
     if ok:
         ok = MoveGantryAndTableToScanStartPosition()
 
-    #if ok:
-    #    print("Press confirm to begin scan?")
-    #    while True:
-    #        CheckEBreak()
-    #        # Wait for initialise, button 14...
-    #        if button14.value == False:
-    #            ok = PerformScan()
+    if ok:
+        print("Press confirm to begin scan?")
+        while True:
+            CheckEBreak()
+            # Wait for initialise, button 14...
+            if button14.value == False:
+                ok = PerformScan()
 
-    #if ok:
-    #     ok = LaserGantryHome()
+    if ok:
+         ok = LaserGantryHome()
     
     print("Done!")
 

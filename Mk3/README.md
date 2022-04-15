@@ -44,3 +44,14 @@ The 3-pin sensor is actually a minuscule light sensor (receiver) diode with an i
 
 ![Alt text](./readme_imgs/20220330_133722.jpg)
 This is going to be so cool!
+
+
+
+
+https://matplotlib.org/stable/gallery/mplot3d/voxels_rgb.html
+
+
+
+After dealing with an issue where the ends of the arms bounce after the beginning and end of the stroke, I could start some calibration scans.
+
+![Alt text](./readme_imgs/2022_04_15.gif)
