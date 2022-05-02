@@ -557,3 +557,28 @@ Now, with my new spring can scan, I have a boundary on level rev_i == 3 where th
 
 ![Alt text](./readme_imgs/2022_09_03_01.png)
 
+| Chunk  | N     | Steps       | diff |
+|----|------|--------|---|
+| 71 | 12   | 852   |   |
+| 36  | 13   | 458     |   |
+| 1  | 13.3 | 13.3   |   |
+|108 |      | 1333.3 | 0 |
+
+108
+54
+27
+
+
+# Hat Scans #
+
+![Alt text](./readme_imgs/hat.gif)
+
+![Alt text](./readme_imgs/hatMeasure.gif)
+
+
+![Alt text](./readme_imgs/sorting_hat_point_cloud.png)
+
+![Alt text](./readme_imgs/2022_09_03_01.png)
+
+![Alt text](./readme_imgs/HatMinBool.png)
+
