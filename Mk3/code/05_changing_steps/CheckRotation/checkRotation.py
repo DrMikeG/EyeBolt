@@ -151,6 +151,76 @@ def Rotate(x,y,rotAngle):
     new_y = (x * math.sin(r)) + (y * math.cos(r))
     return new_x, new_y
 
+def onclick(event):
+    global comX
+    global comY
+    global ix, iy
+    print("Click")
+    ix, iy = event.xdata, event.ydata
+    # input [0.0 - 1.0]
+    # output [-1.0 to 1.0]
+    print(ix, iy)
+    comX = ((ix * 2.0) - 1.0)
+    comY = ((iy * 2.0) - 1.0)
+    print(comX, comY)
+    renderToFigureForXY()
+    
+
+def renderToFigureForXY():
+    global comX
+    global comY
+    global nMeasuresInSweep
+    global nStepsPerRev
+    global scan
+    global fig
+    fig.clear()
+
+    myLines = []
+
+    yDelta = 2.0 / (1.0*nMeasuresInSweep)
+
+    # -0.2,-0.05
+    comX = -0.35
+    comY = -0.36
+    rots = range(0,108)
+
+    for i in range(70):
+        #for i in range(50)[0::2]:
+
+        step = rots[i]
+
+        colFrac = (i / (1.0 * nStepsPerRev))
+        colour = colours.hsv_to_rgb((colFrac,0.65,0.65))
+
+        sweep = Find(scan,0,step)
+        # Rotation [0.0 - 1.0]
+        rotation = step * (1.0 / nStepsPerRev)
+
+        # i want to adjust y to account for a virtual center of mess,
+        y = -1.0
+
+        comXDelta,comYDelta = Rotate(comX,comY,rotation)
+
+        for measure in range(nMeasuresInSweep):            
+
+            # need to apply a rotation to x and y
+            x1 = -1.0 + comXDelta
+            y1 = y + comYDelta
+            x2 = 1.0 + comXDelta
+            y2 = y + comYDelta
+            x1,y1 = Rotate(x1,y1,rotation)
+            x2,y2 = Rotate(x2,y2,rotation)
+
+            if sweep.sweep[measure] == '0':
+                    myLines.append( Line(x1, y1, x2, y2,fig.transFigure,fig,colour) )
+                #else:
+                #    myLines.append( Line(x1, y1, x2, y2,fig.transFigure,fig,colour) )
+            y = y + yDelta
+
+    fig.lines.clear()
+    fig.lines.extend(myLines)
+    plt
+
 
 filename = f'{sys.path[0]}/slide_pin_scan_01.txt'
 #filename = f'{sys.path[0]}/slide_scan_02.txt'
@@ -229,79 +299,12 @@ print(xOffset)
 #        print("%s %s" %(s1,s2))
 
 # the default coordinate system is "figure coordinates" where (0, 0) is the bottom-left of the figure and (1, 1) is the top-right of the figure.
-fig = plt.figure()
 # I want my space to be zero origin with -1 to +1 bounds in X and Y, so I need to apply an offset to all lines I create
 
+fig = plt.figure()
 
-myLines = []
+renderToFigureForXY()
 
-# class matplotlib.lines.Line2D(xdata, ydata, linewidth=None, linestyle=None, color=None, marker=None, markersize=None, antialiased=None,.. **kwargs)[source]
-
-#myLines.append( Line(0, 0, 1, 1,fig.transFigure,fig,'#000000') )
-#myLines.append( Line(0, 1, 1, 0,fig.transFigure,fig,'#eaeaf5') )
-
-
-
-# Can I also draw lines at n dgrees
-# nStepsPerRev
-
-'''
-x1 = 0.0
-y1 = -1.0
-x2 = 0.0
-y2 = 1.0
-myLines.append( Line(x1, y1, x2, y2,fig.transFigure,fig,'#000000') )
-
-for d in (0.125,0.25,0.375):
-    r_x1,r_y1 = Rotate(x1,y1,d)
-    r_x2,r_y2 = Rotate(x2,y2,d)
-    myLines.append( Line(r_x1, r_y1, r_x2, r_y2,fig.transFigure,fig,'#00ff00') )
-
-'''
-yDelta = 2.0 / (1.0*nMeasuresInSweep)
-
-rots = range(0,108)
-cols = ['#000000','#000000']
-
-for i in range(3):
-#for i in range(50)[0::2]:
-
-    y = -1.0
-    step = rots[i]
-
-    colFrac = (i / (1.0 * nStepsPerRev))
-    colour = colours.hsv_to_rgb((colFrac,0.65,0.65))
-    #colour = '#000000'#cols[i]
-
-    sweep = Find(scan,0,step)
-    # Rotation [0.0 - 1.0]
-    rotation = step * (1.0 / nStepsPerRev)
-
-    for measure in range(nMeasuresInSweep):            
-
-        # need to apply a rotation to x and y
-        x1 = -1.0
-        y1 = y
-        x2 = 1.0
-        y2 = y
-        x1,y1 = Rotate(x1,y1,rotation)
-        x2,y2 = Rotate(x2,y2,rotation)
-
-        if sweep.sweep[measure] == '0':
-            myLines.append( Line(x1, y1, x2, y2,fig.transFigure,fig,colour) )
-        #else:
-        #    myLines.append( Line(x1, y1, x2, y2,fig.transFigure,fig,colour) )
-        y = y + yDelta
-
-#myLines.append( Line(0, 0, 1, 1,fig.transFigure,fig,'#000000') )
-#myLines.append( Line(0, 1, 1, 1,fig.transFigure,fig,'#eaeaf5') )
-#myLines.append( Line(0, 1, 1, 0,fig.transFigure,fig,'#eaeaf5') )
-#myLines.append(lines.Line2D([0, 0], [1, 0], transform=fig.transFigure, figure=fig))
-
-fig.lines.extend(myLines)
-
-#l1 = lines.Line2D([0, 1], [0, 1], transform=fig.transFigure, figure=fig)
-#l2 = lines.Line2D([0, 1], [1, 0], transform=fig.transFigure, figure=fig)
-#fig.lines.extend([l1, l2])
-
+fig.canvas.mpl_connect('button_press_event', onclick)
+plt.title("mouse tied to frame")
 plt.show()
