@@ -12,22 +12,6 @@ thumbSwitch.switch_to_input(pull=digitalio.Pull.UP)
 thumbLeftRight = analogio.AnalogIn(board.GP26)
 thumbUpDown = analogio.AnalogIn(board.GP27)
 
-
-# Carriage rear stop
-button10 = digitalio.DigitalInOut(board.GP10)
-button10.switch_to_input(pull=digitalio.Pull.UP)
-
-button11 = digitalio.DigitalInOut(board.GP11)
-button11.switch_to_input(pull=digitalio.Pull.UP)
-# Lower stop?
-button12 = digitalio.DigitalInOut(board.GP12)
-button12.switch_to_input(pull=digitalio.Pull.UP)
-# Upper stop?
-button13 = digitalio.DigitalInOut(board.GP13)
-button13.switch_to_input(pull=digitalio.Pull.UP)
-# Go?
-button14 = digitalio.DigitalInOut(board.GP14)
-button14.switch_to_input(pull=digitalio.Pull.UP)
 # Panic?
 button15 = digitalio.DigitalInOut(board.GP15)
 button15.switch_to_input(pull=digitalio.Pull.UP)
@@ -125,7 +109,7 @@ def isRight():
 def isUp():
     # 0 or 65535
     return thumbUpDown.value > 49149
-        
+
 def isDown():
     # 0 or 65535
     return thumbUpDown.value < 16383
@@ -155,6 +139,7 @@ def BeamIsBroken():
 def rpStepTableUpOneStepWithMinDelay():
     AssertTableHasMotorPower() # This might be too slow to check here?
     tableMotor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE) # BACKWARDs is table up
+    # 0.002 is min and max (sweat spot)
     time.sleep(0.002)
 
 def rpStepTableDownOneStepWithMinDelay():
@@ -165,12 +150,14 @@ def rpStepTableDownOneStepWithMinDelay():
 def rpStepCarriageBackOneStepWithMinDelay():
     AssertBeltHasMotorPower() # This might be too slow to check here?
     beltMotor.onestep(direction=stepper.BACKWARD,style=stepper.DOUBLE) # BACKWARDs is table up
-    time.sleep(0.01)
+    # min is 0.0005
+    # max is 0.002
+    time.sleep(0.0008)
 
 def rpStepCarriageForwardOneStepWithMinDelay():
     AssertBeltHasMotorPower() # This might be too slow to check here?
     beltMotor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE) # FORWARDs is table down
-    time.sleep(0.01)
+    time.sleep(0.0008)
 
 def rpTableMoveToUpperLimit():
     # Move table up until upper limit reached
@@ -575,10 +562,6 @@ CheckEBreak()
 
 while True:
 
-    # Wait for initialise, button 14...
-    if button14.value == False:
-        #PrepareThenPerformScan()
-        break
 
     #print("Button15(PANIC) \t\t{0}".format(        ["Not pressed", "Pressed"][button15.value == False]))
     #print("Button14(Go) \t\t{0}".format(        ["Not pressed", "Pressed"][button14.value == False]))
@@ -588,19 +571,27 @@ while True:
     #print("Button10(CarriageLimit) \t{0}".format(["Not pressed", "Pressed"][button10.value == False]))
     #print("PhotoSensor \t\t{0}".format(["Open", "Closed"][photoSensorPin2.value == True]))
 
+    if button15.value == False:
+        print("Button15(PANIC) is pressed")
+        time.sleep(0.1)
+
+    if photoSensorPin2.value == True:
+        print("Beam broken!")
+        time.sleep(0.1)
+
     if thumbSwitch.value == False:
         print("Thumb switch is pressed")
     if isLeft():
-        print("Left")
+        #print("Left")
         BeltTakeStepperPower()
-        for _ in range(100):
+        for _ in range(1500):
             CheckEBreak()
             rpStepCarriageBackOneStepWithMinDelay()
         BeltReleaseStepperPower()
     if isRight():
         BeltTakeStepperPower()
-        print("Right")
-        for _ in range(100):
+        #print("Right")
+        for _ in range(1500):
             CheckEBreak()
             rpStepCarriageForwardOneStepWithMinDelay()
         BeltReleaseStepperPower()
@@ -610,7 +601,7 @@ while True:
         for _ in range(100):
             CheckEBreak()
             rpStepTableUpOneStepWithMinDelay()
-        TableReleaseStepperPower()        
+        TableReleaseStepperPower()
     if isDown():
         print("Down")
         TableTakeStepperPower()

@@ -1,3 +1,5 @@
+## Code to calibrate the rotation of the table
+
 import time
 import board
 import digitalio
@@ -12,22 +14,6 @@ thumbSwitch.switch_to_input(pull=digitalio.Pull.UP)
 thumbLeftRight = analogio.AnalogIn(board.GP26)
 thumbUpDown = analogio.AnalogIn(board.GP27)
 
-
-# Carriage rear stop
-button10 = digitalio.DigitalInOut(board.GP10)
-button10.switch_to_input(pull=digitalio.Pull.UP)
-
-button11 = digitalio.DigitalInOut(board.GP11)
-button11.switch_to_input(pull=digitalio.Pull.UP)
-# Lower stop?
-button12 = digitalio.DigitalInOut(board.GP12)
-button12.switch_to_input(pull=digitalio.Pull.UP)
-# Upper stop?
-button13 = digitalio.DigitalInOut(board.GP13)
-button13.switch_to_input(pull=digitalio.Pull.UP)
-# Go?
-button14 = digitalio.DigitalInOut(board.GP14)
-button14.switch_to_input(pull=digitalio.Pull.UP)
 # Panic?
 button15 = digitalio.DigitalInOut(board.GP15)
 button15.switch_to_input(pull=digitalio.Pull.UP)
@@ -101,10 +87,12 @@ def Panic():
     # Park Servo
     print("PANIC")
     stepper_motor1.release()
+    stepper_motor2.release()
     while True:
-        if button14.value == False:
-            print("OK button releases panic")
-            break
+        # Don't have the option to continue
+        #if thumbSwitch.value == False:
+        #    print("OK button releases panic")
+        #    break
         time.sleep(0.1)
 
 def CheckEBreak():
@@ -125,20 +113,13 @@ def isRight():
 def isUp():
     # 0 or 65535
     return thumbUpDown.value > 49149
-        
+
 def isDown():
     # 0 or 65535
     return thumbUpDown.value < 16383
 
-def TableIsAtUpperStop():
-    return button13.value == False
-
-def TableIsAtLowerStop():
-    return button12.value == False
-
-def CarriageAtRearStop():
-    #print("Checking CarriageAtRearStop {}".format(button10.value == False))
-    return button10.value == False
+def isOKPressed():
+    return thumbSwitch.value == False
 
 def BeamIsNotBroken():
     # Sensor open means not touched
@@ -148,13 +129,13 @@ def BeamIsBroken():
     # Sensor closed means not touched
     return photoSensorPin2.value == True # True is closed
 
-
 ## Motor Movements (RP = require power) ###################
 # You have to take correct motor out of standby before calling these methods
 
 def rpStepTableUpOneStepWithMinDelay():
     AssertTableHasMotorPower() # This might be too slow to check here?
     tableMotor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE) # BACKWARDs is table up
+    # 0.002 is min and max (sweat spot)
     time.sleep(0.002)
 
 def rpStepTableDownOneStepWithMinDelay():
@@ -165,12 +146,14 @@ def rpStepTableDownOneStepWithMinDelay():
 def rpStepCarriageBackOneStepWithMinDelay():
     AssertBeltHasMotorPower() # This might be too slow to check here?
     beltMotor.onestep(direction=stepper.BACKWARD,style=stepper.DOUBLE) # BACKWARDs is table up
-    time.sleep(0.01)
+    # min is 0.0005
+    # max is 0.002
+    time.sleep(0.0008)
 
 def rpStepCarriageForwardOneStepWithMinDelay():
     AssertBeltHasMotorPower() # This might be too slow to check here?
     beltMotor.onestep(direction=stepper.FORWARD,style=stepper.DOUBLE) # FORWARDs is table down
-    time.sleep(0.01)
+    time.sleep(0.0008)
 
 def rpTableMoveToUpperLimit():
     # Move table up until upper limit reached
@@ -271,54 +254,6 @@ def MoveGantryAndTableToScanStartPosition():
     print("Laser should be glancing over top of table")
     return True
 
-def LaserGantryHome(fast):
-
-    if not fast:
-        print("Homing Laser gantry")
-
-    BeltTakeStepperPower()
-
-    # Go Home
-    while not CarriageAtRearStop():
-        rpStepCarriageBackOneStepWithMinDelay()
-        CheckEBreak()
-
-    if not fast:
-        # Gently leave Home
-        while CarriageAtRearStop():
-            rpStepCarriageForwardOneStepWithMinDelay()
-            time.sleep(0.01)
-            CheckEBreak()
-
-        # Go Home
-        while not CarriageAtRearStop():
-            rpStepCarriageBackOneStepWithMinDelay()
-            CheckEBreak()
-
-    BeltReleaseStepperPower()
-
-    if BeamIsBroken():
-        time.sleep(0.025)
-
-    if BeamIsBroken():
-        print("Stabilising pause...")
-        time.sleep(1.0)
-
-    if BeamIsBroken():
-        print(" ** Realignement needed! **")
-        print("Press button to continue scan")
-        while True:
-            CheckEBreak()
-            # Wait for initialise, button 14...
-            if button14.value == False:
-                break
-            if BeamIsNotBroken():
-                break
-
-    if not fast:
-        print("Fully retracted and confirmed laser received - done")
-
-    return True
 
 def LaserGantryTestSweep():
     print("Test sweep of Laser gantry")
@@ -540,46 +475,152 @@ def PerformScan():
     print("PerformScan - done (revolutions %u)" %(rotationCount))
     return success
 
-def PrepareThenPerformScan():
 
+def IdentifyBoundsForBeamSweep():
+    
+    stepSizeForCalibration = 10
+
+    print("Please move beam to one end of the scan range and confirm")
+
+    BeltTakeStepperPower()    
+    while True:        
+        if isLeft():
+            for _ in range(stepSizeForCalibration):
+                CheckEBreak()
+                rpStepCarriageBackOneStepWithMinDelay()    
+        if isRight():
+            for _ in range(stepSizeForCalibration):
+                CheckEBreak()
+                rpStepCarriageForwardOneStepWithMinDelay()    
+        if isOKPressed():
+            time.sleep(0.5)
+            break
+    BeltReleaseStepperPower()
+    
+    print("Please move beam to other end of the scan range and confirm")
+
+    # Need to count values now
+    beamPosition = 0
+    BeltTakeStepperPower()    
+    while True:        
+        if isLeft():
+            for _ in range(stepSizeForCalibration):
+                CheckEBreak()
+                rpStepCarriageBackOneStepWithMinDelay()
+            beamPosition-=1
+        if isRight():
+            for _ in range(stepSizeForCalibration):
+                CheckEBreak()
+                rpStepCarriageForwardOneStepWithMinDelay()    
+            beamPosition+=1
+        if isOKPressed():
+            time.sleep(0.5)
+            break
+
+    print("Scan length of %u steps" %(beamPosition * stepSizeForCalibration))
+
+    print("Returning to zero")
+    
+    for _ in range(beamPosition * stepSizeForCalibration):
+        CheckEBreak()
+        if beamPosition < 0:
+            rpStepCarriageForwardOneStepWithMinDelay()    
+        else:
+            rpStepCarriageBackOneStepWithMinDelay()
+
+    BeltReleaseStepperPower()
+
+    return beamPosition * stepSizeForCalibration
+
+
+def PrepareThenPerformScan():
 
     ok = True
 
     if ok:
-        ok = LaserGantryHome(False)
-
-    if ok:
-        ok = MoveTableToPreScanPosition()
-
-    if ok:
-        ok = LaserGantryTestSweep()
-
-    if ok:
-        ok = MoveGantryAndTableToScanStartPosition()
-
-    if ok:
-        print("Press confirm to begin scan?")
-        while True:
-            CheckEBreak()
-            # Wait for initialise, button 14...
-            if button14.value == False:
-                ok = PerformScan()
-
-    if ok:
-         ok = LaserGantryHome(False)
+        # The beam is back at zero
+        # returned is the number of steps per sweep
+        beamRange = IdentifyBoundsForBeamSweep()
 
     print("Done!")
 
 CheckEBreak()
 
+def CountStepsBetweenAndDuringBeamBreak():
+
+    # Rotate table until beam is broken... this will be our zero...
+    TableTakeStepperPower()
+
+    while True:
+        CheckEBreak()
+        rpStepTableDownOneStepWithMinDelay()
+        if BeamIsBroken():
+            break
+
+    TableReleaseStepperPower()
+    print("Found starting point for rotation with beam broken")
+
+    # Keep rotating in cycles, count number of steps beam is broken, then number of steps beam is not broken
+    # Print out the two numbers, then continue
+
+
+    TableTakeStepperPower()
+
+    done = False
+    
+    while not done:    
+        stepsWithBeamBrokenA = 0
+        stepsWithBeamOpenA = 0
+        while True:
+            CheckEBreak()
+            rpStepTableDownOneStepWithMinDelay()
+            if not BeamIsBroken():
+                break
+            if isOKPressed():
+                done = True
+                break
+            stepsWithBeamBrokenA+=1
+
+        while True:
+            CheckEBreak()
+            rpStepTableDownOneStepWithMinDelay()
+            if BeamIsBroken():
+                break
+            if isOKPressed():
+                done = True
+            stepsWithBeamOpenA+=1
+        
+        stepsWithBeamBrokenB = 0
+        stepsWithBeamOpenB = 0
+        while True:
+            CheckEBreak()
+            rpStepTableDownOneStepWithMinDelay()
+            if not BeamIsBroken():
+                break
+            if isOKPressed():
+                done = True
+                break
+            stepsWithBeamBrokenB+=1
+
+        while True:
+            CheckEBreak()
+            rpStepTableDownOneStepWithMinDelay()
+            if BeamIsBroken():
+                break
+            if isOKPressed():
+                done = True
+            stepsWithBeamOpenB+=1
+        print("{0},{1},{2},{3}".format(stepsWithBeamBrokenA,stepsWithBeamOpenA,stepsWithBeamBrokenB,stepsWithBeamOpenB))
+
+    TableReleaseStepperPower()
+
+
+
+
 
 while True:
 
-    # Wait for initialise, button 14...
-    if button14.value == False:
-        #PrepareThenPerformScan()
-        break
-
+    CheckEBreak()
     #print("Button15(PANIC) \t\t{0}".format(        ["Not pressed", "Pressed"][button15.value == False]))
     #print("Button14(Go) \t\t{0}".format(        ["Not pressed", "Pressed"][button14.value == False]))
     #print("Button13(UpperLimit) \t{0}".format(["Not pressed", "Pressed"][button13.value == False]))
@@ -588,19 +629,29 @@ while True:
     #print("Button10(CarriageLimit) \t{0}".format(["Not pressed", "Pressed"][button10.value == False]))
     #print("PhotoSensor \t\t{0}".format(["Open", "Closed"][photoSensorPin2.value == True]))
 
-    if thumbSwitch.value == False:
-        print("Thumb switch is pressed")
+    if button15.value == False:
+        print("Button15(PANIC) is pressed")
+        time.sleep(0.1)
+
+    if photoSensorPin2.value == True:
+        print("Beam broken!")
+        time.sleep(0.1)
+
+    if isOKPressed():
+        time.sleep(0.2)
+        CountStepsBetweenAndDuringBeamBreak()
+
     if isLeft():
-        print("Left")
+        #print("Left")
         BeltTakeStepperPower()
-        for _ in range(100):
+        for _ in range(1500):
             CheckEBreak()
             rpStepCarriageBackOneStepWithMinDelay()
         BeltReleaseStepperPower()
     if isRight():
         BeltTakeStepperPower()
-        print("Right")
-        for _ in range(100):
+        #print("Right")
+        for _ in range(1500):
             CheckEBreak()
             rpStepCarriageForwardOneStepWithMinDelay()
         BeltReleaseStepperPower()
@@ -610,7 +661,7 @@ while True:
         for _ in range(100):
             CheckEBreak()
             rpStepTableUpOneStepWithMinDelay()
-        TableReleaseStepperPower()        
+        TableReleaseStepperPower()
     if isDown():
         print("Down")
         TableTakeStepperPower()
