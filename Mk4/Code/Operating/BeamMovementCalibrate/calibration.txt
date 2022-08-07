@@ -1,0 +1,327 @@
+I estimate 30mm to be an average of 2770 steps
+
+I think the lead-screw is 2mm for 20 teeth
+I think the belt drive is 1:1
+The motor is 200 steps per revolution
+30mm should be 3000 steps
+01mm should be 100 steps
+I this suggests the fuzz (region of uncertainty) at each end of my block is 1.15mm
+
+This might have been before I discovered I could focus....
+
+
+Ran again using steps size 10
+
+Bear bones calibration
+Position laser and part - first scan direction will be toward the belt motor
+Then press ok!
+Zeroing X out at -3000
+Zeroing X (from -3000)
+Loop 0 of 10
+Detect changed at 1240
+Detect changed at 4010
+Detect changed at 3990
+Detect changed at 1220
+Loop 1 of 10
+Detect changed at 1250
+Detect changed at 4020
+Detect changed at 3990
+Detect changed at 1230
+Loop 2 of 10
+Detect changed at 1240
+Detect changed at 4020
+Detect changed at 3990
+Detect changed at 1230
+Loop 3 of 10
+Detect changed at 1250
+Detect changed at 4010
+Detect changed at 3990
+Detect changed at 1220
+Loop 4 of 10
+Detect changed at 1250
+Detect changed at 4020
+Detect changed at 3990
+Detect changed at 1220
+Loop 5 of 10
+Detect changed at 1240
+Detect changed at 4020
+Detect changed at 3980
+Detect changed at 1220
+Loop 6 of 10
+Detect changed at 1250
+Detect changed at 4020
+Detect changed at 3980
+Detect changed at 1230
+Loop 7 of 10
+Detect changed at 1250
+Detect changed at 4020
+Detect changed at 3990
+Detect changed at 1220
+Loop 8 of 10
+Detect changed at 1250
+Detect changed at 4010
+Detect changed at 3990
+Detect changed at 1220
+Loop 9 of 10
+Detect changed at 1250
+Detect changed at 4020
+Detect changed at 3990
+Detect changed at 1220
+Done!
+
+Lengths in steps:
+2770
+2770
+2770
+2770
+2770
+2770
+2760
+2760
+2760
+2750
+2760
+2760
+2770
+2770
+2770
+2770
+2770
+2770
+2780
+2780
+
+Lengths in mm:
+27.7
+27.7
+27.7
+27.7
+27.7
+27.7
+27.6
+27.6
+27.6
+27.5
+27.6
+27.6
+27.7
+27.7
+27.7
+27.7
+27.7
+27.7
+27.8
+27.8
+Measured length 29.84mm
+
+Error (end to end): 
++/- 2.34
++/- 2.04
+
+Happy with this, and the consistent movement in steps of 10 - how can it be improved?
+
+Is there an offset or a reduction I'm not aware off?
+It is the beam width? Can I just compensate for that? Does it always measure small?
+
+
+
+
+
+
+
+
+Code stopped by auto-reload.
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+
+code.py output:
+Bear bones calibration
+Position laser and part - first scan direction will be toward the belt motor
+Then press ok!
+Zeroing X out at 0
+Zeroing X (from 0)
+Loop 0 of 10
+Detect changed at 780
+Detect changed at 781
+Detect changed at 782
+Detect changed at 784
+Detect changed at 787
+Detect changed at 793
+Detect changed at 797
+Detect changed at 802
+Detect changed at 895
+Detect changed at 3667
+Detect changed at 3768
+Detect changed at 3771
+Detect changed at 3772
+Detect changed at 3805
+Detect changed at 3811
+Detect changed at 3813
+Detect changed at 4401
+Detect changed at 4402
+Detect changed at 3653
+Detect changed at 881
+Loop 1 of 10
+Detect changed at 802
+Detect changed at 815
+Detect changed at 816
+Detect changed at 817
+Detect changed at 819
+Detect changed at 820
+Detect changed at 829
+Detect changed at 836
+Detect changed at 889
+Detect changed at 3673
+Detect changed at 3771
+Detect changed at 3772
+Detect changed at 3773
+Detect changed at 3784
+Detect changed at 3800
+Detect changed at 3804
+Detect changed at 4990
+Detect changed at 4991
+Detect changed at 3652
+Detect changed at 877
+Detect changed at 811
+Detect changed at 808
+Detect changed at 801
+Detect changed at 797
+Detect changed at 785
+Detect changed at 781
+Loop 2 of 10
+Detect changed at 784
+Detect changed at 786
+Detect changed at 787
+Detect changed at 799
+Detect changed at 800
+Detect changed at 802
+Detect changed at 820
+Detect changed at 822
+Detect changed at 828
+Detect changed at 832
+Detect changed at 888
+Detect changed at 3673
+Detect changed at 3772
+Detect changed at 3773
+Detect changed at 3781
+Detect changed at 3785
+Detect changed at 3790
+Detect changed at 3795
+Detect changed at 3800
+Detect changed at 3803
+Detect changed at 4201
+Detect changed at 4202
+Detect changed at 2765
+Loop 3 of 10
+Detect changed at 2777
+Detect changed at 2873
+Detect changed at 2909
+Detect changed at 2911
+Detect changed at 2917
+Detect changed at 3302
+Detect changed at 3304
+Detect changed at 2772
+Detect changed at 2770
+Detect changed at 2767
+Loop 4 of 10
+Detect changed at 7
+Detect changed at 8
+Detect changed at 10
+Detect changed at 12
+Detect changed at 2781
+Detect changed at 2875
+Detect changed at 2899
+Detect changed at 2901
+Detect changed at 2907
+Detect changed at 2913
+Detect changed at 2917
+Detect changed at 4504
+Detect changed at 4505
+Detect changed at 2765
+Loop 5 of 10
+Detect changed at 2
+Detect changed at 7
+Detect changed at 9
+Detect changed at 10
+Detect changed at 2783
+Detect changed at 2875
+Detect changed at 2908
+Detect changed at 2912
+Detect changed at 2915
+Detect changed at 3304
+Detect changed at 3305
+Detect changed at 3500
+Detect changed at 3503
+Detect changed at 3504
+Detect changed at 3505
+Detect changed at 3511
+Detect changed at 3514
+Detect changed at 2773
+Detect changed at 2772
+Detect changed at 2771
+Loop 6 of 10
+Detect changed at 6
+Detect changed at 8
+Detect changed at 10
+Detect changed at 12
+Detect changed at 2779
+Detect changed at 2887
+Detect changed at 2907
+Detect changed at 2911
+Detect changed at 2915
+Detect changed at 3292
+Detect changed at 3295
+Detect changed at 3302
+Detect changed at 3306
+Detect changed at 3312
+Detect changed at 3315
+Detect changed at 3487
+Detect changed at 3488
+Detect changed at 3492
+Detect changed at 3493
+Detect changed at 1894
+Loop 7 of 10
+Detect changed at 1912
+Detect changed at 2008
+Detect changed at 2014
+Detect changed at 2017
+Detect changed at 2034
+Detect changed at 2430
+Detect changed at 2433
+Detect changed at 2440
+Detect changed at 2441
+Detect changed at 2442
+Detect changed at 2443
+Detect changed at 1894
+Loop 8 of 10
+Detect changed at 1908
+Detect changed at 1999
+Detect changed at 2001
+Detect changed at 2008
+Detect changed at 2013
+Detect changed at 2014
+Detect changed at 2044
+Detect changed at 1892
+Loop 9 of 10
+Detect changed at 1908
+Detect changed at 2000
+Detect changed at 2001
+Detect changed at 2008
+Detect changed at 2012
+Detect changed at 2016
+Detect changed at 2020
+Detect changed at 2022
+Detect changed at 2023
+Detect changed at 2024
+Detect changed at 2036
+Detect changed at 2040
+Detect changed at 2044
+Detect changed at 2223
+Detect changed at 2224
+Detect changed at 2231
+Detect changed at 2232
+Detect changed at 2441
+Detect changed at 2443
+Detect changed at 991
+Done!
