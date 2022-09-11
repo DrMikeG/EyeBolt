@@ -16,8 +16,8 @@ thumbLeftRight = analogio.AnalogIn(board.GP26)
 thumbUpDown = analogio.AnalogIn(board.GP27)
 
 # Panic?
-button15 = digitalio.DigitalInOut(board.GP15)
-button15.switch_to_input(pull=digitalio.Pull.UP)
+# This is registered for interrupt rather than button now
+#button15 = digitalio.DigitalInOut(board.GP15)
 
 photoSensorPin2 = digitalio.DigitalInOut(board.GP3)
 photoSensorPin2.switch_to_input(pull=digitalio.Pull.UP)
@@ -63,17 +63,6 @@ global_scanLength = 0
 
 ## LED ##########################
 
-#led = DigitalInOut(board.LED)
-#led.direction = Direction.OUTPUT
-#led.value = True
-
-#def blink(times):
-#    for _ in range(times):
-#        led.value = False
-#        time.sleep(0.1)
-#        led.value = True
-#        time.sleep(0.1)
-
 async def blink(pin, interval, count):  # Don't forget the async!
     with digitalio.DigitalInOut(pin) as led:
         led.switch_to_output(value=False)
@@ -83,9 +72,6 @@ async def blink(pin, interval, count):  # Don't forget the async!
             await asyncio.sleep(interval)  # Don't forget the await!
             led.value = False
             await asyncio.sleep(interval)  # Don't forget the await!
-
-
-
 
 ## Sensor inputs ##########################
 
@@ -101,19 +87,14 @@ def Panic():
             break
         time.sleep(0.1)
 
-async def AbortTask():
-    while True:
-        if button15.value == False:
-            Panic()
-        await asyncio.sleep(0.25)
-
-async def CheckEBreak():
-    # Button 15 is the EBreak - if this is pressed then:
-    # Send Servo at safe value
-    # Wait for OK
-    pass
-    #if button15.value == False:
-     #   Panic()
+async def catch_abort_interrupt():
+    with countio.Counter(board.GP15, edge=countio.Edge.FALL,pull=digitalio.Pull.UP) as interrupt:
+        while True:
+            if interrupt.count > 0:
+                interrupt.reset()
+                Panic()
+            # Let another task run.
+            await asyncio.sleep(0)
 
 def isLeft():
     # 0 or 65535
@@ -243,7 +224,6 @@ async def MoveBeamInX(deltaInSteps):
 
     if (deltaInSteps > 0):
         for _ in range(deltaInSteps):
-            CheckEBreak()
             incX()
             rpStepCarriageBackOneStepWithMinDelay()
             await asyncio.sleep(beamMotorDelay)
@@ -251,7 +231,6 @@ async def MoveBeamInX(deltaInSteps):
 
     if (deltaInSteps < 0):
         for _ in range(-deltaInSteps):
-            CheckEBreak()
             incX(-1)
             rpStepCarriageForwardOneStepWithMinDelay()    
             await asyncio.sleep(beamMotorDelay)        
@@ -261,7 +240,6 @@ async def MoveTableInZ(deltaInSteps):
 
     if (deltaInSteps > 0):
         for _ in range(deltaInSteps):
-            CheckEBreak()
             incZ()
             rpStepTableDownOneStepWithMinDelay()
             await asyncio.sleep(tableMotorDelay)
@@ -269,7 +247,6 @@ async def MoveTableInZ(deltaInSteps):
 
     if (deltaInSteps < 0):
         for _ in range(-deltaInSteps):
-            CheckEBreak()
             decZ()            
             rpStepTableUpOneStepWithMinDelay()
             await asyncio.sleep(tableMotorDelay)
@@ -453,8 +430,6 @@ def PrepareThenPerformScan():
 
 async def runScannerTask():
 
-    CheckEBreak() # this will never return if abort is pressed - and that's ok
-
     print("Bear bones calibration")
     print("Position laser and part - first scan direction will be toward the belt motor")
     print("Then press ok!")
@@ -463,7 +438,6 @@ async def runScannerTask():
 
         # Allow time for other threads
         await asyncio.sleep(0.05)
-        CheckEBreak()
 
         if BeamIsBroken():
             print("Beam broken!")
@@ -506,7 +480,7 @@ async def runScannerTask():
             await asyncio.sleep(0.2)
 
 async def main():
-    abort_task = asyncio.create_task(AbortTask()) # Runs forever
+    abort_task = asyncio.create_task(catch_abort_interrupt())# Runs forever
     led_task = asyncio.create_task(blink(board.LED, 0.5, 10)) # Runs forever
     scanner_task = asyncio.create_task(runScannerTask()) # Runs until complete
     
