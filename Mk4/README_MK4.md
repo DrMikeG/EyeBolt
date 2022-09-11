@@ -303,3 +303,152 @@ Powell lenses are laser line generator lens that can fan out collimated beams in
 
 If it has a 60 degree beam angle from a 7mm aperture, then at 30cm the beam length is huge.
 If I reduce the aperture to 2.6mm then I should get around a 10cm line length at 30cm throw.
+
+# 11th September 2022 #
+
+Something I was reader referred to circuitPython AsyncIO - which I don't think was a thing back when I started this project 2 years ago.
+
+This isn't preemptive multi-tasking, but cooperative. You can't break into the event loop following an interrupt, but one task can cede control (let other tasks run) when it is waiting (e.g time.sleep)
+
+This might be a good way forward for me, to try and keep the motor movement fluid. At the moment there are sleep statements in every motor step.
+
+Potentially I could be checking the abort button and the laser sensor whilst the motors are paused.
+
+I'm going to have a play with tis code in Mk4\Code\AsyncIO\Prototype01\code.py
+
+Guide here: https://learn.adafruit.com/cooperative-multitasking-in-circuitpython-with-asyncio
+
+```
+# SPDX-FileCopyrightText: 2022 Dan Halbert for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
+import asyncio
+import board
+import digitalio
+
+
+async def blink(pin, interval, count):
+    with digitalio.DigitalInOut(pin) as led:
+        led.switch_to_output(value=False)
+        for _ in range(count):
+            led.value = True
+            await asyncio.sleep(interval)  # Don't forget the "await"!
+            led.value = False
+            await asyncio.sleep(interval)  # Don't forget the "await"!
+        # These tasks finish whenever the for-loop expires
+
+async def main():
+    led1_task = asyncio.create_task(blink(board.D1, 0.25, 10))
+    led2_task = asyncio.create_task(blink(board.D2, 0.1, 20))
+
+    await asyncio.gather(led1_task, led2_task)  # Don't forget "await"!
+    print("done")
+
+
+asyncio.run(main())
+```
+
+What about sharing memory between tasks?
+
+```
+# SPDX-FileCopyrightText: 2022 Dan Halbert for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
+import asyncio
+import board
+import digitalio
+import keypad
+
+
+class Interval:
+    """Simple class to hold an interval value. Use .value to to read or write."""
+
+    def __init__(self, initial_interval):
+        self.value = initial_interval
+
+
+async def monitor_interval_buttons(pin_slower, pin_faster, interval):
+    """Monitor two buttons: one lengthens the interval, the other shortens it.
+    Change interval.value as appropriate.
+    """
+    # Assume buttons are active low.
+    with keypad.Keys(
+        (pin_slower, pin_faster), value_when_pressed=False, pull=True
+    ) as keys:
+        while True:
+            key_event = keys.events.get()
+            if key_event and key_event.pressed:
+                if key_event.key_number == 0:
+                    # Lengthen the interval.
+                    interval.value += 0.1
+                else:
+                    # Shorten the interval.
+                    interval.value = max(0.1, interval.value - 0.1)
+                print("interval is now", interval.value)
+            # Let another task run.
+            await asyncio.sleep(0)
+
+
+async def blink(pin, interval):
+    """Blink the given pin forever.
+    The blinking rate is controlled by the supplied Interval object.
+    """
+    with digitalio.DigitalInOut(pin) as led:
+        led.switch_to_output()
+        while True:
+            led.value = not led.value
+            await asyncio.sleep(interval.value)
+
+
+async def main():
+    interval1 = Interval(0.5)
+    interval2 = Interval(1.0)
+
+    led1_task = asyncio.create_task(blink(board.D1, interval1))
+    led2_task = asyncio.create_task(blink(board.D2, interval2))
+    interval1_task = asyncio.create_task(
+        monitor_interval_buttons(board.D3, board.D4, interval1)
+    )
+    interval2_task = asyncio.create_task(
+        monitor_interval_buttons(board.D5, board.D6, interval2)
+    )
+
+    await asyncio.gather(led1_task, led2_task, interval1_task, interval2_task)
+
+
+asyncio.run(main())
+```
+
+This is perhaps a better way to go? Using countio as a layer over interupts?
+
+```
+import asyncio
+import board
+import countio
+
+async def catch_interrupt(pin):
+    """Print a message when pin goes low."""
+    with countio.Counter(pin) as interrupt:
+        while True:
+            if interrupt.count > 0:
+                interrupt.count = 0
+                print("interrupted!")
+            # Let another task run.
+            await asyncio.sleep(0)
+
+
+async def main():
+    interrupt_task = asyncio.create_task(catch_interrupt(board.D3))
+    await asyncio.gather(interrupt_task)
+
+asyncio.run(main())
+```
+
+Inside the interrupt, I'd want to know the current value of X, and have someone to stash it.
+We could clear and reset the values for each sweep.
+
+Here main() is run with asyncio - I think I would need other tasks
+Task per sweep?
+
