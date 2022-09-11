@@ -325,3 +325,87 @@ Detect changed at 2441
 Detect changed at 2443
 Detect changed at 991
 Done!
+
+
+
+I estimate 15 mm to be:
+
+0	1	2	3	4	5	6	7	8	9		
+460	450	450	460	450	460	460	450	460	450	455	
+1800	1810	1800	1810	1810	1800	1790	1810	1810	1810	1805	1350
+1780	1780	1780	1780	1780	1780	1770	1780	1780	1780	1779	
+430	430	430	430	410	430	430	430	430	430	428	-1351
+
+1351 steps
+
+01mm should be 100 steps
+15mm should be 1500 steps
+less because there is an area of uncertainty
+
+Loop 0 of 10
+Detect changed at 460
+Detect changed at 1800
+Detect changed at 1780
+Detect changed at 430
+Loop 1 of 10
+Detect changed at 450
+Detect changed at 1810
+Detect changed at 1780
+Detect changed at 430
+Loop 2 of 10
+Detect changed at 450
+Detect changed at 1800
+Detect changed at 1780
+Detect changed at 430
+Loop 3 of 10
+Detect changed at 460
+Detect changed at 1810
+Detect changed at 2790
+Detect changed at 2780
+Detect changed at 1780
+Detect changed at 430
+Loop 4 of 10
+Detect changed at 450
+Detect changed at 1800
+Detect changed at 1810
+Detect changed at 1820
+Detect changed at 1780
+Detect changed at 410
+Loop 5 of 10
+Detect changed at 460
+Detect changed at 1800
+Detect changed at 1820
+Detect changed at 1830
+Detect changed at 1780
+Detect changed at 430
+Loop 6 of 10
+Detect changed at 460
+Detect changed at 1790
+Detect changed at 1800
+Detect changed at 1820
+Detect changed at 1770
+Detect changed at 430
+Loop 7 of 10
+Detect changed at 450
+Detect changed at 1810
+Detect changed at 1780
+Detect changed at 430
+Detect changed at 0
+Loop 8 of 10
+Detect changed at 10
+Detect changed at 460
+Detect changed at 1810
+Detect changed at 1780
+Detect changed at 430
+Detect changed at 0
+Loop 9 of 10
+Detect changed at 10
+Detect changed at 420
+Detect changed at 430
+Detect changed at 450
+Detect changed at 1810
+Detect changed at 1820
+Detect changed at 1830
+Detect changed at 1780
+Detect changed at 430
+Done!
