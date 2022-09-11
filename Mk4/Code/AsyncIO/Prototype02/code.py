@@ -19,8 +19,8 @@ thumbUpDown = analogio.AnalogIn(board.GP27)
 # This is registered for interrupt rather than button now
 #button15 = digitalio.DigitalInOut(board.GP15)
 
-photoSensorPin2 = digitalio.DigitalInOut(board.GP3)
-photoSensorPin2.switch_to_input(pull=digitalio.Pull.UP)
+#photoSensorPin2 = digitalio.DigitalInOut(board.GP3)
+#photoSensorPin2.switch_to_input(pull=digitalio.Pull.UP)
 
 coils1 = (
     DigitalInOut(board.GP21),  # A1
@@ -95,6 +95,16 @@ async def catch_abort_interrupt():
                 Panic()
             # Let another task run.
             await asyncio.sleep(0)
+
+async def catch_beam_interrupt():
+    with countio.Counter(board.GP3, pull=digitalio.Pull.UP) as interrupt:
+        while True:
+            if interrupt.count > 0:
+                print("Beam break state changes %u" % (interrupt.count))
+                interrupt.reset()
+            # Let another task run.
+            await asyncio.sleep(0)
+
 
 def isLeft():
     # 0 or 65535
@@ -439,10 +449,6 @@ async def runScannerTask():
         # Allow time for other threads
         await asyncio.sleep(0.05)
 
-        if BeamIsBroken():
-            print("Beam broken!")
-            await asyncio.sleep(0.1)
-
         if isOKPressed():
             print("Beam broken!")
             await asyncio.sleep(0.2)
@@ -481,6 +487,7 @@ async def runScannerTask():
 
 async def main():
     abort_task = asyncio.create_task(catch_abort_interrupt())# Runs forever
+    beam_task = asyncio.create_task(catch_beam_interrupt())# Runs forever
     led_task = asyncio.create_task(blink(board.LED, 0.5, 10)) # Runs forever
     scanner_task = asyncio.create_task(runScannerTask()) # Runs until complete
     
