@@ -161,3 +161,145 @@ The motor has a step angle of 1.8deg
 So the predicted number of steps for a revolution is 2500
 The measured is ~2495
 If I do 100 sample angles (sounds like a lot) that gives 25 steps per chunk, which feels enough to be accurate without backlash.
+
+# 21st August 2022 #
+
+Have been away for two weeks. Just before I left I was working on calibrating the leadscrew movement.
+
+After discovering I could focus the laser - I now need to determine if it's better to focus on the object or the sensor.
+
+Using \Code\Operating\BeamMovementCalibrate\code3.py
+
+```
+I estimate 30mm to be an average of 2770 steps
+
+I think the lead-screw is 2mm for 20 teeth
+I think the belt drive is 1:1
+The motor is 200 steps per revolution
+30mm should be 3000 steps
+01mm should be 100 steps
+I this suggests the fuzz (region of uncertainty) at each end of my block is 1.15mm
+
+Lengths in mm:
+27.7
+27.7
+27.7
+27.7
+27.7
+27.7
+27.6
+27.6
+27.6
+27.5
+27.6
+27.6
+27.7
+27.7
+27.7
+27.7
+27.7
+27.7
+27.8
+27.8
+Measured length 29.84mm
+
+Error (end to end): 
++/- 2.34
++/- 2.04
+
+Happy with this, and the consistent movement in steps of 10 - how can it be improved?
+
+Is there an offset or a reduction I'm not aware off?
+It is the beam width? Can I just compensate for that? Does it always measure small?
+```
+
+Running again for 15mm block, whilst I print a 25x40mm block
+
+1351 steps (13.5mm)
+
+01mm should be 100 steps
+15mm should be 1500 steps
+less because there is an area of uncertainty
+
+On the way back, the numbers as consistently lower, suggesting I could run a pass in both directions and take an average!
+How to group the readings when they are s
+
+# 26th August 2022 #
+Calibrating using the long edge of the L-shaped print.
+
+Zeroing X out at 0
+Zeroing X (from 0)
+Loop 0 of 10
+Detect changed at 1800
+Detect changed at 5650
+Detect changed at 5630
+Detect changed at 1780
+Loop 1 of 10
+Detect changed at 1800
+Detect changed at 5650
+Detect changed at 5630
+Detect changed at 1780
+Loop 2 of 10
+Detect changed at 1800
+Detect changed at 5650
+Detect changed at 5630
+Detect changed at 1780
+Loop 3 of 10
+Detect changed at 1800
+Detect changed at 5650
+Detect changed at 5630
+Detect changed at 1770
+Loop 4 of 10
+Detect changed at 1800
+Detect changed at 5660
+Detect changed at 5640
+Detect changed at 1780
+Loop 5 of 10
+Detect changed at 1810
+Detect changed at 5660
+Detect changed at 5690
+Detect changed at 5710
+Detect changed at 5640
+Detect changed at 1780
+Loop 6 of 10
+Detect changed at 1800
+Detect changed at 5650
+Detect changed at 5640
+Detect changed at 1780
+Loop 7 of 10
+Detect changed at 1810
+Detect changed at 5650
+Detect changed at 5630
+Detect changed at 1780
+Loop 8 of 10
+Detect changed at 1800
+Detect changed at 5660
+Detect changed at 5700
+Detect changed at 5710
+Detect changed at 5630
+Detect changed at 1780
+Loop 9 of 10
+Detect changed at 1800
+Detect changed at 5650
+Detect changed at 5630
+Detect changed at 1780
+Done!
+
+Detect changed at 1800	1800	1800	1800	1800	1800	1810	1800	1810	1800	1800	1802	
+Detect changed at 5650	5650	5650	5650	5650	5660	5660	5650	5650	5660	5650	5653	3851
+Detect changed at 5630	5630	5630	5630	5630	5640	5640	5640	5630	5630	5630	5633	
+Detect changed at 1780	1780	1780	1780	1770	1780	1780	1780	1780	1780	1780	1779	3854
+
+Between 38.51 and 38.4mm
+Measures 39.8
+
+
+# 6th September 2022 #
+
+A long line - but not too long.
+
+Powell lenses are laser line generator lens that can fan out collimated beams in one dimension. They have the shape of a prism with a rounded roof, and are often used to transform a narrow laser beam into a uniformly illuminating line. 
+
+
+If it has a 60 degree beam angle from a 7mm aperture, then at 30cm the beam length is huge.
+If I reduce the aperture to 2.6mm then I should get around a 10cm line length at 30cm throw.
