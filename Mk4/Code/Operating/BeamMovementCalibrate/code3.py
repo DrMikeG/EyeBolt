@@ -113,11 +113,11 @@ def isOKPressed():
 
 def BeamIsNotBroken():
     # Sensor open means not touched
-    return photoSensorPin2.value == False # False is open
+    return photoSensorPin2.value == True # True is open
 
 def BeamIsBroken():
     # Sensor closed means not touched
-    return photoSensorPin2.value == True # True is closed
+    return photoSensorPin2.value == False # False is closed
 
 ## Motor Movements (RP = require power) ###################
 # You have to take correct motor out of standby before calling these methods
@@ -188,10 +188,6 @@ def incX(value = 1):
     global global_X
     global_X+=value
 
-def decX(value = 1):
-    global global_X
-    global_X-=value
-
 def zeroX():
     global global_X
     print("Zeroing X (from %u)" % (global_X))
@@ -239,7 +235,7 @@ def MoveBeamInX(deltaInSteps):
         for _ in range(-deltaInSteps):
             CheckEBreak()
             rpStepCarriageForwardOneStepWithMinDelay()    
-        decX(-deltaInSteps)
+        incX(deltaInSteps)
         return
 
 def MoveTableInZ(deltaInSteps):
@@ -385,7 +381,7 @@ def PrepareThenPerformScan():
     # Rather than try to criss-cross the boundary in one pass
     # lets just plow back and forth and calculate an average
 
-    numberOfStepsObjectDefWithinFromZero = 6000
+    numberOfStepsObjectDefWithinFromZero = 8000
 
     delay = 5
     plowTimes = 10
@@ -395,14 +391,15 @@ def PrepareThenPerformScan():
 
     for i in range(plowTimes):
 
-        print("Loop %u of %u" %(i,plowTimes))
+        print("Loop %u of %u starting from %u" %(i,plowTimes,currentX()))
 
         changeAt = []
 
         BeltTakeStepperPower()
         
+        nChunks = numberOfStepsObjectDefWithinFromZero / minStep
         # Move one way and then the other
-        for i in range(numberOfStepsObjectDefWithinFromZero / minStep):
+        for i in range(nChunks):
             MoveBeamInX(minStep)
             if not objectDetected == BeamIsBroken():
                 #print("Detect changed at %u" %(currentX()))
@@ -413,16 +410,16 @@ def PrepareThenPerformScan():
             print("Detect changed at %u" %(c))
         changeAt.clear()
 
-        for i in range(numberOfStepsObjectDefWithinFromZero / minStep):
+        for i in range(nChunks):
             MoveBeamInX(-minStep)
-            if not objectDetected == BeamIsBroken():
+            #if not objectDetected == BeamIsBroken():
                 #print("Detect changed at %u" %(currentX()))
-                changeAt.append(currentX())
-                objectDetected = not objectDetected
+            #    changeAt.append(currentX())
+            #    objectDetected = not objectDetected
 
-        for c in changeAt:
-            print("Detect changed at %u" %(c))
-        changeAt.clear()
+        #for c in changeAt:
+        #    print("Detect changed at %u" %(c))
+        #changeAt.clear()
 
         BeltReleaseStepperPower()
 
@@ -439,7 +436,7 @@ while True:
     CheckEBreak()
 
     if BeamIsBroken():
-        #print("Beam broken!")
+        print("Beam broken!")
         time.sleep(0.1)
 
     

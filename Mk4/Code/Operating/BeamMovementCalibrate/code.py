@@ -113,11 +113,11 @@ def isOKPressed():
 
 def BeamIsNotBroken():
     # Sensor open means not touched
-    return photoSensorPin2.value == False # False is open
+    return photoSensorPin2.value == True # True is open
 
 def BeamIsBroken():
     # Sensor closed means not touched
-    return photoSensorPin2.value == True # True is closed
+    return photoSensorPin2.value == False # False is closed
 
 ## Motor Movements (RP = require power) ###################
 # You have to take correct motor out of standby before calling these methods
