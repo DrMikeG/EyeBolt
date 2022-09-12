@@ -1,0 +1,276 @@
+Left!
+Beam break state changes 2706,2705
+Beam break state changes 5378,5377
+Right!
+Beam break state changes 5962,5963
+Beam break state changes 5925,5926
+Beam break state changes 5701,5702
+Beam break state changes 2536,2537
+Beam break state changes 2469,2470
+Beam break state changes 2206,2207
+Beam break state changes 2020,2021
+Beam break state changes 1723,1724
+Beam break state changes 1318,1319
+Beam break state changes 1281,1282
+Beam break state changes 1244,1245
+Beam break state changes 945,946
+Beam break state changes 834,835
+Beam break state changes 797,798
+Beam break state changes 612,613
+Beam break state changes 388,389
+Beam break state changes 20,21
+Beam break state changes 0,1
+Left!
+Beam break state changes 2685,2684
+Beam break state changes 5358,5357
+Right!
+Beam break state changes 5870,5871
+Beam break state changes 5796,5797
+Beam break state changes 5722,5723
+Beam break state changes 5467,5468
+Beam break state changes 5430,5431
+Beam break state changes 2563,2564
+Beam break state changes 2415,2416
+Beam break state changes 2340,2341
+Beam break state changes 2303,2304
+Beam break state changes 2267,2268
+Beam break state changes 2230,2231
+Beam break state changes 2156,2157
+Beam break state changes 2050,2051
+Beam break state changes 2014,2015
+Beam break state changes 1902,1903
+Beam break state changes 1827,1828
+Beam break state changes 1790,1791
+Beam break state changes 1716,1717
+Beam break state changes 1604,1605
+Beam break state changes 1567,1568
+Beam break state changes 1531,1532
+Beam break state changes 1494,1495
+Beam break state changes 1420,1421
+Beam break state changes 1383,1384
+Beam break state changes 1346,1347
+Beam break state changes 1272,1273
+Beam break state changes 1236,1237
+Beam break state changes 868,869
+Beam break state changes 832,833
+Beam break state changes 683,684
+Beam break state changes 534,535
+Beam break state changes 497,498
+Beam break state changes 423,424
+Beam break state changes 348,349
+Beam break state changes 50,51
+Beam break state changes 0,1
+Left!
+Beam break state changes 2695,2694
+Beam break state changes 5363,5362
+Right!
+Beam break state changes 5901,5902
+Beam break state changes 5865,5866
+Beam break state changes 5827,5828
+Beam break state changes 5790,5791
+Beam break state changes 5641,5642
+Beam break state changes 5530,5531
+Beam break state changes 5493,5494
+Beam break state changes 2334,2335
+Beam break state changes 2223,2224
+Beam break state changes 2186,2187
+Beam break state changes 2036,2037
+Beam break state changes 1925,1926
+Beam break state changes 1851,1852
+Beam break state changes 1595,1596
+Beam break state changes 1445,1446
+Beam break state changes 1296,1297
+Beam break state changes 1223,1224
+Beam break state changes 474,475
+Beam break state changes 406,407
+Beam break state changes 331,332
+Beam break state changes 220,221
+Beam break state changes 145,146
+Beam break state changes 71,72
+Beam break state changes 0,1
+Left!
+Beam break state changes 2707,2706
+Beam break state changes 5417,5416
+Right!
+Beam break state changes 5884,5885
+Beam break state changes 5773,5774
+Beam break state changes 5661,5662
+Beam break state changes 2537,2538
+Beam break state changes 2501,2502
+Beam break state changes 2315,2316
+Beam break state changes 2241,2242
+Beam break state changes 2130,2131
+Beam break state changes 2055,2056
+Beam break state changes 1906,1907
+Beam break state changes 1838,1839
+Beam break state changes 1726,1727
+Beam break state changes 1615,1616
+Beam break state changes 1503,1504
+Beam break state changes 1429,1430
+Beam break state changes 1279,1280
+Beam break state changes 1242,1243
+Beam break state changes 1131,1132
+Beam break state changes 1094,1095
+Beam break state changes 870,871
+Beam break state changes 833,834
+Beam break state changes 690,691
+Beam break state changes 616,617
+Beam break state changes 504,505
+Beam break state changes 430,431
+Beam break state changes 318,319
+Beam break state changes 170,171
+Beam break state changes 133,134
+Left!
+Beam break state changes 2687,2686
+Beam break state changes 5428,5427
+Right!
+Beam break state changes 5908,5909
+Beam break state changes 5834,5835
+Beam break state changes 5797,5798
+Beam break state changes 5760,5761
+Beam break state changes 5686,5687
+Beam break state changes 2558,2559
+Beam break state changes 2527,2528
+Beam break state changes 2490,2491
+Beam break state changes 2453,2454
+Beam break state changes 2266,2267
+Beam break state changes 2042,2043
+Beam break state changes 1967,1968
+Beam break state changes 1930,1931
+Beam break state changes 1744,1745
+Beam break state changes 1445,1446
+Beam break state changes 1377,1378
+Beam break state changes 1340,1341
+Beam break state changes 1079,1080
+Beam break state changes 1043,1044
+Beam break state changes 969,970
+Beam break state changes 931,932
+Beam break state changes 482,483
+Beam break state changes 184,185
+Beam break state changes 110,111
+
+
+
+Code stopped by auto-reload. Reloading soon.
+soft reboot
+
+Auto-reload is on. Simply save files over USB to run them or enter REPL to disable.
+code.py output:
+Beam break state changes 0,0
+Bear bones calibration
+Position laser and part - first scan direction will be toward the belt motor
+Then press ok!
+Left!
+Beam break state changes 5235,5234
+Beam break state changes 5271,5270
+PANIC
+OK button releases panic
+Beam break state changes 5989,5988
+PANIC
+OK button releases panic
+Beam break state changes 6000,5999
+Right!
+Beam break state changes 5831,5832
+Beam break state changes 5795,5796
+Right!
+Beam break state changes -2720,-2719
+Beam break state changes -5362,-5361
+Left!
+Beam break state changes -5632,-5633
+Beam break state changes -5558,-5559
+Beam break state changes -5490,-5491
+Beam break state changes -2558,-2559
+Beam break state changes -2520,-2521
+Beam break state changes -2484,-2485
+Beam break state changes -2448,-2449
+Beam break state changes -2411,-2412
+Beam break state changes -2225,-2226
+Beam break state changes -2189,-2190
+Beam break state changes -1002,-1003
+Beam break state changes -966,-967
+Right!
+Beam break state changes -2731,-2730
+Beam break state changes -5368,-5367
+Left!
+Beam break state changes -5447,-5448
+Beam break state changes -2587,-2588
+Beam break state changes -2401,-2402
+Beam break state changes -2364,-2365
+Beam break state changes -1245,-1246
+Beam break state changes -1209,-1210
+Down
+Down
+Down
+Down
+Down
+Down
+Down
+Up
+Left!
+Beam break state changes 3154,3153
+Beam break state changes 3191,3190
+Right!
+Right!
+Beam break state changes -1079,-1078
+Beam break state changes -4989,-4988
+Left!
+Beam break state changes -5411,-5412
+Beam break state changes -5338,-5339
+Beam break state changes -5301,-5302
+Beam break state changes -921,-922
+Beam break state changes -810,-811
+Beam break state changes -661,-662
+Right!
+Beam break state changes -1079,-1078
+Beam break state changes -4986,-4985
+Left!
+Beam break state changes -5798,-5799
+Beam break state changes -5762,-5763
+Beam break state changes -5314,-5315
+Beam break state changes -972,-973
+Beam break state changes -823,-824
+Beam break state changes -674,-675
+Right!
+Beam break state changes -1063,-1062
+Beam break state changes -4974,-4973
+Left!
+Beam break state changes -5991,-5992
+Beam break state changes -5954,-5955
+Beam break state changes -5880,-5881
+Beam break state changes -5808,-5809
+Beam break state changes -5473,-5474
+Beam break state changes -5399,-5400
+Beam break state changes -5325,-5326
+Beam break state changes -5289,-5290
+Beam break state changes -5251,-5252
+Beam break state changes -877,-878
+Beam break state changes -765,-766
+Beam break state changes -728,-729
+Beam break state changes -580,-581
+Beam break state changes -506,-507
+
+Need to revise this with on/off data to see if it is flickering (which it shouldn't be)
+
+
+
+
+Then press ok!
+Zeroing X (from 0)
+Right!
+Beam break state changed from Object not Detected to Object Detected at -3085,-3084
+Beam break state changed from Object Detected to Object not Detected at -5434,-5433
+Left!
+Beam break state changed from Object not Detected to Object Detected at -5497,-5498
+Beam break state changed from Object Detected to Object not Detected at -2996,-2997
+Right!
+Beam break state changed from Object not Detected to Object Detected at -3072,-3071
+Beam break state changed from Object Detected to Object not Detected at -5490,-5489
+Left!
+Beam break state changed from Object not Detected to Object Detected at -5476,-5477
+Beam break state changed from Object Detected to Object not Detected at -2968,-2969
+Right!
+Beam break state changed from Object not Detected to Object Detected at -3103,-3102
+Beam break state changed from Object Detected to Object not Detected at -5453,-5452
+Left!
+Beam break state changed from Object not Detected to Object Detected at -5466,-5467
+Beam break state changed from Object Detected to Object not Detected at -3001,-3002
