@@ -582,3 +582,27 @@ Now, with my new spring can scan, I have a boundary on level rev_i == 3 where th
 
 ![Alt text](./readme_imgs/HatMinBool.png)
 
+# 1st April 2023 #
+
+## The End of the Mark IV ##
+
+This project has been on pause for a while, whilst I've done other things - but it's very literally always there - taking up space in my study.
+
+This is the Mark 4 - it's a laser beam scanner. There are a pair of synchronized lead-screws, which move the laser and the sensor horizontally along these sturdy linear tracks.
+
+The subject is placed on a linear rotary turntable. Combing the movement of the laser sensor with the 2 degrees of freedom of the table, you can gather 3D data from the occlusion of the data.
+
+Both the table and the lead screws are driven by Nema steppers, the lead screws are synchronized via timing belts, and the turntable is driven via a 3d printed gear pair. Stepper driver boards are controlled by a pico, which coordinates the movement with the sensing.
+
+I've got this built out as far as calibration - and partly looking at those results I've decided not to take this build any further.
+
+The problems are:
+1) Too many movement parts.
+There's too much slop in the system. Just calibrating this with m2 machine screws, I'm seeing 1mm of inaccuracy on the position, which isn't going to give me the results I want.
+
+2) Too big.
+I was a little ambitious with my scan volume
+I was limited height-wise by by my turntable design 
+I was limited length-wise by not wanting to cut up the lead screws and linear rails.
+So I build this into this big crate - which isn't something I want to have hanging around (like it has for the past year).
+
