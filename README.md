@@ -1,5 +1,80 @@
 # EyeBolt #
 
+## 10th April 2023 - Wiring up camera protoboard ##
+I have a protoboard for the pico from Monk makes
+
+![PICO PROTO PCB](./readme_imgs/monk.jpg)
+
+Which seems perfect for this wiring job. I have the camera on via a socket and the pico soldered directly on board.
+
+I have a 5v 3v3 and Gnd rail, and the camera pins are broken out onto columns, which should make is easy for me to solder them.
+
+My next question, is do I have 5 spare pins for the motor board?
+
+
+## 8th April 2023 - Start of the Mark V ##
+
+Adafruit OV5640 Camera Breakout - 120 Degree Lens
+https://learn.adafruit.com/adafruit-ov5640-camera-breakout/raspberry-pi-pico-usage
+
+Camera connections
+For the Raspberry Pi Pico setup shown in these examples, wire the following connections:
+
+OV5640 GND to Pi Pico GND
+OV5640 3V to Pi Pico 3V3
+OV5640 SDA to Pi Pico GP8
+OV5640 SCL to Pi Pico GP9
+OV5640 HS to Pi Pico GP21
+OV5640 VS to Pi Pico GP7
+OV5640 XC to Pi Pico GP20
+OV5640 PC to Pi Pico GP11
+OV5640 D2..D9 to Pi Pico GP12..GP19
+OV5640 RT to Pi Pico GP10
+
+The pull-up resistors shown on GP8 and GP9 are not required for Adafruit's OV5640 camera break-out board but may be required for other camera breakout boards.
+
+![Alt text](./readme_imgs/adafruit_products_5673-fb.jpg)
+
+
+![Alt text](./readme_imgs/adafruit_products_pico-camera-lcd_bb.png)
+
+
+
+The camera module requires a well-regulated 3.3v supply in order to operate.
+
+**G (GND):** Connect to microcontroller GND
+
+**3V (3.3V):** Connect to microcontroller +3.3V supply
+
+PD (powerdown): Optional connection to microcontroller GPIO. When pulled HIGH the camera module is put into power-down mode. When released or pulled LOW the camera is powered on. This pin can also be pulsed HIGH as a way to reset the camera.
+RT (reset): Optional connect to microcontroller GPIO. Pull the pin LOW to reset the camera module and release it or pull it HIGH to enter operating mode.
+Both pins have built-in pull resistors, so by default the camera is powered on and allowed to exit reset mode.
+
+The camera module must be configured using I2C.
+
+**SDA:** Connect to microcontroller SDA
+
+**SCL:** Connect to microcontroller SDL
+
+**XC (external clock)**: When the XCLK jumper is set to "EXT" (the default), this pin must be driven with a 24MHz square wave from the microcontroller or other source. When the jumper is changed to "INT", then an on-board clock generator is used instead. In this case, the XC pin should not be driven by the microcontroller and may be left unconnected.
+
+**PC (pixel clock)** tells the microcontroller when image data is available. This may need to be connected to a specific microcontroller pin.
+
+**VS and HS** are synchronization signals, which tell the microcontroller when a new frame (VS) or row (HS) of data begins. These may need to be connected to specific microcontroller pins.
+
+The 8 data pins (numbered from **D2 to D9** because reasons) carry data out of the camera into the microcontroller.
+
+Depending on mode, these 8 data bits can be half of a 16-bit pixel value, or one byte of JPEG data.
+
+```If your microcontroller has a 2x9 header available, that method is strongly preferred! The high speed signals of the camera module can be scrambled even with short lengths of jumper wire on a solderless breadboard.```
+
+xclk, pclk, vsync, href: Free choice of any pin
+reset, shutdown: Free choice of any pin. Can omit one or both, but the initialization sequence is less reliable.
+data_pins: Any 8 sequential pins in GPIO ordering (e.g., GPIO2..GPIO9).
+
+https://learn.adafruit.com/adafruit-ov5640-camera-breakout/ascii-mirror-dem
+
+
 ## 1st April 2023 - The End of the Mark IV ##
 
 This project has been on pause for a while, whilst I've done other things - but it's very literally always there - taking up space in my study.
