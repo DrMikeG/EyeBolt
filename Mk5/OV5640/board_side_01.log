@@ -1,0 +1,31 @@
+Solid Edge Translation to STEP
+Date: Monday,April 10,2023 05:11PM
+Output File: C:\Users\gibbens\Documents\Arduino\EyeBolt\Mk5\OV5640\board_side_01.stp
+Author: Unknown
+Organization: Unknown
+Source System: Solid Edge
+
+Hardware:
+Processor: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
+Operating System: Windows 10 Professional Version:20H2 Build:19042 System Type:64-bit
+Installed Memory: 31.8 GB
+
+Software Information
+Parasolid Version: 35.0.224
+PSBodyShop Version: 35.0.85
+Step Adapter Version: 11.0.82
+Solid Edge Version: 224.00.00.028 x64
+
+STEP Export Options
+Export Format: AP214
+Export Construction Sheets: Off
+Export Construction Solids: Off
+Export Construction Wires: Off
+Export Displayed Parts Only: Off
+Export Units: Millimeters
+Export Part Component Names As Unicode: Off
+Export PMI: Off
+
+Phase 1 of 1 Translating Parasolid to foreign data types...
+Translation process completed
+Time required to translate:00 : 00 : 01

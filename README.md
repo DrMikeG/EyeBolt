@@ -1,5 +1,22 @@
 # EyeBolt #
 
+## 14th April 2023 - Stepper trouble ##
+I'm reducing the number of stepper motors from 2 to 1.
+I only need a motor to driver the turntable.
+
+I've made a motor and table assembly with a 400 tooth 2gt timing belt. Small gear has 20 teeth and large gear has 180.
+
+I'm struggling to get any motor to run smoothly and reliably. I've switch out motor driver boards and nema 17 motors. It's all very rattly.
+
+Since there is almost no load on this motor, I'm considering switching down to a tiny 28byj-48, 5V stepper.
+
+https://microcontrollerslab.com/28byj-48-stepper-motor-raspberry-pi-pico-micropython/
+
+https://forums.adafruit.com/viewtopic.php?f=19&t=117680
+
+I also found a suggestion for diagnosing the control lines, so I might try that first too.
+
+
 ## 10th April 2023 - Wiring up camera protoboard ##
 I have a protoboard for the pico from Monk makes
 
@@ -10,6 +27,21 @@ Which seems perfect for this wiring job. I have the camera on via a socket and t
 I have a 5v 3v3 and Gnd rail, and the camera pins are broken out onto columns, which should make is easy for me to solder them.
 
 My next question, is do I have 5 spare pins for the motor board?
+
+
+Whilst I print test-support pieces to interface the camera board and the prototboard, I'm thinking about the new turn table:
+
+https://avtehnik.github.io/gt2-gear-genaretor/
+
+Using a 140 tooth turntable, using a belt length tool:
+
+https://www.technobotsonline.com/timing-pulley-distance-between-centres-calculator.html
+
+140 on larger PCD (dp) 89.127
+20 on smaller PCD (dp) 12.732
+Distance between centers 113.577
+Belt length 400mm
+
 
 
 ## 8th April 2023 - Start of the Mark V ##
