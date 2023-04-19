@@ -1,5 +1,41 @@
 # EyeBolt #
 
+## 19th April 2023 - Mark V progress ##
+
+I've been working on this perhaps more than I realise.
+So, a quick video to capture the changes.
+
+I set out to test the camera - which means wiring up the camera board.
+But before did that, I decided I wanted to test the other features of the board, which in this design means control of the turn table.
+
+I start out with the parts I stripped out of the mark 4.
+I used the Tb6612 motor control board, with the beefy 12volt nema 17 motor.
+
+I made a timing belt driven system where a 20 tooth gear on the motor drives a 400 tooth belt around the outside of this 3d printed turntable.
+This gives me 1800 steps per revolution - but it was noisy and a bit rough.
+
+In the previous design I had one motor turning a pair of chunk lead screws - pushing assemblies along a pair of linear rails. It needed some grunt.
+
+But here, I'm just spinning a table in free space - no grunt needed. So i've switch down a litte 5v 28BYJ geared stepper. This gives me 512 steps be revolution and is buttery smooth and silent.
+
+In other news, I've started to mount the components in their box.
+
+I'm just 3d printing frame sections, that clip over the rim of the box, and align the content to be vertical.
+
+Here I have the camera board and pico mounted on a protoboard (which is not yet wired) And I have the Powell lense laser tacked on the end.
+
+I'm thinking I should make the turn table attach to this, to make a single unit, rather than fixing it to the box. This would make allow me to make a CAD model of the whole assembly, rather than try to measure it accurately.
+
+Not sure about that yet.
+
+Next steps? Well, Now I've proven I can drive the turn table, I should start wiring up nthe camera and try to get a first image.
+
+
+Nema 17 = 200 steps per revolution
+20 tooth cog, so 10 steps per tooth.
+Driving a 180 tooth table, to 1800
+
+
 ## 14th April 2023 - Stepper trouble ##
 I'm reducing the number of stepper motors from 2 to 1.
 I only need a motor to driver the turntable.
