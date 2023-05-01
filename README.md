@@ -1,5 +1,39 @@
 # EyeBolt #
 
+## 30th April 2023 ##
+
+First light?
+
+OV5640_COLOR_RGB = 0
+OV5640_COLOR_YUV = 1
+OV5640_COLOR_GRAYSCALE = 2
+OV5640_COLOR_JPEG = 3
+https://github.com/adafruit/Adafruit_CircuitPython_OV5640/blob/main/adafruit_ov5640.py
+
+OV5640_SIZE_96X96 = 0  # 96x96
+OV5640_SIZE_QQVGA = 1  # 160x120
+OV5640_SIZE_QCIF = 2  # 176x144
+OV5640_SIZE_HQVGA = 3  # 240x176
+OV5640_SIZE_240X240 = 4  # 240x240
+OV5640_SIZE_QVGA = 5  # 320x240
+OV5640_SIZE_CIF = 6  # 400x296
+OV5640_SIZE_HVGA = 7  # 480x320
+OV5640_SIZE_VGA = 8  # 640x480
+OV5640_SIZE_SVGA = 9  # 800x600
+OV5640_SIZE_XGA = 10  # 1024x768
+OV5640_SIZE_HD = 11  # 1280x720
+OV5640_SIZE_SXGA = 12  # 1280x1024
+OV5640_SIZE_UXGA = 13  # 1600x1200
+OV5640_SIZE_QHDA = 14  # 2560x1440
+OV5640_SIZE_WQXGA = 15  # 2560x1600
+OV5640_SIZE_PFHD = 16  # 1088x1920
+OV5640_SIZE_QSXGA = 17  # 2560x1920
+
+https://github.com/adafruit/Adafruit_CircuitPython_BitmapSaver
+https://learn.adafruit.com/circuitpython-display-support-using-displayio/bitmap-and-palette
+
+https://cdn-learn.adafruit.com/assets/assets/000/118/553/thumb100square/adafruit_products_img0006.jpg?1676489257
+
 ## 14th April 2023 - Stepper trouble ##
 I'm reducing the number of stepper motors from 2 to 1.
 I only need a motor to driver the turntable.
