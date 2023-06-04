@@ -111,9 +111,9 @@ for fname in images:
         # Draw and display the corners.
         img = cv2.drawChessboardCorners(img, (4,11), corners, ret)
         found += 1
-        cv2.imshow("{}".format(fname), img) # display
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        #cv2.imshow("{}".format(fname), img) # display
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
     else:
         print("Failed to find corners in {}".format(fname))
 
@@ -122,7 +122,7 @@ for fname in images:
 #cap.release()
 cv2.destroyAllWindows()
 
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img.shape[::-1], None, None)
 
 # It's very important to transform the matrix to list.
 data = {'camera_matrix': np.asarray(mtx).tolist(), 'dist_coeff': np.asarray(dist).tolist()}

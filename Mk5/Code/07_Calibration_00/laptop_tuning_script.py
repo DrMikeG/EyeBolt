@@ -4,7 +4,7 @@ import cv2
 import glob
 
 # termination criteria
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 90, 0.0001)
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
 
 ########################################Blob Detector##############################################
 
@@ -12,12 +12,12 @@ criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 90, 0.0001)
 blobParams = cv2.SimpleBlobDetector_Params()
 
 # Change thresholds
-blobParams.minThreshold = 8
+blobParams.minThreshold = 0 # Changing this to zero improved things
 blobParams.maxThreshold = 255
 
 # Filter by Area.
 blobParams.filterByArea = True
-blobParams.minArea = 24     # minArea may be adjusted to suit for your experiment
+blobParams.minArea = 18     # minArea may be adjusted to suit for your experiment
 blobParams.maxArea = 2500   # maxArea may be adjusted to suit for your experiment
 
 # Filter by Circularity
@@ -26,11 +26,15 @@ blobParams.minCircularity = 0.1
 
 # Filter by Convexity
 blobParams.filterByConvexity = True
-blobParams.minConvexity = 0.87
+blobParams.minConvexity = 0.9
 
 # Filter by Inertia
 blobParams.filterByInertia = True
-blobParams.minInertiaRatio = 0.01
+blobParams.minInertiaRatio = 0.05
+
+# Made no difference
+blobParams.filterByColor: False
+blobParams.blobColor: 0
 
 # Create a detector with the parameters
 blobDetector = cv2.SimpleBlobDetector_create(blobParams)
@@ -90,28 +94,26 @@ objp[42] = (360, 144, 0)
 objp[43] = (360, 216, 0)
 ###################################################################################################
 
-# Arrays to store object points and image points from all the images.
-objpoints = [] # 3d point in real world space
-imgpoints = [] # 2d points in image plane.
-
-#cap = cv2.VideoCapture(0)
-
 images = glob.glob('./Mk5/Code/07_Calibration_00/run_0*/*.jpg')
 found = 0
 print ("found {} images".format(len(images)))
 for fname in images:
 
-    
     img = cv2.imread(fname)
+
     ret, corners = cv2.findCirclesGrid(img, (4,11), None, flags = cv2.CALIB_CB_ASYMMETRIC_GRID,  blobDetector = blobDetector)   # Find the circle grid
     
     if ret == True:
-        #print("Found {} corners".format(len(corners)))
-        objpoints.append(objp)  # Certainly, every loop objp is the same, in 3D.
-        # Draw and display the corners.
-        img = cv2.drawChessboardCorners(img, (4,11), corners, ret)
         found += 1
     else:
-        print("Failed to find corners in {}".format(fname))
+        gray_version_of_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        keypoints_in_img = blobDetector.detect(gray_version_of_img) # Detect blobs.
+        # Draw detected blobs as red circles. This helps cv2.findCirclesGrid() .
+        img_marked_up_with_keypoints = cv2.drawKeypoints(img, keypoints_in_img, np.array([]), (0,255,0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        cv2.imshow("Found {} keypoints in image {}".format(len(keypoints_in_img),fname), img_marked_up_with_keypoints)
+        cv2.waitKey(0)
+        #cv2.imwrite(fname+".bad.jpg", img_marked_up_with_keypoints)
+        break
+        
 
-print("success in {} out of {}".format(found,len(fname)))
+print("success in {} out of {}".format(found,len(images)))
