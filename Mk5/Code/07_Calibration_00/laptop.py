@@ -126,10 +126,6 @@ for fname in images:
     else:
         print("Failed to find corners in {}".format(fname))
 
-    if found > 10:
-        break
-
-
 # When everything done, release the capture
 #cap.release()
 cv2.destroyAllWindows()
@@ -141,6 +137,8 @@ ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, [width,
 data = {'camera_matrix': np.asarray(mtx).tolist(), 'dist_coeff': np.asarray(dist).tolist()}
 #with open("calibration.yaml", "w") as f:
     #yaml.dump(data, f)
+
+np.savez("./Mk5/Code/07_Calibration_00/ov5640_camera_calibration.npz", mtx=mtx, dist=dist)
 
 # Load the distorted image
 filename = images[0]
