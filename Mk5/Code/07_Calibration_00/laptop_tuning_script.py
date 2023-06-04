@@ -105,14 +105,16 @@ for fname in images:
     
     if ret == True:
         found += 1
+        # Write out with coloured mark-up
+        #img = cv2.drawChessboardCorners(img, (4,11), corners, ret)
+        #cv2.imwrite(fname.replace(".jpg","_markup.jpg"), img)        
     else:
+        # Show the first bad image with blob finding - what's wrong with it?
         gray_version_of_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         keypoints_in_img = blobDetector.detect(gray_version_of_img) # Detect blobs.
-        # Draw detected blobs as red circles. This helps cv2.findCirclesGrid() .
         img_marked_up_with_keypoints = cv2.drawKeypoints(img, keypoints_in_img, np.array([]), (0,255,0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         cv2.imshow("Found {} keypoints in image {}".format(len(keypoints_in_img),fname), img_marked_up_with_keypoints)
         cv2.waitKey(0)
-        #cv2.imwrite(fname+".bad.jpg", img_marked_up_with_keypoints)
         break
         
 
