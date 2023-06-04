@@ -1,5 +1,28 @@
 # EyeBolt #
 
+## 4th June 2023 ##
+Adding SD card to camera module to aid calibration.
+
+I want high quality images - going to try writing from camera to SD card.
+
+06_ will mix together 04_largeBitmapCapture with protoMicroSDWithMotor.
+
+Additional libs:
+adafruit_sdcard.mpy which I've taken from adafruit-circuitpython-bundle-7.x-mpy-20230325
+
+Saving images at SXGA (1280x1024)
+Quality - Controls the JPEG quality.  Valid range is from 2..55 inclusive
+
+Quality 4
+1280 1024
+327680
+Traceback (most recent call last):
+  File "code.py", line 193, in <module>
+  File "code.py", line 164, in main
+MemoryError: memory allocation failed, allocating 327680 bytes
+
+
+
 ## 24th May 2023 ##
 Camera calibration
 
