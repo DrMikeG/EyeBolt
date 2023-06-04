@@ -43,12 +43,6 @@ def blink(times):
         led.value = True
         time.sleep(0.1)
 
-# Connect to the card and mount the filesystem.
-spi = busio.SPI(clock=board.GP2, MOSI=board.GP3, MISO=board.GP4)
-cs = digitalio.DigitalInOut(SD_CS)
-sdcard = adafruit_sdcard.SDCard(spi, cs)
-vfs = storage.VfsFat(sdcard)
-storage.mount(vfs, "/sd")
 
 # Use the filesystem as normal! Our files are under /sd
 
