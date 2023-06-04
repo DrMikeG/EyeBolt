@@ -1,5 +1,95 @@
 # EyeBolt #
 
+## 24th May 2023 ##
+Camera calibration
+
+Give me an overview of how to perform OpenCV's cv2.calibrateCamera function.
+https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
+
+
+Instead of chess board, we can alternatively use a circular grid. In this case, we must use the function cv.findCirclesGrid() to find the pattern. Fewer images are sufficient to perform camera calibration using a circular grid.
+
+https://longervision.github.io/2017/03/18/ComputerVision/OpenCV/opencv-internal-calibration-circle-grid/
+
+## 23rd May 2023 ##
+
+Micro SD cards.
+
+I can't keep sending image data across the serial terminal - it's madness. Maybe once I have the processing algorithm dialed in I can put it back on the pico, but to start with, I think I want to capture a load of full res- images.
+
+I plan to add a micro SD card reader to the pico.
+I had one in my box of bits, but it was a generic one, which didn't look like it could use `sdcardio`.
+
+I bought an Adafruit MicroSD Card breakout+ (P254)
+https://www.adafruit.com/product/254
+
+This has the DI and DO pins, so I should be able to follow this guide: https://learn.adafruit.com/adafruit-micro-sd-breakout-board-card-tutorial/circuitpython
+
+I don't so the pi pico on the list, so cannot verify that it supports sdcardio. If it does not, I will try using adafruit_sdcard instead.
+
+Wiring: https://learn.adafruit.com/adafruit-micro-sd-breakout-board-card-tutorial/arduino-wiring
+
+Because SD cards require a lot of data transfer, they will give the best performance when connected up to the hardware SPI pins.
+
+SPI Example
+To setup a SPI bus, you specify the SCK, MOSI (microcontroller out, sensor in), and MISO (microcontroller in, sensor out) pins. 
+The Pico uses a different naming convention for these:
+
+SPIx_SCK = SCK
+SPIx_TX = MOSI
+SPIx_RX = MISO
+So use that mapping to help find available pins.
+
+import board
+import busio
+spi = busio.SPI(clock=board.GP2, MOSI=board.GP3, MISO=board.GP4)
+
+This clashes with the pins I've used for the motor so far, so I will need to re-prototype that.
+
+Connect the 5V pin to the 5V pin on the Arduino
+Connect the GND pin to the GND pin on the Arduino
+
+Connect (Brown) CLK to pin 13 SCK (SPIx_SCK) clock=board.GP2
+Connect (Orange) DO to pin 12 MISO (SPIx_TX) MISO=board.GP4
+Connect (Yellow) DI to pin 11 MOSI (SPIx_RX ) MOSI=board.GP3
+Connect (Green) CS to pin 10 (you will also need a fourth pin for the 'chip/secondary select' (SS))
+
+`Go to the beginning of the sketch and make sure that the chipSelect line is correct, for this wiring we're using digital pin 10 so change it to 10!`
+`Use 8.3 format for file names`
+
+Soldered up the wires and connecting to a pico on a protoboard.
+Copied across library adafruit_sdcard.mpy which I've taken from adafruit-circuitpython-bundle-7.x-mpy-20230325
+
+Edited the file list example into \Mk5\Code\protoMicroSD - run it and listed the files on the SD card.
+
+Next test is to write a file - and generate unique filename in 8.3
+
+I have to move the motor now too, as that was overlapping with the SPI pins.
+I don't think it needed to.
+
+
+```
+import board
+import busio
+import sdcardio
+import storage
+# Use the board's primary SPI bus
+spi = board.SPI()
+# Or, use an SPI bus on specific pins:
+#spi = busio.SPI(board.SD_SCK, MOSI=board.SD_MOSI, MISO=board.SD_MISO)
+
+# For breakout boards, you can choose any GPIO pin that's convenient:
+cs = board.D10
+```
+
+Another quick experiment in \Mk5\Code\protoMicroSDWithMotor
+
+Moved motor pins to 6,7,8 & 9. This works, but that now clashes with 7,8 & 9 being used by the camera!
+
+I've managed to move to the motor to 22,26,27 & 28.
+
+That leaves my GP6 free for E-brake, and maybe 0 and 1 - but I never like using them.
+
 ## 30th April 2023 ##
 
 First light?
