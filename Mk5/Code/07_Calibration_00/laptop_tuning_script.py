@@ -97,36 +97,21 @@ imgpoints = [] # 2d points in image plane.
 #cap = cv2.VideoCapture(0)
 
 images = glob.glob('./Mk5/Code/07_Calibration_00/run_0*/*.jpg')
-
+found = 0
 print ("found {} images".format(len(images)))
 for fname in images:
 
-    found = 0
+    
     img = cv2.imread(fname)
     ret, corners = cv2.findCirclesGrid(img, (4,11), None, flags = cv2.CALIB_CB_ASYMMETRIC_GRID,  blobDetector = blobDetector)   # Find the circle grid
     
     if ret == True:
-        print("Found {} corners".format(len(corners)))
+        #print("Found {} corners".format(len(corners)))
         objpoints.append(objp)  # Certainly, every loop objp is the same, in 3D.
         # Draw and display the corners.
         img = cv2.drawChessboardCorners(img, (4,11), corners, ret)
         found += 1
-        cv2.imshow("{}".format(fname), img) # display
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
     else:
         print("Failed to find corners in {}".format(fname))
 
-
-# When everything done, release the capture
-#cap.release()
-cv2.destroyAllWindows()
-
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-
-# It's very important to transform the matrix to list.
-data = {'camera_matrix': np.asarray(mtx).tolist(), 'dist_coeff': np.asarray(dist).tolist()}
-#with open("calibration.yaml", "w") as f:
-    #yaml.dump(data, f)
-
-print(data)
+print("success in {} out of {}".format(found,len(fname)))
