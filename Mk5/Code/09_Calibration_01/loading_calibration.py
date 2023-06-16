@@ -3,16 +3,16 @@ import cv2
 #import yam
 import glob
 
-images = glob.glob('./Mk5/Code/07_Calibration_00/run_0*/*.jpg')
+images = glob.glob('./Mk5/Code/09_Calibration_01/run_0*/*.jpg')
 print ("found {} images".format(len(images)))
 filename = images[13]
 
 #filename = './Mk5/Code/07_Calibration_00/test_img.jpg'
-filename = './Mk5/Code/08_CaptureToSD_HighResMid/images/capture_000_1600x1200_32.jpg'
+filename = './Mk5/Code/08_CaptureToSD_HighResMid/images/capture_000_2560x1440_24.jpg'
 
 
 # Load the camera calibration data from the file
-data = np.load("./Mk5/Code/07_Calibration_00/ov5640_camera_calibration.npz")
+data = np.load("./Mk5/Code/09_Calibration_01/ov5640_camera_calibration_2560x1440_24.npz")
 
 # Extract the camera matrix and distortion coefficients
 mtx = data['mtx']
