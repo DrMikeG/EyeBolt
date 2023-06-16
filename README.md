@@ -1,5 +1,11 @@
 # EyeBolt #
 
+## 15th June 2023 ##
+Lets look at how I could capture higher quality in less memory.
+
+https://docs.python.org/3/c-api/buffer.html#bufferobjects
+
+
 ## 4th June 2023 ##
 Adding SD card to camera module to aid calibration.
 
