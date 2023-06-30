@@ -5,47 +5,65 @@ import digitalio
 
 def change_setting(cam):
     #cam.flip_x = True
-    reg20 = reg21 = reg4514 = reg4514_test = 0
-    if cam.colorspace == adafruit_ov5640.OV5640_COLOR_JPEG:
-        reg21 |= 0x20
+    flip_x = False
+    if flip_x:
+        reg20 = reg21 = reg4514 = reg4514_test = 0
+        if cam.colorspace == adafruit_ov5640.OV5640_COLOR_JPEG:
+            reg21 |= 0x20
 
-    if cam._binning:
-        reg20 |= 1
-        reg21 |= 1
-        reg4514_test |= 4
-    else:
-        reg20 |= 0x40
+        if cam._binning:
+            reg20 |= 1
+            reg21 |= 1
+            reg4514_test |= 4
+        else:
+            reg20 |= 0x40
 
-    if cam._flip_y:
-        reg20 |= 0x06
-        reg4514_test |= 1
+        if cam._flip_y:
+            reg20 |= 0x06
+            reg4514_test |= 1
 
-    #if self._flip_x:
-    reg21 |= 0x06
-    reg4514_test |= 2
+        #if self._flip_x:
+        reg21 |= 0x06
+        reg4514_test |= 2
 
-    if reg4514_test == 0:
-        reg4514 = 0x88
-    elif reg4514_test == 1:
-        reg4514 = 0x00
-    elif reg4514_test == 2:
-        reg4514 = 0xBB
-    elif reg4514_test == 3:
-        reg4514 = 0x00
-    elif reg4514_test == 4:
-        reg4514 = 0xAA
-    elif reg4514_test == 5:
-        reg4514 = 0xBB
-    elif reg4514_test == 6:
-        reg4514 = 0xBB
-    elif reg4514_test == 7:
-        reg4514 = 0xAA
+        if reg4514_test == 0:
+            reg4514 = 0x88
+        elif reg4514_test == 1:
+            reg4514 = 0x00
+        elif reg4514_test == 2:
+            reg4514 = 0xBB
+        elif reg4514_test == 3:
+            reg4514 = 0x00
+        elif reg4514_test == 4:
+            reg4514 = 0xAA
+        elif reg4514_test == 5:
+            reg4514 = 0xBB
+        elif reg4514_test == 6:
+            reg4514 = 0xBB
+        elif reg4514_test == 7:
+            reg4514 = 0xAA
 
-    _TIMING_TC_REG20 = 0x3820
-    _TIMING_TC_REG21 = 0x3821
-    cam._write_register(_TIMING_TC_REG20, reg20)
-    cam._write_register(_TIMING_TC_REG21, reg21)
-    cam._write_register(0x4514, reg4514)
+        _TIMING_TC_REG20 = 0x3820
+        _TIMING_TC_REG21 = 0x3821
+        cam._write_register(_TIMING_TC_REG20, reg20)
+        cam._write_register(_TIMING_TC_REG21, reg21)
+        cam._write_register(0x4514, reg4514)
+
+        #s->set_reg(s,address,mask,value);
+        # Longer exposure. This one is easy:
+        #cam._write_register(0xff,0xff,0x01);//banksel
+        cam._write_register(0x11,1)#;//frame rate
+        #This is about 1 second.
+
+        # And finally, being able to save high quality images (if the image is getting corrupted)
+        #cam._write_register(0xff,0xff,0x00);//banksel
+        cam._write_register(0xd3,5)#;//jpg clock
+
+        # Another interesting discovery is that this DSP register changes the quality of the image. Only the first 7 bits matter, not sure what the 8th bit is used for. very low numbers will give you very bad quality, but at higher numbers I couldn't find any noticable differences in quality.
+        #cam._write_register(s,0xff,0xff,0x00);//banksel
+        cam._write_register(0x42,0x4f)
+
+
 
 def init_camera():
     print("initialising Camera")
@@ -110,10 +128,10 @@ def init_camera():
     cam.flip_x = False
     #cam.night_mode = False
 
-    #cam.exposure_value = 3
-    #cam.brightness = 3
-    #cam.saturation = 4
-    #cam.constrast = 3
+    cam.exposure_value = -3
+    cam.brightness = 0
+    cam.saturation = -2
+    cam.contrast = -2
     # In test bar mode, the camera shows color bars in the order white - yellow - cyan - green - purple - red - blue - black.
     cam.test_pattern = False
     

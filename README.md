@@ -1,5 +1,37 @@
 # EyeBolt #
 
+
+## 30th June 2023 ##
+From the manual:
+
++------------------+--------------+-----------+------------------------------------+----------------+
+|      Format      | Resolution   | Frame Rate|         Scaling Method             |  Pixel Clock   |
++------------------+--------------+-----------+------------------------------------+----------------+
+|    5 Mpixel      |  2592X1944   |   15 fps  |   Full resolution (dummy 16 pixels, |   96/192 MHz   |
+|                  |              |           |   horizontal, 8 lines)             |                |
++------------------+--------------+-----------+------------------------------------+----------------+
+|    1280X960      |  1280X960    |   45 fps  |   2608x1952 with dummy              |   96/192 MHz   |
+|                  |              |           |   subsampling in vertical and       |                |
+|                  |              |           |   horizontal                        |                |
++------------------+--------------+-----------+------------------------------------+----------------+
+|    1080P         |  1920X1080   |   30 fps  |   1296X968                          |   96/192 MHz   |
++------------------+--------------+-----------+------------------------------------+----------------+
+|    720P          |  1280X720    |   60 fps  |   Supports 2x2 binning              |   96/192 MHz   |
++------------------+--------------+-----------+------------------------------------+----------------+
+|    VGA           |  640X480     |   90 fps  |   Cropping from full resolution     |   48/96 MHz    |
+|                  |              |           |   (1936x1088 with dummy pixels)     |                |
++------------------+--------------+-----------+------------------------------------+----------------+
+|    QVGA          |  320X240     |   120 fps |   Cropping 2592x1944 to 2560x1440   |   24/48 MHz    |
+|                  |              |           |   Subsampling in vertical and       |                |
+|                  |              |           |   horizontal                        |                |
++------------------+--------------+-----------+------------------------------------+----------------+
+
+
+## 29th June 2023 ##
+Using code 11 I tried lots of different camera settings. There were better and worse settings, but none of them I would say were good, and there were lots of errors.
+The errors might be the result of me changing the settings to frequently.
+
+
 ## 15th June 2023 ##
 Lets look at how I could capture higher quality in less memory.
 
