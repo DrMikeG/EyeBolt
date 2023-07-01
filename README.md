@@ -1,7 +1,137 @@
 # EyeBolt #
+## 1st July 2023 ##
+In my v12 code to TweakCameraSettings I am using cam._write_register()
+
+If I want to check current values I should try _read_register()
+
+Looking at the internals we have a method on OV5640:
+```
+ def _set_size_and_colorspace(self) -> None:  # pylint: disable=too-many-locals
+        
+        # I am using  size=adafruit_ov5640.OV5640_SIZE_QHDA = 14  # 2560x1440
+        size = self._size
+        # [2560, 1440, _ASPECT_RATIO_16X9], # QHD
+        # _ASPECT_RATIO_16X9 = const(4)
+        width, height, ratio = _resolution_info[size]
+        # _ratio_table = [
+        #  mw,   mh,  sx,  sy,   ex,   ey, ox, oy,   tx,   ty
+        #[2560, 1440, 0, 240, 2623, 1711, 32, 16, 2844, 1488],  # 16x9
+        #]
+
+        self._w = width     # 2560
+        self._h = height    # 1440
+        (
+            max_width,      # 2560
+            max_height,     # 1440
+            start_x,        # 0
+            start_y,        # 240
+            end_x,          # 2623
+            end_y,          # 1711
+            offset_x,       # 32
+            offset_y,       # 16
+            total_x,        # 2844
+            total_y,        # 1488
+        ) = _ratio_table[ratio]
+
+    
+
+        self._binning = (width <= max_width // 2) and (height <= max_height // 2)
+        self._scale = not (
+            (width == max_width and height == max_height)
+            or (width == max_width // 2 and height == max_height // 2)
+        )
+
+        self._write_addr_reg(_X_ADDR_ST_H, start_x, start_y)
+        self._write_addr_reg(_X_ADDR_END_H, end_x, end_y)
+        self._write_addr_reg(_X_OUTPUT_SIZE_H, width, height)
+
+        if not self._binning:
+            self._write_addr_reg(_X_TOTAL_SIZE_H, total_x, total_y)
+            self._write_addr_reg(_X_OFFSET_H, offset_x, offset_y)
+        else:
+            if width > 920:
+                self._write_addr_reg(_X_TOTAL_SIZE_H, total_x - 200, total_y // 2)
+            else:
+                self._write_addr_reg(_X_TOTAL_SIZE_H, 2060, total_y // 2)
+            self._write_addr_reg(_X_OFFSET_H, offset_x // 2, offset_y // 2)
+
+        self._write_addr_reg(_X_TOTAL_SIZE_H, total_x - 200, total_y // 2)
+        self._write_addr_reg(_X_OFFSET_H, offset_x // 2, offset_y // 2)
+
+        self._write_reg_bits(_ISP_CONTROL_01, 0x20, self._scale)
+```
+mw	2560				
+mh	1440				
+sx	0	_X_ADDR_ST_H			
+sy	240	_X_ADDR_ST_H			
+ex	2623	_X_ADDR_END_H			
+ey	1711	_X_ADDR_END_H			
+ox	32	_X_OFFSET_H	If not binning	16	_X_OFFSET_H
+oy	16	_X_OFFSET_H	If not binning	8	_X_OFFSET_H
+tx	2844	_X_TOTAL_SIZE_H	If not binning	2644	
+ty	1488	_X_TOTAL_SIZE_H	If not binning	744	
+scale	0	_ISP_CONTROL_01	0x20		
+
+
+```
+def _write_addr_reg(self, reg: int, x_value: int, y_value: int) -> None:
+        self._write_register16(reg, x_value)
+        self._write_register16(reg + 2, y_value)
+```
+
+There are two different window configurations, depending on if scaling is enabled.
+
+The values above don't appear to make sense. What registers are they going into?
+
+The OV5640 sensor has an image array of 2624 columns by 1964 rows
+Of the 5,153,536 pixels, 5,038,848 (2592x1944) are active pixels and can be output. The other pixels are used for black 
+level calibration and interpolation.
 
 
 ## 30th June 2023 ##
+![manual](./readme_imgs/bit_packing_01.png)
+
+The 8 bits of register 0x3821 control multiple things:
+- jpeg enabled
+- isp mirror
+- sensor mirror
+- horizontal binning
+
+When setting the windowing, I will need to or in my additional bits.
+
+The OV5640 using registers 0x3800 -> 0x3814 for image windowing.
+(but maybe not all the bits)
+
+| Address    | Register Name     | Default Value | Description                             |
+|------------|-------------------|---------------|-----------------------------------------|
+| OX3800     | TIMING HS         | 0x00          | X address start high byte[ll:8] high byte |
+| OX3801     | TIMING HS         | 0x00          | X address start low byte[7:0] low byte |
+| OX3802     | TIMING VS         | 0x00          | Y address start high byte[10:8] high byte |
+| OX3803     | TIMING VS         | 0x00          | Y address start low byte[7:0] low byte |
+| OX3804     | TIMING HW         | 0x0A          | X address end high byte[11:8] high byte |
+| OX3805     | TIMING HW         | 0x3F          | X address end low byte[7:O] low byte |
+| OX3806     | TIMING VH         | 0x07          | Y address end high byte[10:8] high byte |
+| OX3807     | TIMING VH         | 0x9F          | Y address end low byte[7:O] low byte |
+
+DVP - Digital video port parallel output interface
+```The Digital Video Port (DVR) provides 10-bit parallel data output in all formats supported and extended features including 
+compression mode, HSYNC mode, CClR656 mode, and test pattern output. The DVP is also used to receive the video 
+data from an external camera, which will be sent out through the OV5640 MIPI interface. ```
+
+| OX3808     | TIMING DVPHO      | 0x0A          | DVP output horizontal width[ll:8] high byte|
+| OX3809     | TIMING DVPHO      | OX20          | DVP output horizontal width[7:0] low byte |
+| OX380A     | TIMING DVPVO      | OX07          | DVP output vertical height[10:8] high byte |
+| OX380B     | TIMING DVPVO      | OX98          | DVP output vertical height[7:0] low byte |
+| OX380C     | TIMING HTS        | 0x0B          | Total horizontal size[ll high byte |
+| OX380D     | TIMING HTS        | 0x1C          | Total horizontal size[7:0] low byte |
+| OX380E     | TIMING VTS        | 0x07          | Total vertical size[1 5:8] high byte |
+| OX380F     | TIMING VTS        | 0xB0          | Total vertical size[7:0] low byte |
+| OX3810     | TIMING HOFFSET    | 0x00          | ISP horizontal offset[ll :8] high byte |
+| OX3811     | TIMING HOFFSET    | 0x10          | ISP horizontal offset[7:0] low byte |
+| OX3812     | TIMING VOFFSET    | 0x00          | ISP vertical offset[10:8] high byte  |
+| OX3813     | TIMING VOFFSET    | 0x04          | ISP vertical offset[7:0] low byte  |
+
+
 From the manual:
 
 +------------------+--------------+-----------+------------------------------------+----------------+

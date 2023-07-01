@@ -65,7 +65,7 @@ def main():
     button = init_push_button()
 
     print("init complete")
-
+    
     width = cam.width
     height = cam.height
     print("Image width {} height {}".format(width, height))
@@ -78,11 +78,6 @@ def main():
     if buffer is None:
         raise SystemExit("Could not allocate a bitmap")
 
-    print("Stablise white balance")
-    for _ in range(10):
-        cam.capture(buffer)
-        time.sleep(0.1)
-    time.sleep(1)
     print("Done. Waiting to start")
 
     while True:
@@ -93,6 +88,14 @@ def main():
 
             dirPath = get_next_run_path()
             print("Using next available directory {}".format(dirPath))
+
+            
+
+            print("Stablise white balance")
+            for _ in range(10):
+                cam.capture(buffer)
+                time.sleep(0.1)
+            time.sleep(1)
 
             # Capture image with default settings
             print("Taking picture 0")
@@ -107,7 +110,25 @@ def main():
             print("Changing camera setting")
             change_setting(cam)
             time.sleep(1)
-            
+
+            width = cam.width
+            height = cam.height
+            print("Image width {} height {}".format(width, height))
+            bufSize = cam.capture_buffer_size
+            print("Image bytes {}".format(bufSize))
+            buffer.resize(bufSize)
+            quality = cam.quality
+            print("Image compression factor {}".format(quality))
+
+            if buffer is None:
+                raise SystemExit("Could not allocate a bitmap")
+
+            print("Stablise white balance")
+            for _ in range(10):
+                cam.capture(buffer)
+                time.sleep(0.1)
+            time.sleep(1)
+
             # Capture image with modified settings
             print("Taking picture 1")
             cam.capture(buffer)
