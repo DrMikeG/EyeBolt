@@ -115,8 +115,7 @@ def main():
             height = cam.height
             print("Image width {} height {}".format(width, height))
             bufSize = cam.capture_buffer_size
-            print("Image bytes {}".format(bufSize))
-            buffer.resize(bufSize)
+            print("Image bytes {}".format(bufSize))            
             quality = cam.quality
             print("Image compression factor {}".format(quality))
 
@@ -135,7 +134,8 @@ def main():
             jpgPath = dirPath + "/capture_1.jpg"
             print("Writing image file {}".format(jpgPath))
             with open(jpgPath, "w") as f:
-                for byte in buffer:
+                for i in range(bufSize):
+                    byte = buffer[i]
                     f.write(byte.to_bytes(1, "big"))
 
             break

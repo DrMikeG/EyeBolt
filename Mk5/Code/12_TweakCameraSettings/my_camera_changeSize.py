@@ -10,7 +10,7 @@ def change_setting(cam):
     # to
     #  [1280, 720, _ASPECT_RATIO_16X9],  # HD
     # (Same aspect ratio but much smaller)
-    size=adafruit_ov5640.OV5640_SIZE_QHDA
+    cam.size=adafruit_ov5640.OV5640_SIZE_HD
     # self._size = size
     # self._set_size_and_colorspace()
 
