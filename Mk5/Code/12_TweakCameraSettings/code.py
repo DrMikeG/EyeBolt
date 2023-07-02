@@ -80,10 +80,6 @@ def main():
 
     print("Done. Waiting to start")
 
-    # Change settings
-    print("Changing camera setting")
-    change_setting(cam)
-
     while True:
         
         if not button.value:
@@ -93,12 +89,12 @@ def main():
             dirPath = get_next_run_path()
             print("Using next available directory {}".format(dirPath))
 
-            
-
             print("Stablise white balance")
             for _ in range(10):
+                print(".", end='')
                 cam.capture(buffer)
                 time.sleep(0.1)
+            print("\n", end='')
             time.sleep(1)
 
             # Capture image with default settings
@@ -111,11 +107,10 @@ def main():
                     f.write(byte.to_bytes(1, "big"))
             
             # Change settings
-            print("Changing camera setting")
             change_setting(cam)
             time.sleep(1)
 
-            if False:
+            if True:
                 width = cam.width
                 height = cam.height
                 print("Image width {} height {}".format(width, height))
@@ -129,8 +124,10 @@ def main():
 
                 print("Stablise white balance")
                 for _ in range(10):
+                    print(".", end='')
                     cam.capture(buffer)
                     time.sleep(0.1)
+                print("\n", end='')
                 time.sleep(1)
 
                 # Capture image with modified settings
@@ -142,7 +139,6 @@ def main():
                     for i in range(bufSize):
                         byte = buffer[i]
                         f.write(byte.to_bytes(1, "big"))
-
             break
         
     time.sleep(0.1)  # Small delay to debounce the button

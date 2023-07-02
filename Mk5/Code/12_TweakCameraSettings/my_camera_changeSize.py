@@ -2,25 +2,23 @@ import adafruit_ov5640
 import busio
 import board
 import digitalio
+import time
 
 def change_setting(cam):
 
-    # My default settings of 2560x1440@24 jpg uses 153,600 (150kb)
-    # At full quality, pixel output is 2bytes per pixel.
-    # H * W * 2
     
-    # Change the values in row 0 of the _resolution_info table
-    adafruit_ov5640._resolution_info[0] = [270, 285, 0]  # Assign new values to row 0
-    # Change the values in row 0 of the _ratio_table table
+    print("Overriding defaults")
+    adafruit_ov5640._resolution_info[adafruit_ov5640.OV5640_SIZE_HD] = [128,27,4]
 
-                                    #  mw,   mh,  sx,  sy,   ex,   ey, ox, oy,   tx,   ty
-    adafruit_ov5640._ratio_table[0] = [2650, 1820, 850, 500, 1800, 1400, 0, 0, 2844, 1868]  # Assign new values to row 0
-
+    print("Changing camera size")
+    cam.size = adafruit_ov5640.OV5640_SIZE_HD
+    time.sleep(1)
+    print("New settings")
     # Can I access the resolution_info?
     (
         w,
         h,
-        ratio) = adafruit_ov5640._resolution_info[0]
+        ratio) = adafruit_ov5640._resolution_info[cam.size]
 
     print("w = {}".format(w))
     print("h = {}".format(h))
@@ -38,7 +36,7 @@ def change_setting(cam):
         offset_y,
         total_x,
         total_y,
-    ) = adafruit_ov5640._ratio_table[0]
+    ) = adafruit_ov5640._ratio_table[ratio]
     print("max_width = {}".format(max_width))
     print("max_height = {}".format(max_height))
     print("start_x = {}".format(start_x))
@@ -50,10 +48,17 @@ def change_setting(cam):
     print("total_x = {}".format(total_x))
     print("total_y = {}".format(total_y))
 
-    
-    
 
 def init_camera():
+
+    # Change the values in row 0 of the _resolution_info table
+    #adafruit_ov5640._resolution_info[0] = [2560,1400,8]  # Assign new values to row 0
+    # Change the values in row 0 of the _ratio_table table
+
+    #  mw,   mh,  sx,  sy,   ex,   ey, ox, oy,   tx,   ty
+    #adafruit_ov5640._ratio_table[0] =  [1920, 1920, 320, 0, 2543, 1951, 32, 16, 2684, 1968]  # 1x1
+    #adafruit_ov5640._ratio_table[0] = [2650, 1820, 850, 500, 1800, 1400, 32, 16, 2844, 1868]  # Assign new values to row 0
+
     print("initialising Camera")
     print("construct bus")
     bus = busio.I2C(board.GP9, board.GP8)
@@ -99,9 +104,13 @@ def init_camera():
     
     # 2560x1440 @ 24 seems like a good starting point
 
+    # Use JPG
     cam.quality = 24
-
     cam.colorspace = adafruit_ov5640.OV5640_COLOR_JPEG 
+
+    # Use RGB
+    #cam.colorspace = adafruit_ov5640.OV5640_COLOR_JPEG 
+    
     cam.effect = adafruit_ov5640.OV5640_SPECIAL_EFFECT_NONE
     #cam.effect = adafruit_ov5640.OV5640_SPECIAL_EFFECT_NEGATIVE
     cam.white_balance = adafruit_ov5640.OV5640_WHITE_BALANCE_AUTO
@@ -116,10 +125,10 @@ def init_camera():
     cam.flip_x = False
     #cam.night_mode = False
 
-    cam.exposure_value = -3
-    cam.brightness = 0
-    cam.saturation = -2
-    cam.contrast = -2
+    #cam.exposure_value = 0
+    #cam.brightness = 0
+    #cam.saturation = 0
+    #cam.contrast = 0
     # In test bar mode, the camera shows color bars in the order white - yellow - cyan - green - purple - red - blue - black.
     cam.test_pattern = False
     
