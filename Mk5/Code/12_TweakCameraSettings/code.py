@@ -114,30 +114,30 @@ def main():
                 width = cam.width
                 height = cam.height
                 print("Image width {} height {}".format(width, height))
-                bufSize = cam.capture_buffer_size
-                print("Image bytes {}".format(bufSize))            
+                newBufSize = cam.capture_buffer_size
+                print("Image bytes {}".format(newBufSize))     
+                buffer2 = bytearray(newBufSize)       
                 quality = cam.quality
                 print("Image compression factor {}".format(quality))
 
-                if buffer is None:
+                if buffer2 is None:
                     raise SystemExit("Could not allocate a bitmap")
 
                 print("Stablise white balance")
                 for _ in range(10):
                     print(".", end='')
-                    cam.capture(buffer)
+                    cam.capture(buffer2)
                     time.sleep(0.1)
                 print("\n", end='')
                 time.sleep(1)
 
                 # Capture image with modified settings
                 print("Taking picture 1")
-                cam.capture(buffer)
+                cam.capture(buffer2)
                 jpgPath = dirPath + "/capture_1.jpg"
                 print("Writing image file {}".format(jpgPath))
                 with open(jpgPath, "w") as f:
-                    for i in range(bufSize):
-                        byte = buffer[i]
+                    for byte in buffer2:
                         f.write(byte.to_bytes(1, "big"))
             break
         

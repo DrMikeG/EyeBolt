@@ -8,12 +8,22 @@ def change_setting(cam):
 
     
     print("Overriding defaults")
-    adafruit_ov5640._resolution_info[adafruit_ov5640.OV5640_SIZE_HD] = [128,27,4]
+    # These values are valid - which means the mx and tx don't need to change to 
+    # allow scaling
+    # I think the ratios need to be correct though, in this cases I went 1/10th
+    adafruit_ov5640._resolution_info[adafruit_ov5640.OV5640_SIZE_HD] = [240, 240, 7]  # 240x240
+    # [1280, 720, _ASPECT_RATIO_16X9],  # HD
+    # [2560, 1440, 0, 240, 2623, 1711, 32, 16, 2844, 1488],  # 16x9
+    
+    adafruit_ov5640._ratio_table[7] = [1920, 1920, 320, 0, 2543, 1951, 32, 16, 2684, 1968]  # 1x1
 
     print("Changing camera size")
     cam.size = adafruit_ov5640.OV5640_SIZE_HD
+    #cam.size = adafruit_ov5640.OV5640_SIZE_240X240
+    #cam.colorspace = adafruit_ov5640.OV5640_COLOR_GRAYSCALE
     time.sleep(1)
     print("New settings")
+    time.sleep(1)
     # Can I access the resolution_info?
     (
         w,
