@@ -80,6 +80,10 @@ def main():
 
     print("Done. Waiting to start")
 
+    # Change settings
+    print("Changing camera setting")
+    change_setting(cam)
+
     while True:
         
         if not button.value:
@@ -111,32 +115,33 @@ def main():
             change_setting(cam)
             time.sleep(1)
 
-            width = cam.width
-            height = cam.height
-            print("Image width {} height {}".format(width, height))
-            bufSize = cam.capture_buffer_size
-            print("Image bytes {}".format(bufSize))            
-            quality = cam.quality
-            print("Image compression factor {}".format(quality))
+            if False:
+                width = cam.width
+                height = cam.height
+                print("Image width {} height {}".format(width, height))
+                bufSize = cam.capture_buffer_size
+                print("Image bytes {}".format(bufSize))            
+                quality = cam.quality
+                print("Image compression factor {}".format(quality))
 
-            if buffer is None:
-                raise SystemExit("Could not allocate a bitmap")
+                if buffer is None:
+                    raise SystemExit("Could not allocate a bitmap")
 
-            print("Stablise white balance")
-            for _ in range(10):
+                print("Stablise white balance")
+                for _ in range(10):
+                    cam.capture(buffer)
+                    time.sleep(0.1)
+                time.sleep(1)
+
+                # Capture image with modified settings
+                print("Taking picture 1")
                 cam.capture(buffer)
-                time.sleep(0.1)
-            time.sleep(1)
-
-            # Capture image with modified settings
-            print("Taking picture 1")
-            cam.capture(buffer)
-            jpgPath = dirPath + "/capture_1.jpg"
-            print("Writing image file {}".format(jpgPath))
-            with open(jpgPath, "w") as f:
-                for i in range(bufSize):
-                    byte = buffer[i]
-                    f.write(byte.to_bytes(1, "big"))
+                jpgPath = dirPath + "/capture_1.jpg"
+                print("Writing image file {}".format(jpgPath))
+                with open(jpgPath, "w") as f:
+                    for i in range(bufSize):
+                        byte = buffer[i]
+                        f.write(byte.to_bytes(1, "big"))
 
             break
         

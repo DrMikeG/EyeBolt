@@ -1,4 +1,40 @@
 # EyeBolt #
+
+## 2nd Just 2023 ##
+
+- If width is less than half of max width or height is less than half of max height then enable binning by setting _binning to be true
+Further settings are the specified within _set_image_options()
+
+- If width and height are equal to max width and max height then we don't need to scale, set _scale to false
+- If width and height are equal to half max width and half max height then we don't need to scale if we using binning, set _scale to false
+- Else we are using scaling:  `self._write_reg_bits(_ISP_CONTROL_01, 0x20, self._scale)` - this is using a mask to set the 5th bit
+
+Other than the `_ISP_CONTROL_01 (0x5001) - # Bit[5]: Scale enable 0: Disable 1: Enable`
+I don't see anything that sets scaling, and nothing uses the defined scaling registry addresses.
+
+If you enable the value in this register, I think it must interpret the values X_OUTPUT_SIZE and Y_OUTPUT_SIZE differently.
+X_OFFSET sn Y_OFFSET are used to define the copy before scaling and X_OUTPUT_SIZE and Y_OUTPUT_SIZE defined the scaled image size.
+
+So, for the output size OV5640_SIZE_QHD (# 2560x1440)
+h,      w,      mw,     mh,     sx, sy,     ex,     ey,     ox, oy, tx,     ty
+2560,   1440,   2560,   1440,   0,  240,    2623,   1711,   32, 16, 2844,   1488, # QHD
+
+
+```
+self._binning = false # (1440 <= 1440 // 2) and (height <= max_height // 2)
+self._scale = false # not ((true and true)
+
+self._write_addr_reg(_X_ADDR_ST_H, 0, 240)
+self._write_addr_reg(_X_ADDR_END_H, 2623, 1711)
+self._write_addr_reg(_X_OUTPUT_SIZE_H, 2560, 1440)
+
+self._write_addr_reg(_X_TOTAL_SIZE_H, 2844, 1488)
+self._write_addr_reg(_X_OFFSET_H, 32, 16)
+
+self._write_reg_bits(_ISP_CONTROL_01, 0x20, self._scale)
+```
+
+
 ## 1st July 2023 ##
 In my v12 code to TweakCameraSettings I am using cam._write_register()
 

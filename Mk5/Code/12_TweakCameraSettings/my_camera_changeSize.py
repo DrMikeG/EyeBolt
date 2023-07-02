@@ -5,21 +5,28 @@ import digitalio
 
 def change_setting(cam):
 
-    # Change the camera from
-    #  [2560, 1440, _ASPECT_RATIO_16X9], # QHD
-    # to
-    #  [1280, 720, _ASPECT_RATIO_16X9],  # HD
-    # (Same aspect ratio but much smaller)
-    cam.size=adafruit_ov5640.OV5640_SIZE_HD
-    # self._size = size
-    # self._set_size_and_colorspace()
+    # My default settings of 2560x1440@24 jpg uses 153,600 (150kb)
+    # At full quality, pixel output is 2bytes per pixel.
+    # H * W * 2
     
-    #def _set_size_and_colorspace(self) -> None:  # pylint: disable=too-many-locals
-    #size = self._size
-    _ASPECT_RATIO_16X9 = 4
-    width, height, ratio = [1280, 720, _ASPECT_RATIO_16X9]
-    _w = width
-    _h = height
+    # Change the values in row 0 of the _resolution_info table
+    adafruit_ov5640._resolution_info[0] = [270, 285, 0]  # Assign new values to row 0
+    # Change the values in row 0 of the _ratio_table table
+
+                                    #  mw,   mh,  sx,  sy,   ex,   ey, ox, oy,   tx,   ty
+    adafruit_ov5640._ratio_table[0] = [2650, 1820, 850, 500, 1800, 1400, 0, 0, 2844, 1868]  # Assign new values to row 0
+
+    # Can I access the resolution_info?
+    (
+        w,
+        h,
+        ratio) = adafruit_ov5640._resolution_info[0]
+
+    print("w = {}".format(w))
+    print("h = {}".format(h))
+    print("ratio = {}".format(ratio))
+
+    # Can I access the values in ratio table?
     (
         max_width,
         max_height,
@@ -31,53 +38,20 @@ def change_setting(cam):
         offset_y,
         total_x,
         total_y,
-    ) = [2560, 1440, 0, 240, 2623, 1711, 32, 16, 2844, 1488] # 16x9
+    ) = adafruit_ov5640._ratio_table[0]
+    print("max_width = {}".format(max_width))
+    print("max_height = {}".format(max_height))
+    print("start_x = {}".format(start_x))
+    print("start_y = {}".format(start_y))
+    print("end_x = {}".format(end_x))
+    print("end_y = {}".format(end_y))
+    print("offset_x = {}".format(offset_x))
+    print("offset_y = {}".format(offset_y))
+    print("total_x = {}".format(total_x))
+    print("total_y = {}".format(total_y))
 
-    _binning = (width <= max_width // 2) and (height <= max_height // 2)
-    _scale = not (
-        (width == max_width and height == max_height)
-        or (width == max_width // 2 and height == max_height // 2)
-    )
-
-    _X_ADDR_ST_H = 0x3800    
-    _X_ADDR_END_H = 0x3804
-    _X_OUTPUT_SIZE_H = 0x3808
-    _X_TOTAL_SIZE_H = 0x380C
-    _X_OFFSET_H = 0x3810
-    _ISP_CONTROL_01 = 0x5001
-
-    cam._write_addr_reg(_X_ADDR_ST_H, start_x, start_y)
-    cam._write_addr_reg(_X_ADDR_END_H, end_x, end_y)
-    cam._write_addr_reg(_X_OUTPUT_SIZE_H, width, height)
-
-    if not _binning:
-        cam._write_addr_reg(_X_TOTAL_SIZE_H, total_x, total_y)
-        cam._write_addr_reg(_X_OFFSET_H, offset_x, offset_y)
-    else:
-        if width > 920:
-            cam._write_addr_reg(_X_TOTAL_SIZE_H, total_x - 200, total_y // 2)
-        else:
-            cam._write_addr_reg(_X_TOTAL_SIZE_H, 2060, total_y // 2)
-        cam._write_addr_reg(_X_OFFSET_H, offset_x // 2, offset_y // 2)
-
-    cam._write_reg_bits(_ISP_CONTROL_01, 0x20, cam._scale)
-
-    # This sets binning and flipping and a few other things
-    cam._set_image_options()
-
-    #if cam.colorspace == adafruit_ov5640.OV5640_COLOR_JPEG:
-        #sys_mul = 200
-        #if cam.size < adafruit_ov5640.OV5640_SIZE_QVGA:
-        #    sys_mul = 160
-        #if cam.size < adafruit_ov5640.OV5640_SIZE_XGA:
-        #    sys_mul = 180
-        #cam._set_pll(False, sys_mul, 4, 2, False, 2, True, 4)
-    #else:
-    #    cam._set_pll(False, 32, 1, 1, False, 1, True, 4)
-
-    # hopefully none of this needs to change
-    #cam._set_colorspace()
-
+    
+    
 
 def init_camera():
     print("initialising Camera")
