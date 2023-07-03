@@ -12,10 +12,12 @@ def init_camera(useCrop):
         # allow scaling
         # I think the ratios need to be correct though, in this cases I went 1/10th
         adafruit_ov5640._resolution_info[adafruit_ov5640.OV5640_SIZE_HD] = [960, 960, 7]  # 240x240
+        # For 960 - p_scale is false, binning is true, which explains why we drop into the window shift
+
         # [1280, 720, _ASPECT_RATIO_16X9],  # HD
         # [2560, 1440, 0, 240, 2623, 1711, 32, 16, 2844, 1488],  # 16x9
-        adafruit_ov5640._ratio_table[7] = [1920, 1920, 320, 0, 2543, 1951, 32, 16, 2684, 1968]  # 1x1
-
+        adafruit_ov5640._ratio_table[7] = [960, 960, 800, 700, 1760, 1660, 0, 0, 2684, 1968]  # 1x1
+        # changing 32 to 64 shifts the window right by 32 pixels
 
     # Change the values in row 0 of the _resolution_info table
     #adafruit_ov5640._resolution_info[0] = [2560,1400,8]  # Assign new values to row 0
@@ -71,7 +73,7 @@ def init_camera(useCrop):
     # 2560x1440 @ 24 seems like a good starting point
 
     # Use JPG
-    cam.quality = 24
+    cam.quality = 6
     cam.colorspace = adafruit_ov5640.OV5640_COLOR_JPEG 
 
     # Use RGB
