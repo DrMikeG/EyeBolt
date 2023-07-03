@@ -58,6 +58,60 @@ def change_setting(cam):
     print("total_x = {}".format(total_x))
     print("total_y = {}".format(total_y))
 
+    print("\nRegistry values\n")
+    p_size = cam._size
+    p_width, p_height, p_ratio = adafruit_ov5640._resolution_info[p_size]
+    (
+        p_max_width,
+        p_max_height,
+        p_start_x,
+        p_start_y,
+        p_end_x,
+        p_end_y,
+        p_offset_x,
+        p_offset_y,
+        p_total_x,
+        p_total_y,
+    ) = adafruit_ov5640._ratio_table[p_ratio]
+
+    print("max_width = {}".format(p_max_width))
+    print("max_height = {}".format(p_max_height))
+    print("start_x = {}".format(p_start_x))
+    print("start_y = {}".format(p_start_y))
+    print("end_x = {}".format(p_end_x))
+    print("end_y = {}".format(p_end_y))
+    print("offset_x = {}".format(p_offset_x))
+    print("offset_y = {}".format(p_offset_y))
+    print("total_x = {}".format(p_total_x))
+    print("total_y = {}".format(p_total_y))
+    p_binning = (p_width <= p_max_width // 2) and (p_height <= p_max_height // 2)
+    print("p_binning = {}".format(p_binning))
+    p_scale = not (
+        (p_width == p_max_width and p_height == p_max_height)
+        or (p_width == p_max_width // 2 and p_height == p_max_height // 2)
+    )
+    print("p_scale = {}".format(p_scale))
+
+    print("p_write_addr_reg(_X_ADDR_ST_H, {}, {})".format(p_start_x,p_start_y))
+    print("p_write_addr_reg(_X_ADDR_END_H, {},{})".format(p_end_x, p_end_y))
+    print("p_write_addr_reg(_X_OUTPUT_SIZE_H, {},{})".format(p_width, p_height))
+
+    if not p_binning:
+        print("not binning")
+        print("p_write_addr_reg(_X_TOTAL_SIZE_H, {},{})".format(p_total_x, p_total_y))
+        print("p_write_addr_reg(_X_OFFSET_H, {},{})".format(p_offset_x, p_offset_y))
+    else:
+        print("binning")
+        if p_width > 920:
+            print("p_width > 920")
+            print("p_write_addr_reg(_X_TOTAL_SIZE_H, {}, {})".format(p_total_x - 200,p_total_y // 2))
+        else:
+            print("p_width < 920")
+            print("p_write_addr_reg(_X_TOTAL_SIZE_H, {}, {})".format(2060,p_total_y // 2))
+            print("p_write_addr_reg(_X_OFFSET_H, {}, {})".format(p_offset_x // 2,p_offset_y // 2))
+
+    print("p_write_reg_bits(_ISP_CONTROL_01, 0x20, {})".format(p_scale))
+
 
 def init_camera():
 
@@ -92,7 +146,7 @@ def init_camera():
     mclk=board.GP20,
     shutdown=None,
     reset=reset,
-    size=adafruit_ov5640.OV5640_SIZE_QHDA
+    size=adafruit_ov5640.OV5640_SIZE_96X96
     )
     print("print chip id")
     print(cam.chip_id)

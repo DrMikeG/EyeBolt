@@ -34,6 +34,37 @@ self._write_addr_reg(_X_OFFSET_H, 32, 16)
 self._write_reg_bits(_ISP_CONTROL_01, 0x20, self._scale)
 ```
 
+Thinking about moving away from jpeg again.
+Example gif code:
+``` 
+frame = wait_record_pressed_update_display(True, cap)
+    with open_next_image("gif") as f, gifio.GifWriter(
+        f, cam.width, cam.height, displayio.Colorspace.RGB565_SWAPPED, dither=True
+    ) as 
+        ```
+
+https://docs.circuitpython.org/en/latest/shared-bindings/gifio/index.html
+
+file – Either a file open in bytes mode, or the name of a file to open in bytes mode.
+
+width – The width of the image. All frames must have the same width.
+
+height – The height of the image. All frames must have the same height.
+
+colorspace – The colorspace of the image. All frames must have the same colorspace. The supported colorspaces are RGB565, BGR565, RGB565_SWAPPED, BGR565_SWAPPED, and L8 (greyscale)
+
+The GIF frames are decoded into RGB565 big-endian format. displayio expects little-endian, so the example above uses Colorspace.RGB565_SWAPPED.
+
+https://learn.adafruit.com/saving-bitmap-screenshots-in-circuitpython/overview
+```
+This guide introduces a CircuitPython library which is compatible with CircuitPython 5.0 and later. The library allows the programmer to take the pixels in a bitmap or on a screen and save them into standard 24 bits per pixel BMP files. Files may be on the CircuitPython USB flash filesystem (if it's set to writable mode) or onto a SD card.
+
+To save bitmaps and screenshots you will need to add adafruit_bitmapsaver.mpy to the CIRCUITPY/lib directory.
+
+save_pixels('/sd/pypaint.bmp', self._fg_bitmap, self._fg_palette)
+```
+http://paulbourke.net/dataformats/ppm/
+
 
 ## 1st July 2023 ##
 In my v12 code to TweakCameraSettings I am using cam._write_register()
