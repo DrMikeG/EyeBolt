@@ -1,6 +1,12 @@
 # EyeBolt #
 
-## 2nd Just 2023 ##
+## 3rd July 2023 ##
+Seem to have lost this link.
+https://github.com/espressif/esp32-camera/issues/203
+
+https://github.com/espressif/esp32-camera/blob/master/sensors/ov5640.c
+
+## 2nd July 2023 ##
 
 - If width is less than half of max width or height is less than half of max height then enable binning by setting _binning to be true
 Further settings are the specified within _set_image_options()
