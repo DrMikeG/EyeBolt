@@ -93,10 +93,10 @@ def init_camera(useCrop):
     cam.flip_x = False
     #cam.night_mode = False
 
-    #cam.exposure_value = 0
-    #cam.brightness = 0
-    #cam.saturation = 0
-    #cam.contrast = 0
+    cam.exposure_value = 0
+    cam.brightness = 0
+    cam.saturation = -2
+    cam.contrast = -2
     # In test bar mode, the camera shows color bars in the order white - yellow - cyan - green - purple - red - blue - black.
     cam.test_pattern = False
     
@@ -162,5 +162,52 @@ def init_camera(useCrop):
             print("p_write_addr_reg(_X_OFFSET_H, {}, {})".format(p_offset_x // 2,p_offset_y // 2))
 
     print("p_write_reg_bits(_ISP_CONTROL_01, 0x20, {})".format(p_scale))
+
+    # other recommended settings:
+    #s->set_brightness(s, 0); // -2 to 2
+    #s->set_contrast(s, -2); // -2 to 2
+    #s->set_saturation(s, -2); // -2 to 2
+    #s->set_special_effect(s, 0); // 0 to 6 (0 - No Effect, 1 - Negative, 2 - Grayscale, 3 - Red Tint, 4 - Green Tint, 5 - Blue Tint, 6 - Sepia)
+    
+    
+    #s->set_whitebal(s, 1); // 0 = disable , 1 = enable
+    #s->set_awb_gain(s, 1); // 0 = disable , 1 = enable
+    #static int set_awb_gain_dsp(sensor_t *sensor, int enable)
+    #{
+        #define CTRL0               0xC2
+        #define CTRL1               0xC3
+    #    sensor->status.awb_gain = enable;
+    #    return set_reg_bits(sensor, BANK_DSP, CTRL1, 2, 1, enable?1:0);
+    #                   uint8_t offset, uint8_t mask, uint8_t value
+    #    return set_reg_bits(sensor, 0       , 0xC3 , 2, 1, enable?1:0);
+    # Mast 2, offset 1
+    #}
+
+
+    #s->set_wb_mode(s, 0); // 0 to 4 - if awb_gain enabled (0 - Auto, 1 - Sunny, 2 - Cloudy, 3 - Office, 4 - Home)
+
+    #s->set_exposure_ctrl(s, 1); // 0 = disable , 1 = enable
+    #s->set_aec2(s, 0); // 0 = disable , 1 = enable
+    #//s->set_ae_level(s, 2); // -2 to 2
+    #//s->set_aec_value(s, 400); // 0 to 1200
+    #s->set_gain_ctrl(s, 0); // 0 = disable , 1 = enable
+    #s->set_agc_gain(s, 0); // 0 to 30
+    #s->set_gainceiling(s, (gainceiling_t)6); // 0 to 6
+    #s->set_bpc(s, 1); // 0 = disable , 1 = enable
+    #s->set_wpc(s, 1); // 0 = disable , 1 = enable
+    #s->set_raw_gma(s, 1); // 0 = disable , 1 = enable (makes much lighter and noisy)
+    #s->set_lenc(s, 0); // 0 = disable , 1 = enable
+    #s->set_hmirror(s, 0); // 0 = disable , 1 = enable
+    #s->set_vflip(s, 0); // 0 = disable , 1 = enable
+    #s->set_dcw(s, 0); // 0 = disable , 1 = enable
+    #s->set_colorbar(s, 0); // 0 = disable , 1 = enable
+
+    #Longer exposure. This one is easy:
+    #s->set_reg(s,0xff,0xff,0x01);//banksel
+    #ret = write_reg(sensor, (reg >> 8) & 0x01, reg & 0xFF, value);
+    #s->set_reg(s,0x11,0xff,01);//frame rate
+
+
+    #This is about 1 second.
 
     return cam
