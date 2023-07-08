@@ -4,6 +4,14 @@ import board
 import digitalio
 import time
 
+def change_setting(cam):
+    flip_x = False
+    #https://github.com/espressif/esp32-camera/issues/229
+    #you can increase the exposure by changing the vertical and horizontal timing).
+    cam._write_reg_bits(0x380c,0xff,0x1f)
+    cam._write_reg_bits(0x380d,0xff,0xff)
+
+
 def init_camera(useCrop):
 
     if useCrop:
@@ -207,7 +215,22 @@ def init_camera(useCrop):
     #ret = write_reg(sensor, (reg >> 8) & 0x01, reg & 0xFF, value);
     #s->set_reg(s,0x11,0xff,01);//frame rate
 
-
     #This is about 1 second.
+
+    #_TIMING_TC_REG20 = 0x3820
+    #_TIMING_TC_REG21 = 0x3821
+    #cam._write_register(_TIMING_TC_REG20, reg20)
+    #cam._write_register(_TIMING_TC_REG21, reg21)
+    #cam._write_register(0x4514, reg4514)
+
+    #s->set_reg(s,address,mask,value);
+    # Longer exposure. This one is easy:
+    #cam._write_register(0xff,0xff,0x01);//banksel
+    #cam._write_register(0x11,1)#;//frame rate
+    #This is about 1 second.
+
+    # And finally, being able to save high quality images (if the image is getting corrupted)
+    #cam._write_register(0xff,0xff,0x00);//banksel
+    #cam._write_register(0xd3,5)#;//jpg clock
 
     return cam

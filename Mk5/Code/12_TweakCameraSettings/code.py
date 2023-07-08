@@ -11,11 +11,11 @@ import digitalio
 from digitalio import DigitalInOut, Direction, Pull
 
 import mount_sd
-from my_camera import init_camera
+from my_camera import init_camera, change_setting
 from my_motor import init_stepper_motor, stepper_fwd
 
 
-print("Take 1 photos, testing crop settings")
+print("Take 2 photos with different settings")
 
 def init_push_button():
     button_pin = board.GP6
@@ -98,12 +98,12 @@ def main():
             print("\n", end='')
             time.sleep(1)
 
+
             # Capture image with default settings
             print("Taking picture 0")
             cam.capture(buffer)
             jpgPath = dirPath + "/capture_0.jpg"
             print("Writing image file {}".format(jpgPath))
-
             total_bytes = len(buffer)
             print("Saving {} bytes".format(total_bytes))
             progress_interval = total_bytes // 20  # Update progress every 5%
@@ -117,11 +117,53 @@ def main():
                     if bytes_written >= progress_list[0]:
                         print("#", end="")
                         progress_list.pop(0)
+            
+            # Change settings
+            print("Changing camera setting")
+            change_setting(cam)
+            time.sleep(1)
+
+            width = cam.width
+            height = cam.height
+            print("Image width {} height {}".format(width, height))
+            bufSize = cam.capture_buffer_size
+            print("Image bytes {}".format(bufSize))            
+            quality = cam.quality
+            print("Image compression factor {}".format(quality))
+
+            if buffer is None:
+                raise SystemExit("Could not allocate a bitmap")
+
+            print("Stablise white balance")
+            for _ in range(10):
+                print(".", end='')
+                cam.capture(buffer)
+                time.sleep(0.1)
+            print("\n", end='')
+            time.sleep(1)
+
+
+            # Capture image with modified settings
+            print("Taking picture 1")
+            cam.capture(buffer)
+            jpgPath = dirPath + "/capture_1.jpg"
+            print("Writing image file {}".format(jpgPath))
+            total_bytes = len(buffer)
+            print("Saving {} bytes".format(total_bytes))
+            progress_interval = total_bytes // 20  # Update progress every 5%
+            progress_list = [i * progress_interval for i in range(1, 22)]  # List representing 5%, 10%, 15%, ...
+            print("....................")
+            with open(jpgPath, "w") as f:
+                bytes_written = 0
+                for byte in buffer:
+                    f.write(byte.to_bytes(1, "big"))
+                    bytes_written += 1
+                    if bytes_written >= progress_list[0]:
+                        print("#", end="")
+                        progress_list.pop(0)
+
             break
-            print("")
         
     time.sleep(0.1)  # Small delay to debounce the button
-
-    print("Complete")
 
 main()
