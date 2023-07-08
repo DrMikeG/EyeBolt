@@ -81,7 +81,7 @@ def init_camera(useCrop):
     
     cam.effect = adafruit_ov5640.OV5640_SPECIAL_EFFECT_NONE
     #cam.effect = adafruit_ov5640.OV5640_SPECIAL_EFFECT_NEGATIVE
-    cam.white_balance = adafruit_ov5640.OV5640_WHITE_BALANCE_AUTO
+    cam.white_balance = adafruit_ov5640.OV5640_WHITE_BALANCE_SUNNY
 
     #OV5640_WHITE_BALANCE_AUTO = 0
     #OV5640_WHITE_BALANCE_SUNNY = 1
@@ -91,7 +91,7 @@ def init_camera(useCrop):
 
     cam.flip_y = False
     cam.flip_x = False
-    #cam.night_mode = False
+    cam.night_mode = False
 
     cam.exposure_value = 0
     cam.brightness = 0

@@ -1,5 +1,13 @@
 # EyeBolt #
 
+## 7th July 2023
+
+Following other leads on long exposure:
+
+https://forums.openmv.io/t/need-help-with-ov5640-exposure-timing/8238/5
+https://forums.raspberrypi.com/viewtopic.php?t=350473
+
+
 ## 3rd July 2023 ##
 Seem to have lost this link.
 https://github.com/espressif/esp32-camera/issues/203
