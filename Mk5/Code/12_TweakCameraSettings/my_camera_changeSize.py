@@ -8,8 +8,74 @@ def change_setting(cam):
     flip_x = False
     #https://github.com/espressif/esp32-camera/issues/229
     #you can increase the exposure by changing the vertical and horizontal timing).
+
+
+    # Set for long exposure
+    # 0x380C TIMING HTS default 0x0B 
     cam._write_reg_bits(0x380c,0xff,0x1f)
+    # 0x380D TIMING HTS default 0x1C 
     cam._write_reg_bits(0x380d,0xff,0xff)
+
+    #s->set_aec2(s, 0); // 0 = disable , 1 = enable
+    #//night mode disable
+    #cam._write_reg_bits(0x3a00,0x04,0x00)    
+    
+    #static int set_aec2(sensor_t *sensor, int enable)
+    #{
+    #    int ret = 0;
+    #    ret = write_reg_bits(sensor->slv_addr, 0x3a00, 0x04, enable);
+    #    if (ret == 0) {
+    #        ESP_LOGD(TAG, "Set aec2 to: %d", enable);
+    #        sensor->status.aec2 = enable;
+    #    }
+    #    return ret;
+    #}
+    
+    #s->set_exposure_ctrl(s, 1); // 0 = disable , 1 = enable
+    # 0 is false
+    # 0 is !enable
+    #ret = write_reg_bits(sensor->slv_addr, AEC_PK_MANUAL, AEC_PK_MANUAL_AEC_MANUALEN, !enable);
+    #define AEC_PK_MANUAL   0x3503  // AEC Manual Mode Control
+    #define AEC_PK_MANUAL_AEC_MANUALEN  0x01    /* Enable AEC Manual enable */
+    #cam._write_reg_bits(0x3503,0x01,0x01)
+
+    # The Auto Exposure Control (AEC) and Auto Gain Control (AGC) allows the image sensor to adjust the image brightness 
+    # to a desired range by setting the proper exposure time and gain applied to the image. Besides automatic control, 
+    # exposure time and gain can be set manually from external control. The related registers are listed in table 4-4.
+
+    
+
+    # 0x3503 AEC PK MANUAL 0x00
+    # AEC Manual Mode Control
+    # Bit[1]: AGC manual
+    #  0: Auto enable
+    #  1: Manual enable
+    # Bit[0]: AEC manual
+    #  0: Auto enable
+    #  1: Manual enable
+
+    # To manually change gain, first set register bit 0x3503[1] to enable manual control, then change the values in 
+    # 0x350A/0x350B for the manual gain. The OV5640 has a maximum of 64x gain.
+
+    # I want to set Bit[1] of 0x3503 to 1 for manual gain control
+    cam._write_reg_bits(0x3503,0x01,0x01)
+    # I want to set Bit[0] of 0x3503 to 1 for manual exposure control
+    cam._write_reg_bits(0x3503,0x02,0x01)
+
+    #Gain is stored in reg 0x350a and Reg0x350b. If only use the gain of Reg0x350b, maximum gain of 
+    #32x could be reached. It is enough for camera phone. So we don't discuss reg0x350a here.
+    #Gain = reg0x350b
+    #//gain = {0x350A[1:0], 0x350B[7:0]} / 16
+    cam._write_reg_bits(0x350B,0xFF,0x00)
+
+    #s->set_gain_ctrl(s, 0); // 0 = disable , 1 = enable
+    #s->set_agc_gain(s, 0); // 0 to 30
+    #s->set_gainceiling(s, (gainceiling_t)6); // 0 to 6
+    #s->set_bpc(s, 1); // 0 = disable , 1 = enable
+    #s->set_wpc(s, 1); // 0 = disable , 1 = enable
+    #s->set_raw_gma(s, 1); // 0 = disable , 1 = enable (makes much lighter and noisy)
+
+
 
 
 def init_camera(useCrop):
@@ -102,12 +168,21 @@ def init_camera(useCrop):
     cam.night_mode = False
 
     cam.exposure_value = 0
-    cam.brightness = 0
+    cam.brightness = -2
     cam.saturation = -2
-    cam.contrast = -2
+    cam.contrast = 0
     # In test bar mode, the camera shows color bars in the order white - yellow - cyan - green - purple - red - blue - black.
     cam.test_pattern = False
     
+
+    # Set for long exposure
+    # 0x380C TIMING HTS default 0x0B 
+    cam._write_reg_bits(0x380c,0xff,0x1f)
+    # 0x380D TIMING HTS default 0x1C 
+    cam._write_reg_bits(0x380d,0xff,0xff)
+
+
+
     print("Resolution info:")
     (
         w,
@@ -210,24 +285,6 @@ def init_camera(useCrop):
     #s->set_dcw(s, 0); // 0 = disable , 1 = enable
     #s->set_colorbar(s, 0); // 0 = disable , 1 = enable
 
-    #Longer exposure. This one is easy:
-    #s->set_reg(s,0xff,0xff,0x01);//banksel
-    #ret = write_reg(sensor, (reg >> 8) & 0x01, reg & 0xFF, value);
-    #s->set_reg(s,0x11,0xff,01);//frame rate
-
-    #This is about 1 second.
-
-    #_TIMING_TC_REG20 = 0x3820
-    #_TIMING_TC_REG21 = 0x3821
-    #cam._write_register(_TIMING_TC_REG20, reg20)
-    #cam._write_register(_TIMING_TC_REG21, reg21)
-    #cam._write_register(0x4514, reg4514)
-
-    #s->set_reg(s,address,mask,value);
-    # Longer exposure. This one is easy:
-    #cam._write_register(0xff,0xff,0x01);//banksel
-    #cam._write_register(0x11,1)#;//frame rate
-    #This is about 1 second.
 
     # And finally, being able to save high quality images (if the image is getting corrupted)
     #cam._write_register(0xff,0xff,0x00);//banksel
