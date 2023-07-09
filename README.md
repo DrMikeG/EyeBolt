@@ -1,5 +1,36 @@
 # EyeBolt #
 
+Because of the field of view, I don't care about much of the image.
+Pico has limit - Max 150kb of data
+Ideally I'd like 1.5mb for 900x900 at full resolution - but equally I don't care about most of the those pixels, only the red ones.
+
+Most experiments with 2560x1440 at high compression (24)
+Binning is automatically enabled when output size is less 1440, so wondered where many of my pixels went when I used small output.
+
+The library I am using is really useful for setting the 100s of registers and capturing the output data.
+But output size is set using an enum indexing into a table.
+
+I didn't really want to abandoned the library, since its setting dozens of useful register values, but I want to use an output format that's not one of the pre-canned enum rows in the table.
+
+The library itself is compiled into binary for efficiency, so I can't change it - but it turns out the table values are read-write so I can overwrite one row in the table.
+
+I started off copying all the values from a working row, and setting the offsets to shuffle a cropped window along.
+
+The camera works in two modes depending on the output size - so the values are used differently depending, which took me a while to figure out.
+
+With a bit of trial and error, managed to shift the capture window the be 950x950 (without scaling?)
+
+Capturing fewer pixels allowed me to lower the compression from 24 to 6 (very close to 5)
+
+The next issue to address is the noise.
+The library is very video-focused and doesn't expose any of the setting related to the auto-exposure or auto-gain controls.
+
+Here I have to go to the data sheet and start messing with individual bits in registers.
+
+My approach here was to set the camera to a known good state, take a photo, then adjust some experimental settings, and take a second photos and compare.
+
+
+
 ## 7th July 2023
 
 Following other leads on long exposure:

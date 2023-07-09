@@ -66,6 +66,8 @@ def change_setting(cam):
     #32x could be reached. It is enough for camera phone. So we don't discuss reg0x350a here.
     #Gain = reg0x350b
     #//gain = {0x350A[1:0], 0x350B[7:0]} / 16
+    #0x350a Defaults to 00
+    #cam._write_reg_bits(0x350A,0x03,0x00)
     cam._write_reg_bits(0x350B,0xFF,0x00)
 
     #s->set_gain_ctrl(s, 0); // 0 = disable , 1 = enable
