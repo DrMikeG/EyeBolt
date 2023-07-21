@@ -191,28 +191,10 @@ if processFirstImageTest:
         red_threshold = 10
 
         # Find red pixels
-        #x_coords, y_coords = find_red_pixels(cropped_image, red_threshold)
-        # Set the frame dimensions and circle radius
-        circle_radius = 100
-
-        # Render the circle and get the coordinates
-        x_coords, y_coords, circle_image = render_circle_in_frame(v_width, v_height, circle_radius)
-        ##cv2.imshow("Circle {}x{}".format(frame_width, frame_height), circle_image)
-        ##cv2.waitKey(0)
-        #break
-        # Display the results
-        print(f"Number of red pixels: {len(x_coords)}")
-
-        #for x, y in zip(x_coords, y_coords):
-            #print(f"Pixel coordinates: ({x}, {y})")
-
-        # Assuming you have a list of 3D coordinates called "data"
-        # a list of rotation angles for each frame called "angles"
-        # and the axis of rotation at (0, 720, 0)
-
+        x_coords, y_coords = find_red_pixels(cropped_image, red_threshold)
         # Create a Z-coordinate array of the same length as X and Y coordinates
         z_coords = np.zeros_like(x_coords)
-
+        print(f"Number of red pixels: {len(x_coords)}")
         # Combine X, Y, and Z coordinates to form the 3D points
         data = list(zip(x_coords, y_coords, z_coords))
 
@@ -223,12 +205,6 @@ if processFirstImageTest:
         # Write the coordinates to the .xyz file
         write_xyz_file(rx_coords, ry_coords,rz_coords,output_file)
 
-        axis_of_rotation = (0,0, 0)
-        # Rotate the data around the Y-axis with translation
-        rotated_data = rotate_data_around_y_with_translation(data, z_value*(360.0/len(images)), axis_of_rotation)
-        rx_coords, ry_coords, rz_coords = zip(*rotated_data)
-        # Write the coordinates to the .xyz file
-        write_xyz_file(rx_coords, ry_coords,rz_coords,output_file)
 
         z_value += 1
         #break
