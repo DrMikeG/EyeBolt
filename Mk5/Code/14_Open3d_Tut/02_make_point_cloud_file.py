@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import glob
 import os
+import open3d as o3d
+from datum import makeDatumAsPointCloud
 
 def pad_image(image, target_width, target_height):
     height, width = image.shape[:2]
@@ -53,11 +55,64 @@ def find_red_pixels(image, threshold):
 
     return x_coords, y_coords
 
-def write_xyz_file(x_coords, y_coords, z_value, output_file):
-    with open(output_file, 'w') as f:
-        for x, y in zip(x_coords, y_coords):
-            f.write(f"{x} {y} {z_value}\n")
-    print(f"Coordinates for {z_value} written to {output_file}")
+def write_xyz_file(x_coords, y_coords, z_coords, output_file):
+    with open(output_file, 'a') as f:
+        for x, y, z in zip(x_coords, y_coords, z_coords):
+            f.write(f"{x} {y} {z}\n")
+
+
+def rotate_around_y_with_translation(point, angle, axis_of_rotation):
+    # Extract the X, Y, and Z coordinates
+    x, y, z = point
+
+    # Extract the X, Y, and Z coordinates of the axis of rotation
+    cx, cy, cz = axis_of_rotation
+
+    # Translate the point and axis of rotation to the origin
+    translated_x, translated_z = x - cx, z - cz
+
+    # Convert the angle to radians
+    theta = angle * np.pi / 180.0
+
+    # Perform the rotation around the Y-axis
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+    new_translated_x = translated_x * cos_theta - translated_z * sin_theta
+    new_translated_z = translated_x * sin_theta + translated_z * cos_theta
+
+    # Translate the rotated point back to its original position
+    new_x, new_z = new_translated_x + cx, new_translated_z + cz
+
+    return new_x, y, new_z
+
+def rotate_data_around_y_with_translation(data, angle, axis_of_rotation):
+    rotated_data = []
+    for point in data:
+        rotated_point = rotate_around_y_with_translation(point, angle, axis_of_rotation)
+        rotated_data.append(rotated_point)
+    return rotated_data
+
+
+def render_circle_in_frame(frame_width, frame_height, circle_radius):
+    # Create a blank image frame filled with zeros (black color)
+    image = np.zeros((frame_height, frame_width), dtype=np.uint8)
+
+    # Calculate the center of the frame
+    center_x = frame_width // 2
+    center_y = frame_height // 2
+
+    # Generate coordinates for the circle
+    x_coords, y_coords = [], []
+    for x in range(frame_width):
+        for y in range(frame_height):
+            #if (x - center_x) ** 2 + (y - center_y) ** 2 <= circle_radius ** 2:
+            if (x - center_x) ** 2 + (y - center_y) ** 2 == circle_radius ** 2:
+                x_coords.append(x)
+                y_coords.append(y)
+                # Set the pixel to a white color (255) for visualization purposes
+                image[y, x] = 255
+
+    return x_coords, y_coords, image
 
 
 
@@ -109,6 +164,10 @@ processFirstImageTest = True
 
 # Specify the output file name
 output_file = "./Mk5/Code/14_Open3d_Tut/run_71_output.xyz"
+if os.path.exists(output_file):
+    # Delete the file if it exists
+    os.remove(output_file)
+    print(f"Deleted existing {output_file}")
 
 if processFirstImageTest:
 
@@ -132,18 +191,62 @@ if processFirstImageTest:
         red_threshold = 10
 
         # Find red pixels
-        x_coords, y_coords = find_red_pixels(cropped_image, red_threshold)
+        #x_coords, y_coords = find_red_pixels(cropped_image, red_threshold)
+        # Set the frame dimensions and circle radius
+        circle_radius = 100
 
+        # Render the circle and get the coordinates
+        x_coords, y_coords, circle_image = render_circle_in_frame(v_width, v_height, circle_radius)
+        ##cv2.imshow("Circle {}x{}".format(frame_width, frame_height), circle_image)
+        ##cv2.waitKey(0)
+        #break
         # Display the results
         print(f"Number of red pixels: {len(x_coords)}")
+
         #for x, y in zip(x_coords, y_coords):
             #print(f"Pixel coordinates: ({x}, {y})")
 
-        
+        # Assuming you have a list of 3D coordinates called "data"
+        # a list of rotation angles for each frame called "angles"
+        # and the axis of rotation at (0, 720, 0)
+
+        # Create a Z-coordinate array of the same length as X and Y coordinates
+        z_coords = np.zeros_like(x_coords)
+
+        # Combine X, Y, and Z coordinates to form the 3D points
+        data = list(zip(x_coords, y_coords, z_coords))
+
+        axis_of_rotation = (v_width/2, 0, 0)
+        # Rotate the data around the Y-axis with translation
+        rotated_data = rotate_data_around_y_with_translation(data, z_value*(360.0/len(images)), axis_of_rotation)
+        rx_coords, ry_coords, rz_coords = zip(*rotated_data)
         # Write the coordinates to the .xyz file
-        write_xyz_file(x_coords, y_coords,z_value,output_file)
+        write_xyz_file(rx_coords, ry_coords,rz_coords,output_file)
 
-        z_value += 1.0
+        axis_of_rotation = (0,0, 0)
+        # Rotate the data around the Y-axis with translation
+        rotated_data = rotate_data_around_y_with_translation(data, z_value*(360.0/len(images)), axis_of_rotation)
+        rx_coords, ry_coords, rz_coords = zip(*rotated_data)
+        # Write the coordinates to the .xyz file
+        write_xyz_file(rx_coords, ry_coords,rz_coords,output_file)
 
-        break
+        z_value += 1
+        #break
+
     #cv2.destroyAllWindows()
+
+    print("Load a ply point cloud, print it, and render it")
+    pcd = o3d.io.read_point_cloud(output_file)
+    print(pcd)
+    print(np.asarray(pcd.points))
+
+    datum_point_cloud = makeDatumAsPointCloud()
+
+    combined_geometries = datum_point_cloud + pcd
+
+    o3d.visualization.draw_geometries([combined_geometries],
+                                    zoom=0.3412,
+                                    front=[0.4257, -0.2125, -0.8795],
+                                    lookat=[2.6172, 2.0475, 1.532],
+                                    up=[-0.0694, -0.9768, 0.2024])
+            
