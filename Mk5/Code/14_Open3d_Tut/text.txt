@@ -1,0 +1,28 @@
+Tutorial on Point Cloud in Open3D
+
+https://youtu.be/zF3MreN1w6c
+
+https://github.com/isl-org/Open3D
+
+PS C:\Users\gibbens\Documents\Arduino\EyeBolt> pip install open3d
+Collecting open3d
+
+http://www.open3d.org/docs/release/tutorial/geometry/pointcloud.html
+
+
+
+http://www.open3d.org/docs/release/tutorial/geometry/file_io.html#Point-cloud
+
+By default, Open3D tries to infer the file type by the filename extension. The following point cloud file types are supported:
+
+xyz - Each line contains [x, y, z], where x, y, z are the 3D coordinates
+
+xyzn - Each line contains [x, y, z, nx, ny, nz], where nx, ny, nz are the normals
+
+xyzrgb - Each line contains [x, y, z, r, g, b], where r, g, b are in floats of range [0, 1]
+
+pts - The first line is an integer representing the number of points. The subsequent lines follow one of these formats: [x, y, z, i, r, g, b], [x, y, z, r, g, b], [x, y, z, i] or [x, y, z], where x, y, z, i are of type double and r, g, b are of type uint8
+
+ply - See Polygon File Format, the ply file can contain both point cloud and mesh data
+
+pcd - See Point Cloud Data
