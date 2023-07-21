@@ -170,8 +170,8 @@ def init_camera(useCrop):
     cam.night_mode = False
 
     cam.exposure_value = 0
-    cam.brightness = -2
-    cam.saturation = -2
+    cam.brightness = 0
+    cam.saturation = 0
     cam.contrast = 0
     # In test bar mode, the camera shows color bars in the order white - yellow - cyan - green - purple - red - blue - black.
     cam.test_pattern = False

@@ -28,7 +28,7 @@ def crop_image(image, crop_width, crop_height):
 
     return cropped_image
 
-images = glob.glob('./Mk5/Code/13_Capture360_Crop/run_069/*.jpg')
+images = glob.glob('./Mk5/Code/13_Capture360_Crop/run_071/*.jpg')
 print ("found {} images".format(len(images)))
 
 # Load the camera calibration data from the file
@@ -45,7 +45,7 @@ makeVideo = True
 if makeVideo:
     v_width = 1920
     v_height = 1080
-    output_file = "./Mk5/Code/13_Capture360_Crop/run_069.mp4"  # Name of the output video file
+    output_file = "./Mk5/Code/13_Capture360_Crop/run_071.mp4"  # Name of the output video file
     fps = 10  # Frames per second
     output_size = (v_width, v_height)  # Output video size
     codec = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for the output video

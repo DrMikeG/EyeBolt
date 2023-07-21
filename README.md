@@ -1,5 +1,13 @@
 # EyeBolt #
 
+## 13th July 2023 ##
+
+Where are we up to?
+I'm now capturing runs of cropped 950x950 images with low noise.
+This took a lot of messing - but I'm very please with the result.
+
+## 8th July 2023 ##
+
 Because of the field of view, I don't care about much of the image.
 Pico has limit - Max 150kb of data
 Ideally I'd like 1.5mb for 900x900 at full resolution - but equally I don't care about most of the those pixels, only the red ones.
