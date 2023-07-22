@@ -162,7 +162,7 @@ def processImagesIntoPointCloud(images,mtx,dist,output_file):
         undistorted_img = cv2.undistort(distorted_img, mtx, dist) # 2560x1440
         cropped_image = crop_image(undistorted_img, v_width,v_height)
 
-        cv2.imwrite(filename.replace(".jpg","_cropped_image.jpg"), cropped_image)
+        #cv2.imwrite(filename.replace(".jpg","_cropped_image.jpg"), cropped_image)
 
         red_threshold = 10
 
@@ -174,7 +174,7 @@ def processImagesIntoPointCloud(images,mtx,dist,output_file):
         # Combine X, Y, and Z coordinates to form the 3D points
         data = list(zip(x_coords, y_coords, z_coords))
 
-        axis_of_rotation = ((v_width/2)+200, 0, 0)
+        axis_of_rotation = (670, 0, 0) # I recon the center of rotation is about 670 (should be 640)
         # Rotate the data around the Y-axis with translation
         rotated_data = rotate_data_around_y_with_translation(data, z_value*(360.0/len(images)), axis_of_rotation)
         rx_coords, ry_coords, rz_coords = zip(*rotated_data)
@@ -182,7 +182,7 @@ def processImagesIntoPointCloud(images,mtx,dist,output_file):
         write_xyz_file(rx_coords, ry_coords,rz_coords,output_file)
 
         z_value += 1
-        #break
+        #return
         #cv2.destroyAllWindows()
 
     print("Load a ply point cloud, print it, and render it")
@@ -217,11 +217,21 @@ def find_red_pixels(filename,image, threshold):
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define lower and upper threshold values for red (HSV color space)
-    lower_red = np.array([100, 000, 000], dtype=np.uint8)
-    upper_red = np.array([179, 255, 255], dtype=np.uint8)
+    lower_red = np.array([00, 000, 240], dtype=np.uint8)
+    upper_red = np.array([100, 255, 255], dtype=np.uint8)
 
     # Create a binary mask for red pixels
     red_mask = cv2.inRange(hsv_image, lower_red, upper_red)
+
+    # Set the border regions to zero (black) in the mask
+    top_border_size = 100
+    bottom_border_size = 60
+    left_border_size = 200
+    right_border_size = 200
+    red_mask[:top_border_size, :] = 0  # Top border
+    red_mask[-bottom_border_size:, :] = 0  # Bottom border
+    red_mask[:, :left_border_size] = 0  # Left border
+    red_mask[:, -right_border_size:] = 0  # Right border
     # Create a white image of the same size as the original image
     white_image = np.ones_like(image) * 255
  
@@ -229,9 +239,9 @@ def find_red_pixels(filename,image, threshold):
     result = cv2.bitwise_and(image, image, mask=red_mask)
     #cv2.imshow("Mask applied {}".format(filename), result)
     #cv2.imshow("Original applied {}".format(filename), image)
-    cv2.imwrite(filename.replace(".jpg","_masked.jpg"), image)
+    #cv2.imwrite(filename.replace(".jpg","_masked.jpg"), image)
     #cv2.waitKey(0)
-
+    
     # Find the x, y coordinates of red pixels
     y_coords, x_coords = np.where(red_mask > 0)
 
@@ -294,7 +304,7 @@ def render_circle_in_frame(frame_width, frame_height, circle_radius):
 
     return x_coords, y_coords, image
 
-run = 74
+run = 75
 dark_images = glob.glob('./Mk5/Code/15_Capture360_DarkOrLight/run_0{}/*.jpg'.format(run))
 video_output_file = "./Mk5/Code/15_Capture360_DarkOrLight/run_0{}.mp4".format(run)  # Name of the output video file
 s_video_output_file = "./Mk5/Code/15_Capture360_DarkOrLight/run_0{}_x_run_0{}.mp4".format(run,run+1)  # Name of the output video file
@@ -309,8 +319,8 @@ mtx = data['mtx']
 dist = data['dist']
 
 makeVideo = False
-makeSideBySideVideo = True
-processFirstImageTest = False
+makeSideBySideVideo = False
+processFirstImageTest = True
 
 
 
