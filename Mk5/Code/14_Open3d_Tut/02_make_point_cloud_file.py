@@ -116,7 +116,7 @@ def render_circle_in_frame(frame_width, frame_height, circle_radius):
 
 
 
-images = glob.glob('./Mk5/Code/13_Capture360_Crop/run_071/*.jpg')
+images = glob.glob('./Mk5/Code/13_Capture360_Crop/run_070/*.jpg')
 print ("found {} images".format(len(images)))
 
 # Load the camera calibration data from the file
@@ -133,7 +133,7 @@ makeVideo = False
 if makeVideo:
     v_width = 1920
     v_height = 1080
-    output_file = "./Mk5/Code/13_Capture360_Crop/run_071.mp4"  # Name of the output video file
+    output_file = "./Mk5/Code/13_Capture360_Crop/run_070.mp4"  # Name of the output video file
     fps = 10  # Frames per second
     output_size = (v_width, v_height)  # Output video size
     codec = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for the output video
@@ -163,7 +163,7 @@ cv2.destroyAllWindows()
 processFirstImageTest = True
 
 # Specify the output file name
-output_file = "./Mk5/Code/14_Open3d_Tut/run_71_output.xyz"
+output_file = "./Mk5/Code/14_Open3d_Tut/run_70_output.xyz"
 if os.path.exists(output_file):
     # Delete the file if it exists
     os.remove(output_file)
@@ -198,7 +198,7 @@ if processFirstImageTest:
         # Combine X, Y, and Z coordinates to form the 3D points
         data = list(zip(x_coords, y_coords, z_coords))
 
-        axis_of_rotation = (v_width/2, 0, 0)
+        axis_of_rotation = ((v_width/2)+200, 0, 0)
         # Rotate the data around the Y-axis with translation
         rotated_data = rotate_data_around_y_with_translation(data, z_value*(360.0/len(images)), axis_of_rotation)
         rx_coords, ry_coords, rz_coords = zip(*rotated_data)
@@ -217,6 +217,16 @@ if processFirstImageTest:
     print(np.asarray(pcd.points))
 
     datum_point_cloud = makeDatumAsPointCloud()
+
+    # Define the translation vector to move the datum to the axis of rotation
+    translation_vector = np.array([v_width/2, 0.0, 0.0])  # Adjust this as needed
+
+    # Create a transformation matrix for translation
+    translation_matrix = np.eye(4)
+    translation_matrix[:3, 3] = translation_vector
+
+    # Apply the translation to the entire point cloud
+    datum_point_cloud = datum_point_cloud.transform(translation_matrix)
 
     combined_geometries = datum_point_cloud + pcd
 
