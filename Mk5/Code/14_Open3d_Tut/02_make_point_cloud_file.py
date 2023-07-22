@@ -217,8 +217,8 @@ def find_red_pixels(filename,image, threshold):
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # Define lower and upper threshold values for red (HSV color space)
-    lower_red = np.array([00, 000, 240], dtype=np.uint8)
-    upper_red = np.array([100, 255, 255], dtype=np.uint8)
+    lower_red = np.array([00, 000, 50], dtype=np.uint8)
+    upper_red = np.array([179, 255, 255], dtype=np.uint8)
 
     # Create a binary mask for red pixels
     red_mask = cv2.inRange(hsv_image, lower_red, upper_red)
@@ -241,6 +241,7 @@ def find_red_pixels(filename,image, threshold):
     #cv2.imshow("Original applied {}".format(filename), image)
     #cv2.imwrite(filename.replace(".jpg","_masked.jpg"), image)
     #cv2.waitKey(0)
+    #raise ValueError("Bail")
     
     # Find the x, y coordinates of red pixels
     y_coords, x_coords = np.where(red_mask > 0)
@@ -304,7 +305,7 @@ def render_circle_in_frame(frame_width, frame_height, circle_radius):
 
     return x_coords, y_coords, image
 
-run = 75
+run = 77
 dark_images = glob.glob('./Mk5/Code/15_Capture360_DarkOrLight/run_0{}/*.jpg'.format(run))
 video_output_file = "./Mk5/Code/15_Capture360_DarkOrLight/run_0{}.mp4".format(run)  # Name of the output video file
 s_video_output_file = "./Mk5/Code/15_Capture360_DarkOrLight/run_0{}_x_run_0{}.mp4".format(run,run+1)  # Name of the output video file

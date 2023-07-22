@@ -23,6 +23,10 @@ I'm not convinced by the settings in
 \EyeBolt\Mk5\Code\15_Capture360_DarkOrLight\my_camera_light.py
 \EyeBolt\Mk5\Code\15_Capture360_DarkOrLight\my_camera_dark.py
 
+Having some success processing light frames.
+
+I should diagnose the turning issue by doing 1 photo per revolution for 10 revs...
+
 ## 13th July 2023 ##
 
 Where are we up to?
