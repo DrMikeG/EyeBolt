@@ -1,5 +1,28 @@
 # EyeBolt #
 
+## 22nd July 2023 ##
+
+Capturing some light and dark rotations today to help debug the point cloud work I've been doing in Open3d (14_Open3d_Tut)
+
+Try one capture after another, and looking at the light rotations, I think 128 steps is more than a full rotation. 122 seems much closer.
+
+Also, my dark captures seem too dark now.
+
+I've stated 15_Capture360_DarkOrLight to allow me to easily change between the new dark/light settings I am trying.
+
+Still working on processing in Mk5\Code\14_Open3d_Tut\02_make_point_cloud_file.py
+which can now:
+- Make an undistorted light or dark frame video
+- Make a side-by-side light and dark frame video (needs orientation to line up)
+- Make a file containing point cloud coordinates from dark frames
+- Display a point cloud using open3D
+
+(The difference between light frames and dark frames is just me opening or closing the box... he he)
+
+I'm not convinced by the settings in 
+\EyeBolt\Mk5\Code\15_Capture360_DarkOrLight\my_camera_light.py
+\EyeBolt\Mk5\Code\15_Capture360_DarkOrLight\my_camera_dark.py
+
 ## 13th July 2023 ##
 
 Where are we up to?
