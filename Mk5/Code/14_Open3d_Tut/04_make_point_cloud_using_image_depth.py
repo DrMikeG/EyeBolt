@@ -487,7 +487,7 @@ def render_circle_in_frame(frame_width, frame_height, circle_radius):
 
     return x_coords, y_coords, image
 
-run = 79
+run = 75
 dark_images = glob.glob('./Mk5/Code/15_Capture360_DarkOrLight/run_0{}/*.jpg'.format(run))
 video_output_file = "./Mk5/Code/15_Capture360_DarkOrLight/run_0{}.mp4".format(run)  # Name of the output video file
 s_video_output_file = "./Mk5/Code/15_Capture360_DarkOrLight/run_0{}_x_run_0{}.mp4".format(run,run+1)  # Name of the output video file
@@ -501,9 +501,9 @@ data = np.load("./Mk5/Code/13_Capture360_Crop/ov5640_camera_calibration_2560x144
 mtx = data['mtx']
 dist = data['dist']
 
-makeVideo = True
+makeVideo = False
 makeSideBySideVideo = False
-processFirstImageTest = False
+processFirstImageTest = True
 
 
 
