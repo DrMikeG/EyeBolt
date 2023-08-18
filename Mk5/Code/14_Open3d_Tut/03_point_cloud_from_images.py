@@ -2,7 +2,7 @@ import open3d as o3d
 import numpy as np
 from datum import makeDatumAsPointCloud
 
-output_file = "./Mk5/Code/14_Open3d_Tut/run_71_output.xyz"
+output_file = "./Mk5/Code/15_Capture360_DarkOrLight/run_079_output.xyz"
 
 print("Load a ply point cloud, print it, and render it")
 pcd = o3d.io.read_point_cloud(output_file)
