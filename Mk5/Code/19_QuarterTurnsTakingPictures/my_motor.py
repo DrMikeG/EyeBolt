@@ -10,7 +10,11 @@ DELAY = 0.005  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy afte
 # Gearbox is 100:1
 # 100 steps is 1 step
 # 20 * 100 is one revolution
-STEPS = 20 * 100
+#REVOLUTION = 19 * 100
+REVOLUTION = 2042
+CHUNK = 4
+#STEPS = REVOLUTION / CHUNK
+STEPS = 510
 
 def init_stepper_motor():
     print("initialising Stepper motor")

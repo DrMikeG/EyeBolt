@@ -82,7 +82,7 @@ def main():
         raise SystemExit("Could not allocate a bitmap")
 
     print("Stablise white balance")
-    for _ in range(1):
+    for _ in range(10):
         print(".", end='')
         cam.capture(buffer)
         time.sleep(0.1)
@@ -104,7 +104,7 @@ def main():
             print("Using next available directory {}".format(dirPath))
 
             for n in range(10):
-                if False:
+                if True:
                     print("Taking picture {}".format(n))
                     jpgPath = dirPath + "/capture_{:0>3}_{}x{}_{}.jpg".format(n,width,height,quality)
                     cam.capture(buffer)
@@ -122,11 +122,10 @@ def main():
                             if bytes_written >= progress_list[0]:
                                 print("#", end="")
                                 progress_list.pop(0)
-                for _ in range(1):
-                    print("full turn")
+                for _ in range(4):
+                    print("quarter turn")
                     stepper_fwd(stepper_motor)        
                     time.sleep(0.5)    
-                time.sleep(5)    
             break # finish program
 
     time.sleep(0.1)  # Small delay to debounce the button

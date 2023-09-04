@@ -1,5 +1,16 @@
 # EyeBolt #
 
+## 4th September 2023 ##
+Having mounted the df robot stepper with the 1:100 gearbox, I'm still struggling to get a consistent rotation.
+
+Using the code in 19_QuarterTurnsTakingPictures I'm estimating the error by photographing each rotation and looking for the procession.
+
+The closest I have so far is 1981 steps per revolution, which I still think might be ~2% to much
+
+But the noise is annoying me now, so I'm going to stop.
+
+
+
 ## 22nd July 2023 ##
 
 Capturing some light and dark rotations today to help debug the point cloud work I've been doing in Open3d (14_Open3d_Tut)
