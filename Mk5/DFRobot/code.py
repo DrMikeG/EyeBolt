@@ -2,19 +2,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-# Define the start and end colors (red to violet)
-start_color = (255, 0, 0)  # Red
-end_color = (148, 0, 211)  # Violet
+# Define the rainbow colors
+rainbow_colors = [
+    (255, 0, 0),      # Red
+    (255, 127, 0),    # Orange
+    (255, 255, 0),    # Yellow
+    (0, 255, 0),      # Green
+    (0, 0, 255),      # Blue
+    (75, 0, 130),     # Indigo
+    (148, 0, 211)     # Violet
+]
 
-# Generate 100 evenly spaced color values in the spectrum
+# Generate 100 evenly spaced color values in the rainbow spectrum
 num_colors = 100
 colors = []
 
 for i in range(num_colors):
-    # Calculate the color as an interpolation between start and end colors
-    r = int(np.interp(i, [0, num_colors - 1], [start_color[0], end_color[0]]))
-    g = int(np.interp(i, [0, num_colors - 1], [start_color[1], end_color[1]]))
-    b = int(np.interp(i, [0, num_colors - 1], [start_color[2], end_color[2]]))
+    # Calculate the color as an interpolation between rainbow colors
+    start_index = i * (len(rainbow_colors) - 1) // (num_colors - 1)
+    end_index = start_index + 1
+    if end_index >= len(rainbow_colors):
+        end_index = 0
+    fraction = (i - start_index * (num_colors - 1) // len(rainbow_colors)) / ((num_colors - 1) // len(rainbow_colors))
+    
+    start_color = rainbow_colors[start_index]
+    end_color = rainbow_colors[end_index]
+    
+    r = int(np.interp(fraction, [0, 1], [start_color[0], end_color[0]]))
+    g = int(np.interp(fraction, [0, 1], [start_color[1], end_color[1]]))
+    b = int(np.interp(fraction, [0, 1], [start_color[2], end_color[2]]))
     
     # Append the RGB tuple to the list of colors
     colors.append((r, g, b))
@@ -36,16 +52,15 @@ for x in range(100):
     
     x_offset = x * image_width_px // 100
 
-    if x % 5 == 0:
-        print(f"{x} is a multiple of 5.")
-        # rectangle background color
-        width = (image_width_px // 100)  # Width of the rectangle
-        height = image_height_px  # Height of the rectangle
-        color = (200, 200, 200)  # RGB color (blue)
-        # Draw the colored rectangle by setting pixel values
-        image[1:height-1, x_offset:x_offset + width] = colors[x]
-    else:
-        print(f"{x} is not a multiple of 5.")
+    # rectangle background color
+    width = (image_width_px // 100)  # Width of the rectangle
+    height = image_height_px  # Height of the rectangle
+    color = (200, 200, 200)  # RGB color (blue)
+    # Draw the colored rectangle by setting pixel values
+    image[1:height-1, x_offset:x_offset + width] = colors[x]
+    h2 = height //4
+    h3 = h2 * 3
+    image[h2:h3, x_offset:x_offset + width] = (254,254,254)
 
     # Start vertical line    
     image[:, x_offset] = [0, 0, 0]  # Set grid lines to black

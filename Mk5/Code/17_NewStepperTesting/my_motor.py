@@ -3,9 +3,9 @@ import time
 from digitalio import DigitalInOut, Direction, Pull
 from adafruit_motor import stepper
 
-DELAY = 0.01  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
+DELAY = 0.005  # fastest is ~ 0.004, 0.01 is still very smooth, gets steppy after that
 #STEPS = 512  # this is a full 360º
-STEPS = 20 # 128 per rev
+STEPS = 4 # 128 per rev
 
 def init_stepper_motor():
     print("initialising Stepper motor")
