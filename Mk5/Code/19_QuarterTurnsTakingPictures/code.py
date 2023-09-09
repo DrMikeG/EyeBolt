@@ -17,7 +17,7 @@ from my_camera_light import init_camera
 from my_motor import init_stepper_motor, stepper_fwd
 
 
-print("Take a phone, rotate 360 in 4 steps, repeat 10 times")
+print("Take a phone, rotate 360 in 4 steps, repeat 10 times - for worm drive")
 
 def init_push_button():
     button_pin = board.GP6
@@ -122,10 +122,19 @@ def main():
                             if bytes_written >= progress_list[0]:
                                 print("#", end="")
                                 progress_list.pop(0)
-                for _ in range(4):
-                    print("quarter turn")
-                    stepper_fwd(stepper_motor)        
-                    time.sleep(0.5)    
+                
+                print("Complete one revolution - 100 teeth")
+                for t in range(100):
+                    #print("Progress turn table one tooth: {} of 100".format(t))
+                    print("{} of 100 of {} of 10".format(t,n))
+                    stepper_fwd(stepper_motor)
+                    # Check the button state during the 0.5-second sleep
+                    #for _ in range(5):  # Check the button 5 times with 0.1-second intervals
+                    #    if not button.value:
+                    #        # Button is pressed, perform your desired action here
+                    #        raise SystemExit("E brake pressed - quitting!")
+                    #    time.sleep(0.1)
+
             break # finish program
 
     time.sleep(0.1)  # Small delay to debounce the button

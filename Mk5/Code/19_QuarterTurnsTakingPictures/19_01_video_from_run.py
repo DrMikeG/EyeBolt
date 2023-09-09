@@ -80,7 +80,7 @@ def make_single_video(images,mtx,dist,output_file):
     video_writer.release()
     cv2.destroyAllWindows()
 
-run = 29
+run = 34
 dark_images = glob.glob('./Mk5/Code/19_QuarterTurnsTakingPictures/run_0{}*/*.jpg'.format(run))
 video_output_file = "./Mk5/Code/19_QuarterTurnsTakingPictures/run_0{}.mp4".format(run)  # Name of the output video file
 
