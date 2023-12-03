@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import glob
 import os
-import open3d as o3d
 
 ## General manipulation
 
@@ -80,7 +79,7 @@ def make_single_video(images,mtx,dist,output_file):
     video_writer.release()
     cv2.destroyAllWindows()
 
-run = 36
+run = 37
 dark_images = glob.glob('./Mk5/Code/20_100StepTurnsTakingPictures/run_0{}*/*.jpg'.format(run))
 video_output_file = "./Mk5/Code/20_100StepTurnsTakingPictures/run_0{}.mp4".format(run)  # Name of the output video file
 

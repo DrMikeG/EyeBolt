@@ -1,5 +1,89 @@
 # EyeBolt #
 
+## 10th September 2023 ##
+I've just captured the first full scan on the work driven turntable.
+\EyeBolt\Mk5\Code\20_100StepTurnsTakingPictures\run_036
+
+I'm now having a chat with chatGPT about the next steps:
+```
+`cv2.solvePnP()` is a function provided by the OpenCV library in Python for solving the Perspective-n-Point (PnP) problem, which is used in computer vision to estimate the pose (rotation and translation) of an object in a 3D space relative to a camera. This is precisely what you need when determining the extrinsic parameters between your camera and laser in your 3D scanner project.
+
+Here's a more detailed explanation of how to use `cv2.solvePnP()`:
+
+```python
+import cv2
+import numpy as np
+
+# Define known 3D world points (object points)
+object_points = np.array([
+    [x1, y1, z1],
+    [x2, y2, z2],
+    # ... add more points ...
+], dtype=np.float32)
+
+# Define detected 2D image points
+image_points = np.array([
+    [u1, v1],
+    [u2, v2],
+    # ... add more points ...
+], dtype=np.float32)
+
+# Define camera matrix (intrinsic parameters), obtained from camera calibration
+camera_matrix = np.array([
+    [fx, 0, cx],
+    [0, fy, cy],
+    [0, 0, 1]
+], dtype=np.float32)
+
+# Define distortion coefficients if applicable (usually from camera calibration)
+distortion_coeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float32)
+
+# Use cv2.solvePnP to estimate pose (extrinsic parameters)
+retval, rotation_vector, translation_vector = cv2.solvePnP(object_points, image_points, camera_matrix, distortion_coeffs)
+
+# 'retval' indicates the success of the solvePnP operation (usually 1 if successful)
+
+# 'rotation_vector' is the rotation in Rodrigues form (axis-angle representation)
+# Convert it to a rotation matrix if needed
+rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
+
+# 'translation_vector' represents the translation of the object center in camera coordinates
+
+# The resulting 'rotation_matrix' and 'translation_vector' represent the pose of the object
+```
+
+Key points to note:
+
+- You need to provide `object_points`, which are the 3D coordinates of known points in the world coordinate system.
+- `image_points` are the 2D coordinates of the corresponding points in the image.
+- `camera_matrix` is the camera's intrinsic matrix, obtained through camera calibration.
+- `distortion_coeffs` are the distortion coefficients, also obtained from camera calibration (may not always be needed).
+
+The function returns the rotation vector (`rotation_vector`) and translation vector (`translation_vector`) that describe the pose of the object in relation to the camera.
+
+You can then use the rotation and translation information to transform your laser line data from the camera's coordinate system to the world coordinate system, allowing you to align the laser data with your 3D point cloud.
+
+Remember to make sure that your world points and image points are correctly matched and correspond to the same features in your images for accurate pose estimation. Additionally, if you have lens distortion, it's important to account for it using the distortion coefficients.
+```
+
+Measurements of box:
+Camera focal plane to far wall distance = 315mm
+11cm from far wall to pivot
+Camera focal plane to pivot = 315mm - 110mm = 205mm
+Blue laser source to camera axis - 92mm
+Red laser source to camera axis - 92mm
+
+Blue laser plane:
+Origin (-92,0,0)
+Direction ()
+Vector in plane up far wall - from bottom to top of visible line
+Vector in plane run from origin to 
+
+
+
+
+
+
 ## 4th September 2023 ##
 Having mounted the df robot stepper with the 1:100 gearbox, I'm still struggling to get a consistent rotation.
 
